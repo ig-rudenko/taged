@@ -1,0 +1,5 @@
+venv
+esdata
+test*
+taged_web/migrations/
+logs

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="ru">
+<link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
+<head>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/tags.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/checkselect.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/menu.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/buttons.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.cleditor.css' %}" />
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/jquery.cleditor.min.js' %}"></script>
+
+
+    <script type="text/javascript">
+      $(document).ready(function() {
+        editor = $("#input").cleditor({width:"100%", height:"100%"})[0].focus();
+        $(window).resize();
+      });
+      $(window).resize(function() {
+        var $win = $(window);
+        $("#container").width($win.width() - 32).height($win.height() - 33).offset({left:15, top:15});
+        editor.refresh();
+      });
+    </script>
+    <meta charset="UTF-8">
+    <title>Note</title>
+</head>
+
+<body>
+    <ul class="menu-main" style="padding: 20px">
+      <li><a href="/">Search</a></li>
+      <li><a href="/create" class="current">Create Note</a></li>
+      <li><a href="/tags">Tags</a></li>
+      <li><a href="/accounts/logout">Logout</a></li>
+    </ul>
+
+    <form name="theForm" method="post" style="height: 100%">
+        {% csrf_token %}
+
+        {# КНОПКА ОПУБЛИКОВАТЬ #}
+        <div class="button-wrapper">
+            <a class="arrow-btn" onclick="document.theForm.submit()">Опубликовать<span></span></a>
+        </div>
+        <h4 style="color: darkred; text-align: center">{{ error }}</h4>
+
+        {# СПИСОК ТЕГОВ #}
+        <div style="text-align: right">
+            <div class="checkselect" style="margin: 20px">
+
+            {% for t in tags %}
+            <label>
+                <input type="checkbox" name="tags_checked" value="{{ t.tag }}" {% if t.checked %} checked {% endif %}>
+                {{ t.tag }}
+            </label>
+            {% endfor %}
+            </div>
+        </div>
+
+        <div id="tag-start-tags_checked"></div> {# МЕСТО ДЛЯ ТЕГОВ #}
+
+        {# ХРАНЕНИЕ ID ЗАПИСИ #}
+        <input type="text" name="post_id" value="{{ post_id }}" style="display: none" readonly>
+
+        {# TITLE #}
+        <input type="text" name="title" required placeholder="Название заметки" value="{{ title }}">
+
+        {# CONTENT #}
+        <textarea id="input" name="input" required>{{ content }}</textarea>
+    </form>
+
+    {# РАБОТА С ОТОБРАЖЕНИЕМ ТЕГОВ #}
+<script src="{% static 'js/tags_control.js' %}"></script>
+</body>
+</html>

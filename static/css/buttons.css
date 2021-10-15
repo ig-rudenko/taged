@@ -1,0 +1,122 @@
+/* КНОПКА INPUT*/
+
+input[type=text] {
+    text-align: center;
+    font-size: 22px;
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    border: none;
+    border-bottom: 2px solid #F58262;
+}
+
+.atuin-btn {
+    /*display: inline-flex;*/
+    width: 220px;
+    /*margin: 0px;*/
+    text-decoration: none;
+    border: 2px solid #ffffff;
+    position: relative;
+    overflow: hidden;
+    font-size: 14px;
+    line-height: 20px;
+    padding: 9px;
+    color: #FFF;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif, serif;
+    background: #F58262;
+    transition: box-shadow 0.3s, transform 0.3s;
+    cursor: pointer;
+}
+.atuin-btn:hover,
+.atuin-btn:active,
+.atuin-btn:focus {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2), 0 16px 20px rgba(0,0,0,0.2);
+    color: #FFF;
+}
+.atuin-btn:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(-45deg, transparent, rgba(191, 226, 255, 0.3), transparent);
+    transition: left 0.7s;
+}
+.atuin-btn:hover:before,
+.atuin-btn:active:before,
+.atuin-btn:focus:before {
+    left: 100%;
+}
+
+/* КОНЕЦ КНОПКИ */
+
+/* ARROW */
+
+.button-wrapper {
+   max-width: 400px;
+   margin: 10px auto;
+   text-align: center;
+   overflow: hidden;
+}
+.arrow-btn {
+   position: relative;
+   display: inline-block;
+   padding: 15px 30px;
+   text-decoration: none;
+   color: #F58262;
+   border: 4px solid #F58262;
+   font-size: 14px;
+   text-transform: uppercase;
+   letter-spacing: .4em;
+   transition: .2s;
+   transition-delay: .1s;
+}
+.arrow-btn:hover {
+   color: white;
+   padding: 15px 35px;
+}
+.arrow-btn span {
+   position: absolute;
+   top: -2px;
+   left: -2px;
+   right: -2px;
+   bottom: -2px;
+   z-index: -1;
+   overflow: hidden;
+   transition: .35s cubic-bezier(.215, .61, .215, 1);
+}
+.arrow-btn span:before {
+   content: "";
+   position: absolute;
+   top: -5%;
+   left: -210%;
+   width: 200%;
+   height: 108%;
+   background: #F58262;
+   transform: skew(-15deg, 0);
+   transition: .5s;
+}
+.arrow-btn:after {
+   content: "";
+   position: absolute;
+   z-index: -1;
+   top: 50%;
+   left: -1000%;
+   height: 2px;
+   margin-top: -1px;
+   width: 400%;
+   background: #F58262;
+   transition: .5s;
+}
+.arrow-btn:hover:after {
+   width: 140%;
+   left: -20%;
+}
+.arrow-btn:hover span:before {
+   left: -25%;
+}

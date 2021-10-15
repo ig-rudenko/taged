@@ -1,0 +1,9 @@
+*
+!static
+!taged
+!taged_web
+!templates
+!manage.py
+!requirements.txt
+!db.sqlite3
+!run.sh

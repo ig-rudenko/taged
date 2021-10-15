@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
+<head>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/tags.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/buttons.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/menu.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/show_post.css' %}">
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <ul class="menu-main" style="padding-top: 20px">
+      <li><a href="/">Search</a></li>
+      <li><a href="/create">Create Note</a></li>
+      <li><a href="/tags" class="current">Tags</a></li>
+      <li><a href="/accounts/logout">Logout</a></li>
+    </ul>
+    <div class="container" style="text-align: center; max-width: unset">
+        <div class="post">
+            <div class="post-content">
+            <form method="post" style="padding-bottom: 30px">
+                {% csrf_token %}
+                <label>
+                    Имя нового тега
+                    <input type="text" name="new_tag">
+                </label>
+                <input class="atuin-btn" type="submit" value="Создать">
+            </form>
+
+            {% for t in tags %}
+
+                    <a class="tag-in">{{ t.tag_name }}</a>
+
+            {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

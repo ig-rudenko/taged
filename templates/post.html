@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
+<head>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/show_post.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/menu.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/tags.css' %}">
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    {# Меню #}
+    <ul class="menu-main" style="padding-top: 20px">
+      <li><a href="/" class="current">Search</a></li>
+        {% if superuser %}
+      <li><a href="/create">Create Note</a></li>
+      <li><a href="/tags">Tags</a></li>
+        {% endif %}
+      <li><a href="/accounts/logout">Logout</a></li>
+    </ul>
+
+<div class="container">
+    <div class="post">
+        <div class="post-content">
+
+            {# ЗАГОЛОВОК #}
+            <div class="post-header">
+                <h1>{{ title }}</h1>
+                <div class="post-meta">
+                    <time datetime="">{{ published_at }}</time>
+                    <br>
+                {% if superuser %}
+                <a href="/edit/{{ post_id }}" style="color: #03a2ff">редактировать</a>
+                {% endif %}
+
+                </div>
+            </div>
+
+            {# ТЕГИ #}
+            <div style="padding-bottom: 30px">
+                {% for tag in tags %}
+                    <span class="tag-in">{{ tag }}</span>
+                {% endfor %}
+            </div>
+
+            {# СОДЕРЖАНИЕ #}
+            <div style="color: black">
+                {{ content|safe }}
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

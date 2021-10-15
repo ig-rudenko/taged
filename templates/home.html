@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="ru">
+<link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
+<head>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/post.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/search.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/menu.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/tags.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/checkselect.css' %}">
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <meta charset="UTF-8">
+    <title>Taged</title>
+</head>
+
+<body>
+<div style="text-align: center; padding: 20px">
+
+    {# МЕНЮ #}
+    <ul class="menu-main">
+      <li><a href="/" class="current">Search</a></li>
+        {% if superuser %}
+      <li><a href="/create">Create Note</a></li>
+      <li><a href="/tags">Tags</a></li>
+        {% endif %}
+      <li><a href="/accounts/logout">Logout</a></li>
+    </ul>
+
+    {# СТРОКА ПОИСКА #}
+    <div class="d1" style="padding-top: 40px">
+      <form method="post">
+          {% csrf_token %}
+          <input type="text" name="search" placeholder="Искать здесь...">
+          <button type="submit"></button>
+
+          {# ПОИСК ПО ТЕГАМ #}
+            {# TAGS IN #}
+            <div style="text-align: right">
+                <div class="checkselect">
+                {% for t in tags_in %}
+                <label>
+                    <input type="checkbox" style="width: unset; height: unset"
+                           name="tags-in" value="{{ t.tag }}" {% if t.checked %} checked {% endif %}>
+                    {{ t.tag }}
+                </label>
+                {% endfor %}
+                </div>
+            </div>
+
+            {# TAGS OFF #}
+            <div style="text-align: right">
+                <div class="checkselect">
+                {% for t in tags_off %}
+                <label>
+                    <input type="checkbox" style="width: unset; height: unset"
+                           name="tags-off" value="{{ t.tag }}" {% if t.checked %} checked {% endif %}>
+                    {{ t.tag }}
+                </label>
+                {% endfor %}
+                </div>
+            </div>
+
+          <div id="tag-start-tags-in"></div>  {# МЕСТО ДЛЯ ТРЕБУЕМЫХ ТЕГОВ #}
+          <div id="tag-start-tags-off"></div> {# МЕСТО ДЛЯ ТЕГОВ ИСКЛЮЧЕНИЯ #}
+
+      </form>
+    </div>
+
+
+
+
+
+</div>
+<div class="post-wrap">
+
+    {% for post in data %}
+        <div class="post-item">
+            <div class="post-item-wrap">
+            <a href="post/{{ post.id }}" class="post-link">
+            <h3 class="post-title">{{ post.title }}</h3>
+                {% for tag in post.tags %}
+                <p class="post-content">{{ tag }}</p>
+                {% endfor %}
+            </a>
+            </div>
+        </div>
+    {% endfor %}
+
+</div>
+
+<script src="{% static 'js/tags_control.js' %}"></script>
+</body>
+</html>

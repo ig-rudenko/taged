@@ -120,6 +120,23 @@ def update_post(elastic_object: Elasticsearch, index_name: str, record: dict, id
         print(str(ex))
 
 
+def get_titles(elacticsearch: Elasticsearch, string: str):
+    # Поиск по строке в title и content
+    res = elacticsearch.search(index='company', _source=['title'], query={
+        "simple_query_string": {
+            "query": string,
+            "fields": [
+                'title'
+            ]
+        }
+    })
+    pprint(res)
+    if res['hits']['total']['value']:
+        return [line['_source']['title'] for line in res['hits']['hits']]
+    else:
+        return []
+
+
 def find_posts(elacticsearch: Elasticsearch, tags_in: list = None, tags_off: list = None, string: str = '') -> list:
     """
     Возвращает id записей, которые были отфильтрованы
@@ -132,7 +149,6 @@ def find_posts(elacticsearch: Elasticsearch, tags_in: list = None, tags_off: lis
     tags_off = tags_off if tags_off else []
     tags_in = tags_in if tags_in else []
     print('def find_posts(elacticsearch)', tags_in, tags_off, string)
-    res = None
     if not string:
         # Поиск по тегам
         res = elacticsearch.search(index='company', _source=['tags', 'title'], query={

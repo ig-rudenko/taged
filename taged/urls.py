@@ -20,6 +20,7 @@ from taged_web import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.home),
+    path('ajax/autocomplete/', views.autocomplete),
     path('accounts/', include('django.contrib.auth.urls')),
     path('edit/<str:post_id>', views.edit_post),
     path('post/<str:post_id>', views.show_post),

@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from dateconverter import DateConverter
 import elasticsearch
 from django.contrib.auth.decorators import login_required
@@ -8,7 +8,14 @@ from taged_web import elasticsearch_control
 from taged_web.models import Tags
 from datetime import datetime
 
-# Create your views here.
+
+@login_required(login_url='accounts/login/')
+def autocomplete(request):
+    print(request.GET)
+    es = elasticsearch_control.connect_elasticsearch()
+    titles = elasticsearch_control.get_titles(es, request.GET.get('term'))
+    print(titles)
+    return JsonResponse({'data': titles})
 
 
 @login_required(login_url='accounts/login/')

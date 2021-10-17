@@ -10,6 +10,34 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/tags.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/checkselect.css' %}">
     <script src="{% static 'js/jquery.min.js' %}"></script>
+
+
+    <link rel="stylesheet" type="text/css" href="{% static 'css/jquery-ui.css' %}">
+    <script src="{% static 'js/jquery-ui.js' %}"></script>
+    <script>
+    $( function() {
+
+    $( "#search" ).autocomplete({
+      source: function( request, response ) {
+        $.ajax( {
+          url: "/ajax/autocomplete",
+
+          data: {
+            term: request.term
+          },
+          success: function( data ) {
+              console.log(data.data)
+              response( data.data );
+
+          }
+        } );
+      },
+      minLength: 4,
+    } );
+    } );
+    </script>
+
+
     <meta charset="UTF-8">
     <title>Taged</title>
 </head>
@@ -31,7 +59,7 @@
     <div class="d1" style="padding-top: 40px">
       <form method="post">
           {% csrf_token %}
-          <input type="text" name="search" placeholder="Искать здесь...">
+          <input id="search" type="text" name="search" placeholder="Искать здесь...">
           <button type="submit"></button>
 
           {# ПОИСК ПО ТЕГАМ #}
@@ -66,8 +94,6 @@
 
       </form>
     </div>
-
-
 
 
 

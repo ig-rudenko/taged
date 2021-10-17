@@ -23,6 +23,7 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
     path('edit/<str:post_id>', views.edit_post),
     path('post/<str:post_id>', views.show_post),
+    path('delete/<str:post_id>', views.delete_post),
     path('create/', views.create_post),
     path('tags/', views.tags),
 ]

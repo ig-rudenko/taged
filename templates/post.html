@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 {% load static %}
-<html lang="en">
+<html lang="ru">
 <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
 <head>
     <link rel="stylesheet" type="text/css" href="{% static 'css/show_post.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/menu.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/tags.css' %}">
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>{{ title }}</title>
 </head>
 <body>
     {# Меню #}
@@ -32,6 +32,8 @@
                     <br>
                 {% if superuser %}
                 <a href="/edit/{{ post_id }}" style="color: #03a2ff">редактировать</a>
+                    <time></time>
+                <a style="color: #ff6363; cursor: pointer" onclick="delete_post('{{ post_id }}', '{{ title }}')">удалить</a>
                 {% endif %}
 
                 </div>
@@ -51,5 +53,14 @@
         </div>
     </div>
 </div>
+
+<script>
+function delete_post(id, name) {
+    if (confirm("Вы согласны удалить запись \"" + name + "\" ?")) {
+        window.location.href = "/delete/" + id
+    }
+}
+</script>
+
 </body>
 </html>

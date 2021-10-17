@@ -148,7 +148,7 @@ def create_post(request):
     """
     if not request.user.is_superuser:  # Только суперпользователи
         return HttpResponseRedirect('/')
-
+    print(request.POST)
     all_tags = [t.tag_name for t in Tags.objects.all()]  # Все существующие теги
 
     if request.method == 'POST':
@@ -175,10 +175,19 @@ def create_post(request):
                 ],
                 'error': "Необходимо указать хотя бы один тег, название заметки и её содержимое!"
             })
-        print(request.POST)
 
     tags_ = [{'tag': t, 'cheched': False} for t in all_tags]  # Если новая запись, то все теги изначально отключены
     return render(request, 'edit_post.html', {'tags': tags_})
+
+
+@login_required(login_url='accounts/login/')
+def delete_post(request, post_id):
+    if not request.user.is_superuser:  # Только суперпользователи
+        return HttpResponseRedirect('/')
+
+    es = connect_elasticsearch()
+    es.delete(index='company', id=post_id)
+    return HttpResponseRedirect('/')
 
 
 @login_required(login_url='accounts/login/')

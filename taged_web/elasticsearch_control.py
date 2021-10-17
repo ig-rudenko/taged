@@ -75,7 +75,7 @@ def create_index(es_object, index_name='company'):
     try:
         if not IndicesClient(client=es_object).exists(index=index_name):
             resp = requests.put(
-                url=f'http://{ELASTICSEARCH_HOST}:9200/{index_name}?pretty',
+                url=f'http://{ELASTICSEARCH_HOST or "localhost"}:9200/{index_name}?pretty',
                 headers={'Content-Type': 'application/json'},
                 json=settings
             )

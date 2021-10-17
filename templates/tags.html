@@ -32,11 +32,20 @@
 
             {% for t in tags %}
 
-                    <a class="tag-in">{{ t.tag_name }}</a>
+                    <a class="tag-in" onclick="delete_tag('{{ t.id }}', '{{ t.tag_name }}')">{{ t.tag_name }}</a>
 
             {% endfor %}
             </div>
         </div>
     </div>
+
+<script>
+function delete_tag(id, name) {
+    if (confirm("Вы согласны удалить тег \"" + name + "\" ?")) {
+        window.location.href = "/delete/tag/" + id
+    }
+}
+</script>
+
 </body>
 </html>

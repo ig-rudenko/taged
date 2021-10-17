@@ -211,3 +211,20 @@ def tags(request):
             t.tag_name = request.POST['new_tag']
             t.save()
         return HttpResponseRedirect('/tags')
+
+
+@login_required(login_url='accounts/login/')
+def delete_tag(request, tag_id):
+    """
+    Смотрим и создаем теги
+    :param request: запрос
+    :param tag_id: ID тега
+    :return:
+    """
+    if not request.user.is_superuser:  # Только суперпользователи
+        return HttpResponseRedirect('/')
+
+    t = Tags.objects.get(id=tag_id)
+    print(t.tag_name)
+    t.delete()
+    return HttpResponseRedirect('/tags')

@@ -20,7 +20,10 @@ def autocomplete(request):
 
 @login_required(login_url='accounts/login/')
 def home(request):
-    tags_in = tags_off = tags_ = [{'tag': t.tag_name, 'checked': False} for t in Tags.objects.all()]
+    tags_in = tags_off = tags_ = sorted(
+        [{'tag': t.tag_name, 'checked': False} for t in Tags.objects.all()],
+        key=lambda x: x['tag'].lower()  # Сортируем по алфавиту
+    )
     data = []
     if request.method == 'POST':
         print(request.POST)
@@ -41,12 +44,18 @@ def home(request):
                 if isinstance(d['tags'], str):
                     d['tags'] = [d['tags']]
 
-        tags_in = [
-            {'tag': t['tag'], 'checked': True if tags_in and t['tag'] in tags_in else False} for t in tags_
-        ]
-        tags_off = [
-            {'tag': t['tag'], 'checked': True if tags_off and t['tag'] in tags_off else False} for t in tags_
-        ]
+        tags_in = sorted(
+            [
+                {'tag': t['tag'], 'checked': True if tags_in and t['tag'] in tags_in else False} for t in tags_
+            ],
+            key=lambda x: x['tag'].lower()  # Сортируем по алфавиту
+        )
+        tags_off = sorted(
+            [
+                {'tag': t['tag'], 'checked': True if tags_off and t['tag'] in tags_off else False} for t in tags_
+            ],
+            key=lambda x: x['tag'].lower()  # Сортируем по алфавиту
+        )
 
     return render(request, 'home.html',
                   {
@@ -111,7 +120,10 @@ def edit_post(request, post_id):
                 'title': request.POST.get('title') or '',
                 'content': request.POST.get('input') or '',
                 'tags': [
-                    {'tag': t, 'checked': False if t not in [dict(request.POST).get('tags_checked')] else True}
+                    sorted(
+                        {'tag': t, 'checked': False if t not in [dict(request.POST).get('tags_checked')] else True},
+                        key=lambda x: x['tag'].lower()  # Сортируем по алфавиту
+                    )
                     for t in all_tags
                 ],
                 'error': "Необходимо указать хотя бы один тег, название заметки и её содержимое!"
@@ -183,7 +195,10 @@ def create_post(request):
                 'error': "Необходимо указать хотя бы один тег, название заметки и её содержимое!"
             })
 
-    tags_ = [{'tag': t, 'cheched': False} for t in all_tags]  # Если новая запись, то все теги изначально отключены
+    tags_ = sorted(
+        [{'tag': t, 'cheched': False} for t in all_tags],
+        key=lambda x: x['tag'].lower()  # Сортируем по алфавиту
+    )  # Если новая запись, то все теги изначально отключены
     return render(request, 'edit_post.html', {'tags': tags_})
 
 

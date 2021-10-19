@@ -29,10 +29,10 @@
 	box-sizing: border-box;
 	margin: 0;
 	padding: 0;
-	width: 100%;
+	width: auto;
 	height: auto;
 	max-height: 300px;
-	position: absolute;
+	/*position: absolute;*/
 	top: 100%;
 	left: 0px;
 	border: 1px solid #dadada;
@@ -46,7 +46,7 @@
 	position: relative;
 	display: block;
 	margin: 0;
-	padding: 4px 6px 4px 25px;
+	padding: 6px 6px 6px 25px;
 	font-weight: normal;
 	font-size: 1em;
 	line-height: 1.1;
@@ -54,7 +54,7 @@
 }
 .checkselect-popup input {
 	position: absolute;
-	top: 5px;
+	top: 8px;
 	left: 8px;
 	margin: 0 !important;
 	padding: 0;

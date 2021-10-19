@@ -67,7 +67,7 @@
             <div style="text-align: right">
                 <div class="checkselect">
                 {% for t in tags_in %}
-                <label>
+                <label style="float:left">
                     <input type="checkbox" style="width: unset; height: unset"
                            name="tags-in" value="{{ t.tag }}" {% if t.checked %} checked {% endif %}>
                     {{ t.tag }}
@@ -80,7 +80,7 @@
             <div style="text-align: right">
                 <div class="checkselect">
                 {% for t in tags_off %}
-                <label>
+                <label style="float:left">
                     <input type="checkbox" style="width: unset; height: unset"
                            name="tags-off" value="{{ t.tag }}" {% if t.checked %} checked {% endif %}>
                     {{ t.tag }}

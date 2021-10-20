@@ -151,7 +151,7 @@ def find_posts(elacticsearch: Elasticsearch, tags_in: list = None, tags_off: lis
     print('def find_posts(elacticsearch)', tags_in, tags_off, string)
     if not string:
         # Поиск по тегам
-        res = elacticsearch.search(index='company', _source=['tags', 'title'], query={
+        res = elacticsearch.search(size=100, index='company', _source=['tags', 'title'], query={
             "match": {
                 "tags": " ".join(tags_in)
             }
@@ -160,7 +160,7 @@ def find_posts(elacticsearch: Elasticsearch, tags_in: list = None, tags_off: lis
     else:
 
         # Поиск по строке в title и content
-        res = elacticsearch.search(index='company', _source=['tags', 'title'], query={
+        res = elacticsearch.search(size=100, index='company', _source=['tags', 'title'], query={
             "simple_query_string": {
                 "query": string,
                 "fields": [

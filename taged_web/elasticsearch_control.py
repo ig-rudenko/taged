@@ -1,3 +1,5 @@
+import time
+
 import requests
 from elasticsearch import Elasticsearch
 from elasticsearch.client.indices import IndicesClient
@@ -7,19 +9,21 @@ import os
 
 
 ELASTICSEARCH_HOST = os.environ.get('ELASTICSEARCH_HOST')
+try:
+    ELASTICSEARCH_request_timeout = int(os.environ.get('ELASTICSEARCH_request_timeout')) or 20
+except (ValueError, TypeError):
+    ELASTICSEARCH_request_timeout = 20
+
 logging.basicConfig(level=logging.ERROR, filename='logs')
 
 
 def connect_elasticsearch():
-    _es = None
-    try:
-        _es = Elasticsearch([{'host': ELASTICSEARCH_HOST or 'localhost', 'port': 9200}])
-    except requests.ConnectionError:
-        pass
+    _es = Elasticsearch([{'host': ELASTICSEARCH_HOST or 'localhost', 'port': 9200}])
     if _es.ping():
-        print('Yay Connect')
+        print('connect_elasticsearch: Connected')
     else:
-        print('Awww it could not connect!')
+        print('connect_elasticsearch: It could not connect!')
+        return None
     return _es
 
 
@@ -79,7 +83,7 @@ def create_index(es_object, index_name='company'):
                 headers={'Content-Type': 'application/json'},
                 json=settings
             )
-            print(resp.json())
+            pprint(resp.json())
             print('Created Index')
         created = True
     except Exception as ex:
@@ -97,7 +101,7 @@ def create_post(elastic_object: Elasticsearch, index_name: str, record: dict):
     :return:
     """
     try:
-        return elastic_object.index(index=index_name, document=record)
+        return elastic_object.index(index=index_name, document=record, request_timeout=ELASTICSEARCH_request_timeout)
     except Exception as ex:
         print('Error in indexing data')
         print(str(ex))
@@ -113,7 +117,7 @@ def update_post(elastic_object: Elasticsearch, index_name: str, record: dict, id
     :return:
     """
     try:
-        return elastic_object.index(index=index_name, document=record, id=id_)
+        return elastic_object.index(index=index_name, document=record, id=id_, request_timeout=ELASTICSEARCH_request_timeout)
 
     except Exception as ex:
         print('Error in indexing data')
@@ -129,7 +133,7 @@ def get_titles(elacticsearch: Elasticsearch, string: str):
                 'title'
             ]
         }
-    })
+    }, request_timeout=ELASTICSEARCH_request_timeout)
     pprint(res)
     if res['hits']['total']['value']:
         return [line['_source']['title'] for line in res['hits']['hits']]
@@ -155,7 +159,7 @@ def find_posts(elacticsearch: Elasticsearch, tags_in: list = None, tags_off: lis
             "match": {
                 "tags": " ".join(tags_in)
             }
-        })
+        }, request_timeout=ELASTICSEARCH_request_timeout)
         pprint(res)
     else:
 
@@ -168,7 +172,7 @@ def find_posts(elacticsearch: Elasticsearch, tags_in: list = None, tags_off: lis
                     'content'
                 ]
             }
-        })
+        }, request_timeout=ELASTICSEARCH_request_timeout)
         pprint(res)
 
     result = []
@@ -203,4 +207,4 @@ if __name__ == '__main__':
                 break
         except Exception as e:
             print(e)
-
+            time.sleep(1)

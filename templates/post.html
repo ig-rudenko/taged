@@ -3,6 +3,7 @@
 <html lang="ru">
 <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
 <head>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/upload_file.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/show_post.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/menu.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/tags.css' %}">
@@ -40,10 +41,20 @@
             </div>
 
             {# ТЕГИ #}
-            <div style="padding-bottom: 30px">
+            <div style="padding-bottom: 8px">
                 {% for tag in tags %}
                     <span class="tag-in">{{ tag }}</span>
                 {% endfor %}
+            </div>
+
+            {# ФАЙЛЫ #}
+            <div class="post-file">
+            {% for f in files %}
+                <a href="/download/{{ post_id }}/{{ f.name }}">
+                    <img src="{% static f.icon %}" width="40px" height="40px" alt="">
+                    {{ f.name }}
+                </a>
+            {% endfor %}
             </div>
 
             {# СОДЕРЖАНИЕ #}

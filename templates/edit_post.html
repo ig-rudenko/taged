@@ -9,6 +9,8 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/menu.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/buttons.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.cleditor.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/upload_file.css' %}" />
+
     <script src="{% static 'js/jquery.min.js' %}"></script>
     <script src="{% static 'js/jquery.cleditor.min.js' %}"></script>
 
@@ -36,7 +38,7 @@
       <li><a href="/accounts/logout">Logout</a></li>
     </ul>
 
-    <form name="theForm" method="post" style="height: 100%">
+    <form name="theForm" method="post" style="height: 100%" enctype="multipart/form-data">
         {% csrf_token %}
 
         {# КНОПКА ОПУБЛИКОВАТЬ #}
@@ -60,6 +62,27 @@
 
         <div id="tag-start-tags_checked"></div> {# МЕСТО ДЛЯ ТЕГОВ #}
 
+        {# ФАЙЛЫ #}
+        <div class="upload_form">
+            <label>
+                <input id="files" name="files" type="file" class="main_input_file" multiple />
+                <img src="{% static "/images/icons/clip.png" %}" alt="clip">
+                <div>Прикрепить</div>
+            </label>
+        </div>
+        {# СУЩЕСТВУЮЩИЕ ФАЙЛЫ #}
+        <div class="post-file">
+            {% for f in files %}
+                <a id="file_{{ f.name }}">
+                    <img src="{% static f.icon %}" width="40px" height="40px" alt="">
+                    {{ f.name }}
+                </a>
+                <a onclick="delete_file('{{ f.name }}')">X</a>
+                <input id="checkbox_{{ f.name }}" name="checkbox_{{ f.name }}" type="checkbox" hidden checked>
+            {% endfor %}
+        </div>
+        <div id="file_list"></div>
+
         {# ХРАНЕНИЕ ID ЗАПИСИ #}
         <input type="text" name="post_id" value="{{ post_id }}" style="display: none" readonly>
 
@@ -72,5 +95,64 @@
 
     {# РАБОТА С ОТОБРАЖЕНИЕМ ТЕГОВ #}
 <script src="{% static 'js/tags_control.js' %}"></script>
+<script>
+
+function file_format(file_name) {
+    if (file_name.endsWith('.docx') || file_name.endsWith('.doc') || file_name.endsWith('.rtf')){
+        return 'docx'
+    }
+    if (file_name.endsWith('.xls') || file_name.endsWith('.xlsx') || file_name.endsWith('.xlsm')){
+        return 'xlsx'
+    }
+    if (file_name.endsWith('.pdf')){
+        return 'pdf'
+    }
+    if (file_name.endsWith('.xml')){
+        return 'xml'
+    }
+    if (file_name.endsWith('.drawio')){
+        return 'drawio'
+    }
+    if (file_name.endsWith('.vsd') || file_name.endsWith('.vsdx')){
+        return 'visio'
+    }
+    if (file_name.endsWith('.png') || file_name.endsWith('.jpeg') || file_name.endsWith('.jpg') || file_name.endsWith('.gif') || file_name.endsWith('.bpm')){
+        return 'img'
+    }
+    if (file_name.endsWith('.rar') || file_name.endsWith('.7z') || file_name.endsWith('.zip') || file_name.endsWith('.tar') || file_name.endsWith('.iso')){
+        return 'archive'
+    }
+    return 'file'
+}
+
+function delete_file(file_name){
+    console.log(document.getElementById('file_' + file_name).style.backgroundColor)
+    if (document.getElementById('file_' + file_name).style.backgroundColor === 'red'){
+        document.getElementById('file_' + file_name).style.backgroundColor = 'white';
+        document.getElementById('checkbox_' + file_name).checked = true;
+    } else {
+        document.getElementById('file_' + file_name).style.backgroundColor = 'red';
+        document.getElementById('checkbox_' + file_name).checked = false;
+    }
+}
+
+$(document).ready(function() {
+
+    $(".main_input_file").change(function() {
+
+        console.log('next')
+        console.log($(this).get(0).files)
+        var files_html_ = '<div class="post-file">'
+
+        for (var i = 0; i < $(this).get(0).files.length; ++i) {
+            files_html_ += `<a><img src="/static/images/icons/`+file_format($(this).get(0).files[i].name)+
+                `.png" width="40px" height="40px" alt="">`+$(this).get(0).files[i].name+`</a>`
+        }
+
+        document.getElementById('file_list').innerHTML = files_html_ + '</div>'
+    });
+});
+
+</script>
 </body>
 </html>

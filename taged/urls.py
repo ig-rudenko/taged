@@ -28,4 +28,5 @@ urlpatterns = [
     path('create/', views.create_post),
     path('tags/', views.tags),
     path('delete/tag/<str:tag_id>', views.delete_tag),
+    path('download/<str:post_id>/<str:file_name>', views.download_file),
 ]

@@ -117,7 +117,8 @@ def update_post(elastic_object: Elasticsearch, index_name: str, record: dict, id
     :return:
     """
     try:
-        return elastic_object.index(index=index_name, document=record, id=id_, request_timeout=ELASTICSEARCH_request_timeout)
+        return elastic_object.index(index=index_name, document=record, id=id_,
+                                    request_timeout=ELASTICSEARCH_request_timeout)
 
     except Exception as ex:
         print('Error in indexing data')
@@ -155,7 +156,7 @@ def find_posts(elacticsearch: Elasticsearch, tags_in: list = None, tags_off: lis
     print('def find_posts(elacticsearch)', tags_in, tags_off, string)
     if not string:
         # Поиск по тегам
-        res = elacticsearch.search(size=100, index='company', _source=['tags', 'title'], query={
+        res = elacticsearch.search(size=1000, index='company', _source=['tags', 'title'], query={
             "match": {
                 "tags": " ".join(tags_in)
             }

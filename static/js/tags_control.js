@@ -36,9 +36,9 @@ function create_tags(tags, tags_name) {
 
 		// Создаем подпись
 		if (tags_name === 'tags-off') {
-			var desc = 'Исключаем теги'
+			var desc = '– tag'
 		} else {
-			var desc = 'Добавляем теги'
+			var desc = '+ tag'
 		}
 		if (checked.length) {
 			$(target).find('select option:first').html(desc + ': ' + checked.length);
@@ -75,7 +75,7 @@ function create_tags(tags, tags_name) {
 		});
 
 		$('html, body').on('click', function(e){
-			if ($(e.target).closest('.checkselect').length == 0){
+			if ($(e.target).closest('.checkselect').length === 0){
 				$('.checkselect-popup').css('display', 'none');
 			}
 		});

@@ -63,12 +63,13 @@
           <button type="submit"></button>
 
           {# ПОИСК ПО ТЕГАМ #}
+
             {# TAGS IN #}
             <div style="text-align: right">
                 <div class="checkselect">
                 {% for t in tags_in %}
                 <label style="float:left">
-                    <input type="checkbox" style="width: unset; height: unset"
+                    <input type="checkbox" style="width: 20px; height: 20px"
                            name="tags-in" value="{{ t.tag }}" {% if t.checked %} checked {% endif %}>
                     {{ t.tag }}
                 </label>
@@ -81,7 +82,7 @@
                 <div class="checkselect">
                 {% for t in tags_off %}
                 <label style="float:left">
-                    <input type="checkbox" style="width: unset; height: unset"
+                    <input type="checkbox" style="width: 20px; height: 20px"
                            name="tags-off" value="{{ t.tag }}" {% if t.checked %} checked {% endif %}>
                     {{ t.tag }}
                 </label>

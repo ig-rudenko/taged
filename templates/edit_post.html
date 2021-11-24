@@ -49,7 +49,7 @@
 
         {# СПИСОК ТЕГОВ #}
         <div style="text-align: right">
-            <div class="checkselect" style="margin: 20px">
+            <div class="checkselect">
 
             {% for t in tags %}
             <label style="float:left">
@@ -112,6 +112,9 @@ function file_format(file_name) {
     }
     if (file_name.endsWith('.drawio')){
         return 'drawio'
+    }
+    if (file_name.endsWith('.txt')){
+        return 'txt'
     }
     if (file_name.endsWith('.vsd') || file_name.endsWith('.vsdx')){
         return 'visio'

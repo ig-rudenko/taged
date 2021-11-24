@@ -1,14 +1,17 @@
 .checkselect {
 	position: relative;
 	display: inline-block;
-	min-width: 200px;
+	min-width: 45px;
 	text-align: left;
+	padding-right: 40px;
 }
 .checkselect-control {
 	position: relative;
 	padding: 0 !important;
 }
 .checkselect-control select {
+	border-color: white;
+	font-size: 24px;
 	position: relative;
 	display: inline-block;
 	width: 100%;
@@ -46,16 +49,17 @@
 	position: relative;
 	display: block;
 	margin: 0;
-	padding: 6px 6px 6px 25px;
+	padding: 6px 15px 6px 25px;
 	font-weight: normal;
 	font-size: 1em;
 	line-height: 1.1;
 	cursor: pointer;
+	border-radius: 4px;
 }
 .checkselect-popup input {
 	position: absolute;
-	top: 8px;
-	left: 8px;
+	top: 5px;
+	left: 3px;
 	margin: 0 !important;
 	padding: 0;
 }

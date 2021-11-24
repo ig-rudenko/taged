@@ -154,7 +154,7 @@ def find_posts(elacticsearch: Elasticsearch, tags_in: list = None, tags_off: lis
     tags_off = tags_off if tags_off else []
     tags_in = tags_in if tags_in else []
     print('def find_posts(elacticsearch)', tags_in, tags_off, string)
-    if not string:
+    if not string and tags_in:
         # Поиск по тегам
         res = elacticsearch.search(size=1000, index='company', _source=['tags', 'title'], query={
             "match": {
@@ -162,8 +162,8 @@ def find_posts(elacticsearch: Elasticsearch, tags_in: list = None, tags_off: lis
             }
         }, request_timeout=ELASTICSEARCH_request_timeout)
         pprint(res)
-    else:
 
+    elif string:
         # Поиск по строке в title и content
         res = elacticsearch.search(size=100, index='company', _source=['tags', 'title'], query={
             "simple_query_string": {
@@ -175,6 +175,8 @@ def find_posts(elacticsearch: Elasticsearch, tags_in: list = None, tags_off: lis
             }
         }, request_timeout=ELASTICSEARCH_request_timeout)
         pprint(res)
+    else:
+        return []
 
     result = []
     if res and res['hits']['total']['value']:

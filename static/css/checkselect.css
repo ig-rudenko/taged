@@ -10,14 +10,19 @@
 	padding: 0 !important;
 }
 .checkselect-control select {
-	border-color: white;
-	font-size: 24px;
+	border: white;
+	font-size: 23px;
 	position: relative;
 	display: inline-block;
 	width: 100%;
 	margin: 0;
 	padding-left: 5px;
 	height: 30px;
+	background: white;
+	/* убираем стрелку */
+	-webkit-appearance: none;
+  	-moz-appearance: none;
+  	appearance: none;
 }
 .checkselect-over {
 	position: absolute;

@@ -26,7 +26,7 @@ def icon_path(file: str):
         icon = 'images/icons/drawio.png'
     if file.endswith('.xml'):
         icon = 'images/icons/xml.png'
-    if file.endswith('.vds') or file.endswith('.vdsx'):
+    if file.endswith('.vds') or file.endswith('.vsdx'):
         icon = 'images/icons/visio.png'
     if file.endswith('.rar') or file.endswith('.7z') or file.endswith('.zip') or file.endswith('.tar') or file.endswith('.iso'):
         icon = 'images/icons/archive.png'

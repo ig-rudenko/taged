@@ -14,8 +14,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from taged_web import views
+from django.views.static import serve
+from taged import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -29,4 +31,12 @@ urlpatterns = [
     path('tags/', views.tags),
     path('delete/tag/<str:tag_id>', views.delete_tag),
     path('download/<str:post_id>/<str:file_name>', views.download_file),
+
+    # User
+    path('users/', views.users),
+    path('users/<username>', views.user_access_edit),
+
+    # STATIC
+    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATICFILES_DIRS[0]}),
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]

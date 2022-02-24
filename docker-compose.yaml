@@ -19,7 +19,7 @@ services:
 
   taged:
     container_name: taged_container
-    image: taged:0.1
+    build: .
     restart: always
     command: /bin/bash /home/run.sh
     environment:
@@ -34,6 +34,7 @@ services:
       - ./taged_web:/home/taged_web
       - ./templates:/home/templates
       - ./db.sqlite3:/home/db.sqlite3
+      - ./media:/home/media
       - ./test.py:/home/test.py
       - ./run.sh:/home/run.sh
     depends_on:

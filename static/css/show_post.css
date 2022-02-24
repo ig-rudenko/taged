@@ -9,7 +9,7 @@ body {
 .container {
     margin: 50px;
     padding: 0 15px;
-    background: white;
+    /*background: white;*/
 }
 .post-image img {
     width: 100%;

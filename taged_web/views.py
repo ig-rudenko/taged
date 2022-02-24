@@ -2,10 +2,11 @@ import os.path
 import sys
 
 from django.shortcuts import render
-from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponse, HttpResponseNotFound
 from dateconverter import DateConverter
 import elasticsearch
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from taged_web.elasticsearch_control import connect_elasticsearch
 from taged_web import elasticsearch_control
 from taged_web.models import Tags
@@ -47,8 +48,17 @@ def autocomplete(request):
 
 @login_required(login_url='accounts/login/')
 def home(request):
+
+    available_tags = Tags.objects.all() if request.user.is_superuser else Tags.objects.filter(user__username=request.user.username)
+    unavailable_tags = list({t.tag_name for t in Tags.objects.all()} - {t.tag_name for t in available_tags})
+    print('User:', request.user.username)
+    print('unavailable_tags:', unavailable_tags)
+
     tags_in = tags_off = tags_ = sorted(
-        [{'tag': t.tag_name, 'checked': False} for t in Tags.objects.all()],
+        [
+            {'tag': t.tag_name, 'checked': False}
+            for t in available_tags
+        ],
         key=lambda x: x['tag'].lower()  # Сортируем по алфавиту
     )
     data = []
@@ -56,7 +66,8 @@ def home(request):
         print(request.POST)
         es = connect_elasticsearch()
         tags_in = dict(request.POST).get('tags-in')
-        tags_off = dict(request.POST).get('tags-off')
+        tags_off = dict(request.POST).get('tags-off') or []
+        tags_off += unavailable_tags
 
         if request.POST.get('search'):  # Поиск по строке
             data = elasticsearch_control.find_posts(es, string=request.POST['search'], tags_in=tags_in, tags_off=tags_off)
@@ -167,8 +178,6 @@ def edit_post(request, post_id):
                     with open(f'{sys.path[0]}/media/{post_id}/{file.name}', 'wb+') as upload_file:
                         for chunk_ in file.chunks():
                             upload_file.write(chunk_)  # Записываем файл
-
-
             return HttpResponseRedirect(f'/post/{res["_id"]}')
 
         else:
@@ -215,6 +224,9 @@ def show_post(request, post_id):
             res['tags'] = [res['tags']]
     except elasticsearch.exceptions.NotFoundError:
         print('ID not exist')
+        return HttpResponseNotFound(
+            '<h1 style="text-align: center; padding: 25%;">По вашему запросу не существует заметки</h1>'
+        )
     res['superuser'] = request.user.is_superuser
     res['post_id'] = post_id
 
@@ -340,3 +352,55 @@ def delete_tag(request, tag_id):
     print(t.tag_name)
     t.delete()
     return HttpResponseRedirect('/tags')
+
+
+@login_required(login_url='accounts/login/')
+def users(request):
+    if not request.user.is_superuser:
+        return HttpResponseRedirect('/')
+    u = User.objects.all()
+    return render(request, "user_control/users.html", {"users": u})
+
+
+@login_required(login_url='accounts/login/')
+def user_access_edit(request, username):
+    if not request.user.is_superuser:
+        return HttpResponseRedirect('/')
+
+    if request.method == 'GET':
+        if not username:
+            return HttpResponseRedirect('/users')
+
+        data = {}
+
+        for tag in Tags.objects.all():
+            try:
+                is_enable = Tags.objects.get(id=tag.id).user.get(username=username)
+            except Exception:
+                is_enable = 0
+
+            data[tag.id] = {
+                'name': tag.tag_name,
+                'checked': is_enable,
+            }
+
+        return render(
+            request,
+            'user_control/user_access_group.html',
+            {
+                'username': username,
+                'data': data
+            }
+        )
+
+    elif request.method == 'POST':
+        user = User.objects.get(username=username)  # Пользователь
+        for tag in Tags.objects.all():
+            current_tag = Tags.objects.get(id=tag.id)
+            print(current_tag.tag_name)
+            if request.POST.get(f'tag_id_{tag.id}'):    # Если данная группа была выбрана
+                user.tags_set.add(current_tag)  # Добавляем пользователя в группу
+            else:
+                user.tags_set.remove(current_tag)  # Удаляем
+
+        return HttpResponseRedirect('/users')

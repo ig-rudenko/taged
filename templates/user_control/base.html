@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+{% load static %}
+<link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static "css/styles.css" %}" />
+    <link rel="stylesheet" href="{% static "css/menu.css" %}" />
+    <link rel="stylesheet" href="{% static "css/checkbox.css" %}" />
+    <link rel="stylesheet" href="{% static "css/buttons.css" %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/show_post.css' %}">
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/jquery.cleditor.min.js' %}"></script>
+    <title>{% block title %}Users Control{% endblock title %}</title>
+</head>
+<body>
+    <ul class="menu-main" style="padding-top: 20px">
+        <li><a href="/" >Home</a></li>
+        <li><a href="/create">Create Note</a></li>
+        <li><a href="/tags">Tags</a></li>
+        <li><a href="/users" class="current">Users</a></li>
+        <li><a href="/accounts/logout">Logout</a></li>
+    </ul>
+    <h1 class="center_" style="margin-bottom: 10px; margin-top: 20px">
+        {% block header %}{% endblock header %}
+    </h1>
+    <div class="center_">
+            {% block content %}{% endblock content %}
+    </div>
+    <div>{% block footer %}{% endblock footer %}</div>
+</body>
+</html>

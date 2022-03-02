@@ -48,8 +48,8 @@
     {# МЕНЮ #}
     <ul class="menu-main">
       <li><a href="/" class="current">Search</a></li>
-        {% if superuser %}
       <li><a href="/create">Create Note</a></li>
+        {% if superuser %}
       <li><a href="/tags">Tags</a></li>
       <li><a href="/users">Users</a></li>
         {% endif %}
@@ -57,10 +57,14 @@
     </ul>
 
     {# СТРОКА ПОИСКА #}
+
     <div class="d1" style="padding-top: 40px">
-      <form method="post">
+        <form method="post">
           {% csrf_token %}
-          <input id="search" type="text" name="search" placeholder="Искать здесь...">
+
+              <img src="static/images/cat{{ image }}.gif" width="110" height="108" style="vertical-align: middle">
+              <input id="search" type="text" name="search" placeholder="Искать здесь...">
+
           <button type="submit"></button>
 
           {# ПОИСК ПО ТЕГАМ #}
@@ -94,7 +98,7 @@
           <div id="tag-start-tags-in"></div>  {# МЕСТО ДЛЯ ТРЕБУЕМЫХ ТЕГОВ #}
           <div id="tag-start-tags-off"></div> {# МЕСТО ДЛЯ ТЕГОВ ИСКЛЮЧЕНИЯ #}
 
-      </form>
+        </form>
     </div>
 
 

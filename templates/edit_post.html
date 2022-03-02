@@ -34,8 +34,10 @@
     <ul class="menu-main" style="padding: 20px">
       <li><a href="/">Search</a></li>
       <li><a href="/create" class="current">Create Note</a></li>
+        {% if superuser %}
       <li><a href="/tags">Tags</a></li>
       <li><a href="/users">Users</a></li>
+        {% endif %}
       <li><a href="/accounts/logout">Logout</a></li>
     </ul>
 

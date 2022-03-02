@@ -14,10 +14,10 @@
     {# Меню #}
     <ul class="menu-main" style="padding-top: 20px">
       <li><a href="/" class="current">Search</a></li>
-        {% if superuser %}
       <li><a href="/create">Create Note</a></li>
-      <li><a href="/tags">Tags</a></li>
-      <li><a href="/users">Users</a></li>
+        {% if superuser %}
+        <li><a href="/tags">Tags</a></li>
+        <li><a href="/users">Users</a></li>
         {% endif %}
       <li><a href="/accounts/logout">Logout</a></li>
     </ul>
@@ -32,11 +32,11 @@
                 <div class="post-meta">
                     <time datetime="">{{ published_at }}</time>
                     <br>
-                {% if superuser %}
                 <a href="/edit/{{ post_id }}" style="color: #03a2ff">редактировать</a>
                     <time></time>
+{#                {% if superuser %}#}
                 <a style="color: #ff6363; cursor: pointer" onclick="delete_post('{{ post_id }}', '{{ title }}')">удалить</a>
-                {% endif %}
+{#                {% endif %}#}
 
                 </div>
             </div>
@@ -68,7 +68,7 @@
 
 <script>
 function delete_post(id, name) {
-    if (confirm("Вы согласны удалить запись \"" + name + "\" ?")) {
+    if (confirm("Вы согласны удалить запись \"" + name + "\" ? {{ tags }}")) {
         window.location.href = "/delete/" + id
     }
 }

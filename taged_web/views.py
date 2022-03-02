@@ -11,6 +11,7 @@ from taged_web.elasticsearch_control import connect_elasticsearch
 from taged_web import elasticsearch_control
 from taged_web.models import Tags
 from datetime import datetime
+import random
 
 
 def icon_path(file: str):
@@ -52,7 +53,6 @@ def home(request):
     available_tags = Tags.objects.all() if request.user.is_superuser else Tags.objects.filter(user__username=request.user.username)
     unavailable_tags = list({t.tag_name for t in Tags.objects.all()} - {t.tag_name for t in available_tags})
     print('User:', request.user.username)
-    print('unavailable_tags:', unavailable_tags)
 
     tags_in = tags_off = tags_ = sorted(
         [
@@ -100,7 +100,8 @@ def home(request):
                       'data': data,
                       'superuser': request.user.is_superuser,
                       'tags_in': tags_in,
-                      'tags_off': tags_off
+                      'tags_off': tags_off,
+                      'image': random.randint(0, 9)
                   })
 
 
@@ -112,11 +113,12 @@ def edit_post(request, post_id):
     :param post_id: ID записи в elasticsearch
     :return:
     """
-    if not request.user.is_superuser:  # Если не суперпользователь, то доступ запрещен
-        return HttpResponseRedirect('/')
 
     res = {}  # Результат поиска в elasticsearch
-    all_tags = [t.tag_name for t in Tags.objects.all()]  # Все существующие теги
+
+    available_tags = [t.tag_name for t in Tags.objects.all()] \
+        if request.user.is_superuser else \
+        [t.tag_name for t in Tags.objects.filter(user__username=request.user.username)]
 
     # Прикрепленные файлы
     files = []
@@ -139,12 +141,15 @@ def edit_post(request, post_id):
                 res['tags'] = [res['tags']]  # Переводим теги в list
         except elasticsearch.exceptions.NotFoundError:
             print('ID not exist')  # Данный ID не существует
+            return HttpResponseNotFound(
+                '<h1 style="text-align: center; padding: 25%;">По вашему запросу не существует заметки</h1>'
+            )
         print(res)
         res['superuser'] = request.user.is_superuser
         res['post_id'] = post_id
         res['tags'] = [
                     {'tag': t, 'checked': False if t not in res['tags'] else True}
-                    for t in all_tags
+                    for t in available_tags
                 ]  # Определяем, какие теги были добавлены в записе
         res['files'] = files  # Прикрепленные файлы
 
@@ -188,7 +193,7 @@ def edit_post(request, post_id):
                 'content': request.POST.get('input'),
                 'tags': [
                         {'tag': t, 'checked': False if t not in dict(request.POST).get('tags_checked') else True}
-                        for t in all_tags
+                        for t in available_tags
                 ],
                 'error': "Необходимо указать хотя бы один тег, название заметки и её содержимое!",
                 'files': files
@@ -252,14 +257,15 @@ def create_post(request):
     :param request: запрос
     :return:
     """
-    if not request.user.is_superuser:  # Только суперпользователи
-        return HttpResponseRedirect('/')
+
     print(request.POST)
     print(request.FILES)
-    all_tags = [t.tag_name for t in Tags.objects.all()]  # Все существующие теги
+
+    available_tags = [t.tag_name for t in Tags.objects.all()] \
+        if request.user.is_superuser else \
+        [t.tag_name for t in Tags.objects.filter(user__username=request.user.username)]
 
     if request.method == 'POST':
-        # print(dict(request.FILES)['files'][0].chunks())
 
         # Создаем новую запись
         if request.POST.get('title') and request.POST.get('input') and request.POST.get('tags_checked'):
@@ -283,34 +289,63 @@ def create_post(request):
             return HttpResponseRedirect(f'/post/{res["_id"]}')
 
         else:
+            tags_checked = dict(request.POST).get('tags_checked') or []     # Выбранные теги
             # Если не все поля были указаны
             return render(request, 'edit_post.html', {
                 'title': request.POST.get('title'),
                 'content': request.POST.get('input'),
                 'tags': [
-                    {'tag': t, 'checked': False if t not in dict(request.POST).get('tags_checked') else True}
-                    for t in all_tags
+                    {'tag': t, 'checked': True if t in tags_checked else False}
+                    for t in available_tags
                 ],
-                'error': "Необходимо указать хотя бы один тег, название заметки и её содержимое!"
+                'error': "Необходимо указать хотя бы один тег, название заметки и её содержимое!",
+                'superuser': request.user.is_superuser
             })
 
     tags_ = sorted(
-        [{'tag': t, 'cheched': False} for t in all_tags],
+        [{'tag': t, 'cheched': False} for t in available_tags],
         key=lambda x: x['tag'].lower()  # Сортируем по алфавиту
     )  # Если новая запись, то все теги изначально отключены
-    return render(request, 'edit_post.html', {'tags': tags_})
+    return render(request, 'edit_post.html', {'tags': tags_, 'superuser': request.user.is_superuser})
 
 
 @login_required(login_url='accounts/login/')
 def delete_post(request, post_id):
-    if not request.user.is_superuser:  # Только суперпользователи
-        return HttpResponseRedirect('/')
+    # Смотрим разрешенные теги для данного пользователя
+    available_tags = [t.tag_name for t in Tags.objects.all()] \
+        if request.user.is_superuser else \
+        [t.tag_name for t in Tags.objects.filter(user__username=request.user.username)]
 
+    # Подключаемся к Elasticsearch
     es = connect_elasticsearch()
-    es.delete(index='company', id=post_id)
-    if os.path.exists(f'{sys.path[0]}/media/{post_id}'):  # Если есть прикрепленные файлы
-        for f in os.listdir(f'{sys.path[0]}/media/{post_id}'):
-            os.remove(f'{sys.path[0]}/media/{post_id}/{f}')  # Удаляем файл
+
+    # Ищем пост по его ID
+    post = es.search(index='company', _source=['_id', 'tags'], query={
+        "simple_query_string": {
+            "query": post_id,
+            "fields": ['_id']
+        }
+    })
+    if post['_shards']['successful']:    # Если нашли
+        post_tags = post['hits']['hits'][0]['_source']['tags']  # Смотрим его теги
+
+    else:
+        print('ID not exist')
+        return HttpResponseNotFound(
+            '<h1 style="text-align: center; padding: 25%;">По вашему запросу не существует заметки</h1>'
+        )
+
+    # Если теги поста разрешены данному пользователю, то удаляем пост
+    print(post_tags)
+    print(available_tags)
+    if set(post_tags).issubset(available_tags):
+        print('delete:', post_id)
+        es.delete(index='company', id=post_id)
+        if os.path.exists(f'{sys.path[0]}/media/{post_id}'):  # Если есть прикрепленные файлы
+            for f in os.listdir(f'{sys.path[0]}/media/{post_id}'):
+                os.remove(f'{sys.path[0]}/media/{post_id}/{f}')  # Удаляем файл
+            os.rmdir(f'{sys.path[0]}/media/{post_id}')  # Удаляем папку
+
     return HttpResponseRedirect('/')
 
 
@@ -396,11 +431,9 @@ def user_access_edit(request, username):
     elif request.method == 'POST':
         user = User.objects.get(username=username)  # Пользователь
         for tag in Tags.objects.all():
-            current_tag = Tags.objects.get(id=tag.id)
-            print(current_tag.tag_name)
             if request.POST.get(f'tag_id_{tag.id}'):    # Если данная группа была выбрана
-                user.tags_set.add(current_tag)  # Добавляем пользователя в группу
+                user.tags_set.add(tag)  # Добавляем пользователя в группу
             else:
-                user.tags_set.remove(current_tag)  # Удаляем
+                user.tags_set.remove(tag)  # Удаляем
 
         return HttpResponseRedirect('/users')

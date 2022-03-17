@@ -101,7 +101,8 @@ def home(request):
                       'superuser': request.user.is_superuser,
                       'tags_in': tags_in,
                       'tags_off': tags_off,
-                      'image': random.randint(0, 9)
+                      'image': random.randint(0, 9),
+                      'search_text': request.POST.get('search') or ''
                   })
 
 

@@ -63,7 +63,7 @@
           {% csrf_token %}
 
               <img src="static/images/cat{{ image }}.gif" width="110" height="108" style="vertical-align: middle">
-              <input id="search" type="text" name="search" placeholder="Искать здесь...">
+              <input id="search" type="text" name="search" placeholder="Искать здесь..." value="{{ search_text }}">
 
           <button type="submit"></button>
 

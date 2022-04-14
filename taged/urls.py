@@ -22,7 +22,6 @@ from taged import settings
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.home),
-    path('ajax/autocomplete/', views.autocomplete),
     path('accounts/', include('django.contrib.auth.urls')),
     path('edit/<str:post_id>', views.edit_post),
     path('post/<str:post_id>', views.show_post),
@@ -39,4 +38,8 @@ urlpatterns = [
     # STATIC
     re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATICFILES_DIRS[0]}),
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+
+    # AJAX
+    path('ajax/autocomplete/', views.autocomplete),
+    path('ajax/extend_post/<post_id>', views.pre_show_post),
 ]

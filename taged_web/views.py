@@ -69,18 +69,10 @@ def home(request):
         tags_off = dict(request.POST).get('tags-off') or []
         tags_off += unavailable_tags
 
-        if request.POST.get('search'):  # Поиск по строке
-            data = elasticsearch_control.find_posts(es, string=request.POST['search'], tags_in=tags_in, tags_off=tags_off)
-            for d in data:
-                if isinstance(d['tags'], str):
-                    d['tags'] = [d['tags']]
-
-        elif request.POST.get('tags-in') or request.POST.get('tags-off'):
-
-            data = elasticsearch_control.find_posts(es, tags_in=tags_in, tags_off=tags_off)
-            for d in data:
-                if isinstance(d['tags'], str):
-                    d['tags'] = [d['tags']]
+        data = elasticsearch_control.find_posts(es, string=request.POST.get('search', ''), tags_in=tags_in, tags_off=tags_off)
+        for d in data:
+            if isinstance(d['tags'], str):
+                d['tags'] = [d['tags']]
 
         tags_in = sorted(
             [
@@ -222,7 +214,6 @@ def show_post(request, post_id):
     :return:
     """
     es = connect_elasticsearch()  # Подключаемся к elasticsearch
-    res = None  # Результат поиска в elasticsearch
     try:
         res = es.get(index='company', id=post_id)['_source']  # Получаем запись по ID
         # Если имеется всего один тег, то он имеет тип str, переводим его в list
@@ -249,6 +240,30 @@ def show_post(request, post_id):
             })
 
     return render(request, 'post.html', res)
+
+
+@login_required(login_url='accounts/login/')
+def pre_show_post(request, post_id):
+    """
+    Выводим содержимое заметки
+    :param request: запрос
+    :param post_id: ID записи в elasticsearch
+    :return:
+    """
+    es = connect_elasticsearch()  # Подключаемся к elasticsearch
+    try:
+        res = es.get(index='company', id=post_id)['_source']  # Получаем запись по ID
+        print(res)
+
+    except elasticsearch.exceptions.NotFoundError:
+        print('ID not exist')
+        return JsonResponse({'error': 'not found'})
+
+    return JsonResponse(
+        {
+            'post': res['content']
+        }
+    )
 
 
 @login_required(login_url='accounts/login/')

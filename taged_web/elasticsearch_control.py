@@ -178,6 +178,7 @@ def find_posts(elacticsearch: Elasticsearch, tags_in: list = None, tags_off: lis
     else:
         return []
 
+    max_score = float(res['hits']['max_score'] or 0)
     result = []
     if res and res['hits']['total']['value']:
         for post in res['hits']['hits']:
@@ -192,7 +193,8 @@ def find_posts(elacticsearch: Elasticsearch, tags_in: list = None, tags_off: lis
                 result.append({
                     'id': post['_id'],
                     'title': post['_source']['title'],
-                    'tags': post['_source']['tags']
+                    'tags': post['_source']['tags'],
+                    'score': round(float(post['_score'])/max_score, 3)
                 })
     pprint(result)
     return result

@@ -108,13 +108,15 @@
 
     {% for post in data %}
         <div class="post-item">
-            <div class="post-item-wrap">
-            <a href="post/{{ post.id }}" class="post-link">
+            <div class="post-item-wrap {% if post.score > 0.48 %} post-item-wrap-main {% endif %}">
+            <a id="{{ post.id }}" href="post/{{ post.id }}" class="post-link">
             <h3 class="post-title">{{ post.title }}</h3>
                 {% for tag in post.tags %}
                 <p class="post-content">{{ tag }}</p>
                 {% endfor %}
+
             </a>
+            <div id="content-{{ post.id }}" class="pre_post_hidden" style="width: 426.66px"></div>
             </div>
         </div>
     {% endfor %}
@@ -122,5 +124,38 @@
 </div>
 
 <script src="{% static 'js/tags_control.js' %}"></script>
+<script>
+    $(document).ready(
+      function (){
+          // Наведение на объект
+          $('.post-link').mouseover(function (){
+              let post_id = $(this).attr('id');
+              if ($('#content-'+post_id).html()) {
+                  // Скрываем все открытые элементы
+                  $('.pre_post_visible').removeClass('pre_post_visible').addClass('pre_post_hidden')
+                  // Показываем
+                  $('#content-'+post_id).removeClass('pre_post_hidden').addClass('pre_post_visible');
+              } else {
+                  // Загружаем, если нет
+                  $.ajax( {
+                    url: "/ajax/extend_post/" + post_id,
+                    success: function( data ) {
+                        // Скрываем все открытые элементы
+                        $('.pre_post_visible').removeClass('pre_post_visible').addClass('pre_post_hidden')
+                        // Затем показываем
+                        $('#content-'+post_id).html(data.post).removeClass('pre_post_hidden').addClass('pre_post_visible');
+                    }
+                  } );
+              }
+          }).mouseleave(function (){
+              // Скрываем все открытые элементы
+              $('.pre_post_visible').removeClass('pre_post_visible').addClass('pre_post_hidden')
+          })
+
+      }
+    );
+
+
+</script>
 </body>
 </html>

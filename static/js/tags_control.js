@@ -8,7 +8,7 @@ function create_tags(tags, tags_name) {
 	}
 	$('#tag-start-'+tags_name).after(`<div id="tags_all-`+tags_name+`"><div id="tags-`+tags_name+`"></div></div>`)
 	for (let i=0;i<tags.length;i++) {
-		console.log(tags[i].value)
+
 		if (i !== 0) {
 			$('#'+hashCode(tags[i-1].value+tags_name)).after(
 				`<a class="`+tags_class+`" id="`+ hashCode(tags[i].value+tags_name) +`">`+tags[i].value+`</a>`)

@@ -74,7 +74,7 @@
                 <div class="checkselect">
                 {% for t in tags_in %}
                 <label style="float:left">
-                    <input type="checkbox" style="width: 20px; height: 20px"
+                    <input type="checkbox"
                            name="tags-in" value="{{ t.tag }}" {% if t.checked %} checked {% endif %}>
                     {{ t.tag }}
                 </label>
@@ -104,12 +104,24 @@
 
 
 </div>
+{% if not search_mode %}
+<div class="last-post-text">
+    Всего записей: {{ posts_count }}
+    <div>
+    Последние изменения
+    </div>
+</div>
+
+{% endif %}
 <div class="post-wrap">
 
     {% for post in data %}
         <div class="post-item">
             <div class="post-item-wrap {% if post.score > 0.48 %} post-item-wrap-main {% endif %}">
             <a id="{{ post.id }}" href="post/{{ post.id }}" class="post-link">
+            {% if post.files %}
+                <img class="post-title-img" src="{% static "/images/icons/clip3.png" %}" alt="clip">
+            {% endif %}
             <h3 class="post-title">{{ post.title }}</h3>
                 {% for tag in post.tags %}
                 <p class="post-content">{{ tag }}</p>

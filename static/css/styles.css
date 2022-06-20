@@ -91,3 +91,20 @@ text:hover {
     width: 20px;
     height: 20px;
 }
+
+.last-post-text {
+    /*text-align: center;*/
+    padding: 10px;
+    margin: 20px 17% 20px 17%;
+    color: white;
+    font-family: 'Teams', sans-serif;
+    background: #F58262;
+    /*background: repeating-linear-gradient(45deg, white, white 10px, #F58262 10px, #F58262 20px);*/
+    border-radius: 10px
+}
+
+.last-post-text div {
+    text-align: center;
+    margin-left: 30%;
+    display: inline;
+}

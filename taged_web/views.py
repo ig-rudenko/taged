@@ -62,6 +62,13 @@ def home(request):
         key=lambda x: x['tag'].lower()  # Сортируем по алфавиту
     )
     data = []
+    posts_count = None
+
+    if request.method == 'GET':
+        es = connect_elasticsearch()
+        data = elasticsearch_control.get_last_published(es)
+        posts_count = elasticsearch_control.posts_count()
+
     if request.method == 'POST':
         print(request.POST)
         es = connect_elasticsearch()
@@ -73,6 +80,12 @@ def home(request):
         for d in data:
             if isinstance(d['tags'], str):
                 d['tags'] = [d['tags']]
+            # Проверяем прикрепленные файлы
+            if os.path.exists(f'{sys.path[0]}/media/{d["id"]}') and os.listdir(f'{sys.path[0]}/media/{d["id"]}'):
+                d['files'] = True
+            else:
+                d['files'] = False
+
 
         tags_in = sorted(
             [
@@ -89,6 +102,8 @@ def home(request):
 
     return render(request, 'home.html',
                   {
+                      'posts_count': posts_count,
+                      'search_mode': request.method == 'POST',
                       'data': data,
                       'superuser': request.user.is_superuser,
                       'tags_in': tags_in,

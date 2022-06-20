@@ -200,6 +200,33 @@ def find_posts(elacticsearch: Elasticsearch, tags_in: list = None, tags_off: lis
     return result
 
 
+def get_last_published(elacticsearch: Elasticsearch):
+    res = elacticsearch.search(index='company',
+                               body={"sort": {"published_at": "desc"}},
+                               size=6,
+                               request_timeout=ELASTICSEARCH_request_timeout)
+    pprint(res)
+    result = []
+    if res and res['hits']['total']['value']:
+        for post in res['hits']['hits']:
+            if isinstance(post['_source']['tags'], str):
+                post['_source']['tags'] = [post['_source']['tags']]  # Переводим один тег в список из одного тега
+            result.append({
+                'id': post['_id'],
+                'title': post['_source']['title'],
+                'tags': post['_source']['tags'],
+                'score': 0
+            })
+    return result
+
+
+def posts_count() -> int:
+    resp = requests.get(f'http://{ELASTICSEARCH_HOST or "localhost"}:9200/company/_doc/_count')
+    if resp.status_code == 200:
+        return resp.json()['count']
+    return -1
+
+
 if __name__ == '__main__':
     # Создание индекса
     logging.basicConfig(filename='logs', level=logging.ERROR)

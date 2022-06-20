@@ -6,7 +6,9 @@
     <meta charset="UTF-8">
     <title>LOGIN</title>
     <link rel="stylesheet" href="{% static "css/styles.css" %}" />
-    <link rel="stylesheet" href="{% static "css/buttons.css" %}" />
+{#    <link rel="stylesheet" href="{% static "css/buttons.css" %}" />#}
+    <link rel="stylesheet" href="{% static "css/login.css" %}" />
+    <script src="{% static 'js/jquery.min.js' %}"></script>
 </head>
 &nbsp;
 <body>
@@ -14,21 +16,34 @@
     {% block content %}
 
     {% if form.errors %}
-      <p>Your username and password didn't match. Please try again.</p>
+      <p id="errors">Неверный логин или пароль!</p>
     {% endif %}
 
     {% if next %}
       {% if user.is_authenticated %}
-        <p>Your account doesn't have access to this page. To proceed,
+        <p id="errors">Your account doesn't have access to this page. To proceed,
         please login with an account that has access.</p>
       {% else %}
-        <p>Please login to see this page.</p>
+        <p> </p>
       {% endif %}
     {% endif %}
 
+    {# Картинка кота #}
+    <div class="center_" style="margin-bottom: 40px">
+        {% if form.errors %}
+          <img id="angry_cat" src="/static/images/cat_angry.gif" alt="cat" onclick="show_nice_cat()">
+          <img id="nice_cat" src="/static/images/cat7.gif" height="250px" width="250px" alt="cat" style="display: none">
+        {% else %}
+        <img src="/static/images/cat7.gif" height="250px" width="250px" alt="cat">
+        {% endif %}
+    </div>
+
+
+
+
     <form method="post" action="{% url 'login' %}">
     {% csrf_token %}
-    <table class="center_">
+    <table>
 
     <tr>
       <td>{{ form.username.label_tag }}</td>
@@ -41,7 +56,7 @@
     </tr>
     </table>
 
-    <div class="center_">
+    <div style="display: none">
         <input class="atuin-btn" type="submit" value="Войти" />
         <input class="atuin-btn center_" type="hidden" name="next" value="{{ next }}" />
     </div>
@@ -54,4 +69,10 @@
     {% endblock %}
     </div>
 </body>
+<script>
+    function show_nice_cat(){
+        $('#angry_cat').css('display', 'none')
+        $('#nice_cat').css('display', 'inline')
+    }
+</script>
 </html>

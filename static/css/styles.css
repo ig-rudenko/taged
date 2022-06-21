@@ -4,7 +4,7 @@ html{
 
 body{
     font-family: 'Teams', sans-serif;
-    height: 95%;
+    /*height: 95%;*/
     background-color: #ffffff;
 }
 
@@ -12,8 +12,7 @@ h1{
     color: #000000;
 }
 
-.center_
-{
+.center_{
     text-align: center;
     display: block;
     margin: auto;

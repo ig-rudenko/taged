@@ -17,6 +17,7 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from taged_web import views
 from django.views.static import serve
+from django.views.defaults import page_not_found
 from taged import settings
 
 urlpatterns = [
@@ -31,6 +32,8 @@ urlpatterns = [
     path('delete/tag/<str:tag_id>', views.delete_tag),
     path('download/<str:post_id>/<str:file_name>', views.download_file),
 
+    path('logout', views.logout),
+
     # User
     path('users/', views.users),
     path('users/<username>', views.user_access_edit),
@@ -43,3 +46,6 @@ urlpatterns = [
     path('ajax/autocomplete/', views.autocomplete),
     path('ajax/extend_post/<post_id>', views.pre_show_post),
 ]
+
+handler404 = 'taged_web.errors_views.page404'
+handler500 = 'taged_web.errors_views.page500'

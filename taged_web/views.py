@@ -149,9 +149,7 @@ def edit_post(request, post_id):
                 res['tags'] = [res['tags']]  # Переводим теги в list
         except elasticsearch.exceptions.NotFoundError:
             print('ID not exist')  # Данный ID не существует
-            return HttpResponseNotFound(
-                '<h1 style="text-align: center; padding: 25%;">По вашему запросу не существует заметки</h1>'
-            )
+            return render(request, 'errors/404.html', status=404)
         print(res)
         res['superuser'] = request.user.is_superuser
         res['post_id'] = post_id
@@ -236,9 +234,7 @@ def show_post(request, post_id):
             res['tags'] = [res['tags']]
     except elasticsearch.exceptions.NotFoundError:
         print('ID not exist')
-        return HttpResponseNotFound(
-            '<h1 style="text-align: center; padding: 25%;">По вашему запросу не существует заметки</h1>'
-        )
+        return render(request, 'errors/404.html', status=404)
     res['superuser'] = request.user.is_superuser
     res['post_id'] = post_id
 
@@ -362,9 +358,7 @@ def delete_post(request, post_id):
 
     else:
         print('ID not exist')
-        return HttpResponseNotFound(
-            '<h1 style="text-align: center; padding: 25%;">По вашему запросу не существует заметки</h1>'
-        )
+        return render(request, 'errors/404.html', status=404)
 
     # Если теги поста разрешены данному пользователю, то удаляем пост
     print(post_tags)
@@ -468,3 +462,8 @@ def user_access_edit(request, username):
                 user.tags_set.remove(tag)  # Удаляем
 
         return HttpResponseRedirect('/users')
+
+
+@login_required(login_url='accounts/login/')
+def logout(request):
+    return render(request, 'registration/logout.html')

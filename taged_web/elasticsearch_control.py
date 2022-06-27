@@ -196,7 +196,6 @@ def find_posts(elacticsearch: Elasticsearch, tags_in: list = None, tags_off: lis
                     'tags': post['_source']['tags'],
                     'score': round(float(post['_score'])/max_score, 3)
                 })
-    pprint(result)
     return result
 
 

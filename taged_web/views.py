@@ -76,7 +76,11 @@ def home(request):
         tags_off = dict(request.POST).get('tags-off') or []
         tags_off += unavailable_tags
 
+        if not request.POST.get('search', '') and not tags_in:
+            return HttpResponseRedirect('/')
+
         data = elasticsearch_control.find_posts(es, string=request.POST.get('search', ''), tags_in=tags_in, tags_off=tags_off)
+
         for d in data:
             if isinstance(d['tags'], str):
                 d['tags'] = [d['tags']]
@@ -85,7 +89,6 @@ def home(request):
                 d['files'] = True
             else:
                 d['files'] = False
-
 
         tags_in = sorted(
             [

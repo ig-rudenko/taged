@@ -107,3 +107,19 @@ text:hover {
     margin-left: 30%;
     display: inline;
 }
+
+#cat-run {
+  top: 12%;
+  position: absolute;
+  -webkit-animation: linear none;
+  -webkit-animation-name: run;
+  -webkit-animation-duration: 18s;
+}
+@-webkit-keyframes run {
+  0% {
+    left: -10%;
+  }
+  100% {
+    left: 110%;
+  }
+}

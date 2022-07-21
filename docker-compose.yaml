@@ -37,6 +37,7 @@ services:
       - ./media:/home/media
       - ./test.py:/home/test.py
       - ./run.sh:/home/run.sh
+      - ./books:/home/books
     depends_on:
       - taged_elasticsearch
     networks:

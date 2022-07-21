@@ -1,3 +1,4 @@
+import datetime
 import time
 
 import requests
@@ -10,7 +11,7 @@ import os
 
 ELASTICSEARCH_HOST = os.environ.get('ELASTICSEARCH_HOST')
 try:
-    ELASTICSEARCH_request_timeout = int(os.environ.get('ELASTICSEARCH_request_timeout')) or 20
+    ELASTICSEARCH_request_timeout = int(os.environ.get('ELASTICSEARCH_request_timeout')) or 10
 except (ValueError, TypeError):
     ELASTICSEARCH_request_timeout = 20
 
@@ -27,55 +28,10 @@ def connect_elasticsearch():
     return _es
 
 
-def create_index(es_object, index_name='company'):
+def create_index(es_object, settings: dict, index_name='company'):
     created = False
     # index settings
-    settings = {
-        'settings': {
-            "analysis": {
-                "filter": {
-                    "ru_stop": {
-                        "type": "stop",
-                        "stopwords": "_russian_"
-                    },
-                    "ru_stemmer": {
-                        "type": "stemmer",
-                        "language": "russian"
-                    }
-                },
-                "analyzer": {
-                    "default": {
-                        "char_filter": [
-                            "html_strip"
-                        ],
-                        "tokenizer": "standard",
-                        "filter": [
-                            "lowercase",
-                            "ru_stop",
-                            "ru_stemmer"
-                        ]
-                    }
-                }
-            }
-        },
-        "mappings": {
-            "dynamic": "strict",
-            "properties": {
-                "title": {
-                    "type": "text"
-                },
-                "content": {
-                    "type": "text"
-                },
-                "tags": {
-                    "type": "text"
-                },
-                "published_at": {
-                    "type": "date"
-                },
-            }
-        }
-    }
+
     try:
         if not IndicesClient(client=es_object).exists(index=index_name):
             resp = requests.put(
@@ -125,9 +81,9 @@ def update_post(elastic_object: Elasticsearch, index_name: str, record: dict, id
         print(str(ex))
 
 
-def get_titles(elacticsearch: Elasticsearch, string: str):
+def get_titles(elacticsearch: Elasticsearch, string: str, index='company'):
     # Поиск по строке в title и content
-    res = elacticsearch.search(index='company', _source=['title'], query={
+    res = elacticsearch.search(index=index, _source=['title'], query={
         "simple_query_string": {
             "query": string,
             "fields": [
@@ -199,34 +155,140 @@ def find_posts(elacticsearch: Elasticsearch, tags_in: list = None, tags_off: lis
     return result
 
 
-def get_last_published(elacticsearch: Elasticsearch):
-    res = elacticsearch.search(index='company',
+def get_last_published(elacticsearch: Elasticsearch, index='company', limit=6):
+    res = elacticsearch.search(index=index,
                                body={"sort": {"published_at": "desc"}},
-                               size=6,
+                               size=limit,
                                request_timeout=ELASTICSEARCH_request_timeout)
-    pprint(res)
     result = []
     if res and res['hits']['total']['value']:
         for post in res['hits']['hits']:
-            if isinstance(post['_source']['tags'], str):
-                post['_source']['tags'] = [post['_source']['tags']]  # Переводим один тег в список из одного тега
-            result.append({
-                'id': post['_id'],
-                'title': post['_source']['title'],
-                'tags': post['_source']['tags'],
-                'score': 0
-            })
+            # COMPANY
+            if index == 'company':
+                if isinstance(post['_source']['tags'], str):
+                    post['_source']['tags'] = [post['_source']['tags']]  # Переводим один тег в список из одного тега
+                result.append({
+                    'id': post['_id'],
+                    'title': post['_source']['title'],
+                    'tags': post['_source']['tags'],
+                    'score': 0
+                })
+            # BOOKS
+            elif index == 'books':
+                result.append({
+                    'id': post['_id'],
+                    'title': post['_source']['title'],
+                    'author': post['_source']['author'],
+                    'year': post['_source']['year'],
+                    'about': post['_source']['about'],
+                    'published_at': datetime.datetime.strptime(post['_source']['published_at'], '%Y-%m-%dT%H:%M:%S.%f')
+                })
     return result
 
 
-def posts_count() -> int:
-    resp = requests.get(f'http://{ELASTICSEARCH_HOST or "localhost"}:9200/company/_doc/_count')
+def posts_count(index='company') -> int:
+    resp = requests.get(f'http://{ELASTICSEARCH_HOST or "localhost"}:9200/{index}/_doc/_count')
     if resp.status_code == 200:
         return resp.json()['count']
     return -1
 
 
 if __name__ == '__main__':
+    settings_company = {
+        'settings': {
+            "analysis": {
+                "filter": {
+                    "ru_stop": {
+                        "type": "stop",
+                        "stopwords": "_russian_"
+                    },
+                    "ru_stemmer": {
+                        "type": "stemmer",
+                        "language": "russian"
+                    }
+                },
+                "analyzer": {
+                    "default": {
+                        "char_filter": [
+                            "html_strip"
+                        ],
+                        "tokenizer": "standard",
+                        "filter": [
+                            "lowercase",
+                            "ru_stop",
+                            "ru_stemmer"
+                        ]
+                    }
+                }
+            }
+        },
+        "mappings": {
+            "dynamic": "strict",
+            "properties": {
+                "title": {
+                    "type": "text"
+                },
+                "content": {
+                    "type": "text"
+                },
+                "tags": {
+                    "type": "text"
+                },
+                "published_at": {
+                    "type": "date"
+                },
+            }
+        }
+    }
+    settings_books = {
+        'settings': {
+            "analysis": {
+                "filter": {
+                    "ru_stop": {
+                        "type": "stop",
+                        "stopwords": "_russian_"
+                    },
+                    "ru_stemmer": {
+                        "type": "stemmer",
+                        "language": "russian"
+                    }
+                },
+                "analyzer": {
+                    "default": {
+                        "char_filter": [
+                            "html_strip"
+                        ],
+                        "tokenizer": "standard",
+                        "filter": [
+                            "lowercase",
+                            "ru_stop",
+                            "ru_stemmer"
+                        ]
+                    }
+                }
+            }
+        },
+        "mappings": {
+            "dynamic": "strict",
+            "properties": {
+                "title": {
+                    "type": "text"
+                },
+                "author": {
+                    "type": "text"
+                },
+                "about": {
+                    "type": "text"
+                },
+                "year": {
+                    "type": "text"
+                },
+                "published_at": {
+                    "type": "date"
+                },
+            }
+        }
+    }
     # Создание индекса
     logging.basicConfig(filename='logs', level=logging.ERROR)
     print(os.environ.get('ELASTICSEARCH_HOST'))
@@ -234,8 +296,9 @@ if __name__ == '__main__':
         try:
             es = connect_elasticsearch() or None
             if es:
-                create_index(es, 'company')
+                create_index(es, settings_company, 'company')
+                create_index(es, settings_books, 'books')
                 break
         except Exception as e:
             print(e)
-            time.sleep(1)
+            time.sleep(10)

@@ -2,7 +2,7 @@ import os.path
 import sys
 
 from django.shortcuts import render
-from django.http import HttpResponseRedirect, JsonResponse, HttpResponse, HttpResponseNotFound
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponse, HttpResponseNotFound, HttpResponseNotAllowed
 from dateconverter import DateConverter
 import elasticsearch
 from django.contrib.auth.decorators import login_required
@@ -66,8 +66,9 @@ def home(request):
 
     if request.method == 'GET':
         es = connect_elasticsearch()
-        data = elasticsearch_control.get_last_published(es)
-        posts_count = elasticsearch_control.posts_count()
+        if es and request.user.is_superuser:  # Просмотр последних статей доступен только суперпользователю
+            data = elasticsearch_control.get_last_published(es)
+            posts_count = elasticsearch_control.posts_count()
 
     if request.method == 'POST':
         print(request.POST)
@@ -141,7 +142,6 @@ def edit_post(request, post_id):
                     'icon': icon_path(f)
                 }
             )
-        print(files)
 
     if request.method == 'GET':
         print(request.GET)
@@ -152,7 +152,7 @@ def edit_post(request, post_id):
                 res['tags'] = [res['tags']]  # Переводим теги в list
         except elasticsearch.exceptions.NotFoundError:
             print('ID not exist')  # Данный ID не существует
-            return render(request, 'errors/404.html', status=404)
+            return HttpResponseNotFound()
         print(res)
         res['superuser'] = request.user.is_superuser
         res['post_id'] = post_id
@@ -175,7 +175,6 @@ def edit_post(request, post_id):
                 'tags': dict(request.POST)['tags_checked'],
                 'title': request.POST['title']
             }, id_=post_id)
-            print(res)
 
             # Прикрепленные файлы
             # Удаляем файлы
@@ -237,7 +236,7 @@ def show_post(request, post_id):
             res['tags'] = [res['tags']]
     except elasticsearch.exceptions.NotFoundError:
         print('ID not exist')
-        return render(request, 'errors/404.html', status=404)
+        return HttpResponseNotFound()
     res['superuser'] = request.user.is_superuser
     res['post_id'] = post_id
 
@@ -288,9 +287,6 @@ def create_post(request):
     :return:
     """
 
-    print(request.POST)
-    print(request.FILES)
-
     available_tags = [t.tag_name for t in Tags.objects.all()] \
         if request.user.is_superuser else \
         [t.tag_name for t in Tags.objects.filter(user__username=request.user.username)]
@@ -306,12 +302,9 @@ def create_post(request):
                 'tags': dict(request.POST)['tags_checked'],
                 'title': request.POST['title']
             })
-            print(res)
             if res.get("_id") and request.FILES.get('files'):
                 os.makedirs(f'{sys.path[0]}/media/{res["_id"]}')  # Создаем папку для текущей заметки
-                print(request.FILES)
                 for file in dict(request.FILES)['files']:  # Для каждого файла
-                    print(file)
                     with open(f'{sys.path[0]}/media/{res["_id"]}/{file.name}', 'wb+') as upload_file:
                         for chunk_ in file.chunks():
                             upload_file.write(chunk_)  # Записываем файл
@@ -341,6 +334,9 @@ def create_post(request):
 
 @login_required(login_url='accounts/login/')
 def delete_post(request, post_id):
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['post'])
+
     # Смотрим разрешенные теги для данного пользователя
     available_tags = [t.tag_name for t in Tags.objects.all()] \
         if request.user.is_superuser else \
@@ -361,11 +357,9 @@ def delete_post(request, post_id):
 
     else:
         print('ID not exist')
-        return render(request, 'errors/404.html', status=404)
+        return HttpResponseNotFound()
 
     # Если теги поста разрешены данному пользователю, то удаляем пост
-    print(post_tags)
-    print(available_tags)
     if set(post_tags).issubset(available_tags):
         print('delete:', post_id)
         es.delete(index='company', id=post_id)

@@ -1,0 +1,129 @@
+{% extends 'books/base.html' %}
+
+{% block title %}
+    {% if type == 'create' %}Добавить книгу{% else %}Редактируем: "{{ form.title.value }}"{% endif %}
+{% endblock title %}
+
+{% block menu %}
+    <ul class="menu-main" style="padding-top: 20px">
+        <li><a href="/" >> Заметки <</a></li>
+
+        {% if user.is_superuser %}
+        <li><a href="/books/create" {% if type == 'create' %}class="current"{% endif %}>Добавить книгу</a></li>
+        {% endif %}
+
+        <li><a href="/books">Библиотека</a></li>
+
+        {% if user.is_superuser %}
+        <li><a href="/users">Пользователи</a></li>
+        {% endif %}
+
+        <li><a href="/accounts/logout">Выйти</a></li>
+    </ul>
+{% endblock %}
+
+{% block content %}
+<form name="book_form" method="post" enctype="multipart/form-data">
+{% csrf_token %}
+
+{% if type == 'create' %}
+<div class="custom-file">
+  <input name="book_file" type="file" class="custom-file-input" id="customFile" required>
+  <label class="custom-file-label" for="customFile">Выберите книгу</label>
+</div>
+    <br><br>
+{% endif %}
+
+
+<div class="card" style="border: none">
+  <img src="/static/images/books/img.png" class="card-img" alt="...">
+  <div class="card-img-overlay">
+    <br><br>
+
+{#    Название книги   #}
+    <div class="row">
+        <div class="col-md-1 mb"></div>
+        <div class="col-md-5 mb-3">
+            <label for="validationServer01" style="color: #1b1b1b">Название книги</label>
+            <input name="title" type="text"
+                 class="form-control {% if form.title.errors %}is-invalid{% else %}is-valid{% endif %}"
+                 id="validationServer01"
+                 value="{% if form.title.value %}{{ form.title.value }}{% endif %}"
+                 required>
+
+            {% if form.title.errors %}
+                <div class="invalid-feedback">{{ form.title.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+{#    Автор книги   #}
+    <div class="row">
+        <div class="col-md-1 mb"></div>
+        <div class="col-md-5 mb-3">
+            <label for="validationServer02" style="color: #1b1b1b">Автор</label>
+            <input name="author" type="text"
+                 class="form-control {% if form.author.errors %}is-invalid{% else %}is-valid{% endif %}"
+                 id="validationServer02"
+                 value="{% if form.author.value %}{{ form.author.value }}{% endif %}">
+
+            {% if form.author.errors %}
+                <div class="invalid-feedback">{{ form.author.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+{#    Год   #}
+    <div class="row">
+        <div class="col-md-1 mb"></div>
+        <div class="col-md-2 mb-3">
+            <label for="validationServer02" style="color: #1b1b1b">Год</label>
+            <input name="year" type="text"
+                 class="form-control {% if form.year.errors %}is-invalid{% else %}is-valid{% endif %}"
+                 id="validationServer02"
+                 value="{% if form.year.value %}{{ form.year.value }}{% endif %}">
+
+            {% if form.year.errors %}
+                <div class="invalid-feedback">{{ form.year.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+{#    Описание   #}
+    <div class="row">
+        <div class="col-md-1 mb"></div>
+        <div class="col-md-10 mb-3">
+            <label for="validationServer03" style="color: #1b1b1b">Описание</label>
+            <textarea name="about" cols="100" rows="10" required
+                 class="form-control {% if form.about.errors %}is-invalid{% else %}is-valid{% endif %}"
+                 id="validationServer03">{% if form.about.value %}{{ form.about.value }}{% endif %}</textarea>
+
+            {% if form.about.errors %}
+                <div class="invalid-feedback">{{ form.about.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+{#  Кнопка  #}
+  <div class="row">
+      <div class="col-md-5 mb"></div>
+      <div class="col-md-2 mb-3">
+          <button class="btn btn-primary" type="submit">{% if type == 'create' %}Загрузить книгу{% else %}Обновить книгу{% endif %}</button>
+      </div>
+  </div>
+
+  </div>
+</div>
+
+</form>
+{% endblock %}
+
+{% block footer %}
+<script>
+$('.custom-file-input').on('change', function() {
+   let fileName = $(this).val().split('\\').pop();
+   console.log(fileName)
+   $(this).next('.custom-file-label').addClass("selected").html(fileName);
+});
+</script>
+{% endblock %}

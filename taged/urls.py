@@ -17,10 +17,14 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from taged_web import views
 from django.views.static import serve
-from django.views.defaults import page_not_found
 from taged import settings
+# import debug_toolbar
+
 
 urlpatterns = [
+    # BOOKS
+    path('books/', include('books.urls')),
+
     path('admin/', admin.site.urls),
     path('', views.home),
     path('accounts/', include('django.contrib.auth.urls')),
@@ -49,3 +53,7 @@ urlpatterns = [
 
 handler404 = 'taged_web.errors_views.page404'
 handler500 = 'taged_web.errors_views.page500'
+
+
+# if settings.DEBUG:
+#     urlpatterns += [path('__debug__/', include(debug_toolbar.urls))]

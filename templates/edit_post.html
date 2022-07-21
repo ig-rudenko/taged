@@ -32,13 +32,14 @@
 
 <body style="height: 80%">
     <ul class="menu-main" style="padding: 20px">
-      <li><a href="/">Search</a></li>
-      <li><a href="/create" class="current">Create Note</a></li>
+      <li><a href="/">Поиск</a></li>
+      <li><a href="/create" class="current">Создать Заметку</a></li>
+      <li><a href="/books">Библиотека</a></li>
         {% if superuser %}
-      <li><a href="/tags">Tags</a></li>
-      <li><a href="/users">Users</a></li>
+      <li><a href="/tags">Теги</a></li>
+      <li><a href="/users">Пользователи</a></li>
         {% endif %}
-      <li><a href="/logout">Logout</a></li>
+      <li><a href="/logout">Выйти</a></li>
     </ul>
 <div>
     <img id="cat-run" src="/static/images/cat_run.gif" width="100" style="left: -100px; z-index: 999">

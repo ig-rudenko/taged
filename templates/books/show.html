@@ -1,0 +1,60 @@
+{% extends 'books/base.html' %}
+{% load humanize %}
+{% block content %}
+
+{#    Поиск    #}
+<form method="get">
+    <div class="form-row">
+        <div class="col-md-8 mb-3">
+            <label for="search">Поиск</label>
+            <input name="search_text" type="text" id="search" class="form-control" aria-describedby="passwordHelpBlock"
+            value="{% if form.search_text %}{{ form.search_text }}{% endif %}">
+            <small id="passwordHelpBlock" class="form-text text-muted">
+              Введите строку для поиска названия книги, её описания или автора
+            </small>
+        </div>
+
+        <div class="col-md-3 mb-5">
+            <label for="year">Год</label>
+            <input name="search_year" type="text" id="year" class="form-control" aria-describedby="passwordHelpBlock"
+            value="{% if form.search_year %}{{ form.search_year }}{% endif %}">
+            <small id="passwordHelpBlock" class="form-text text-muted">
+              Введите год, чтобы отфильтровать запрос
+            </small>
+        </div>
+        <div class="col-md-1 mb-5">
+              <button class="btn btn-primary" type="submit" style="margin-top: 32px">Поиск</button>
+        </div>
+    </div>
+</form>
+
+{#    КНИГИ    #}
+<div class="row row-cols-md-3">
+{% for book in books %}
+    <div class="col mb-4">
+        <div class="card bg-light" style="width: 322px;">
+
+            <a href="{% url 'about_book' book.id %}">
+                <img style="height: 440px; width: 320px; object-fit: cover; object-position: right;"
+                     src="/media/books/{{ book.id }}/preview.png" class="card-img-top" alt="img:'{{ book.title }}'">
+            </a>
+
+            <ul class="list-group list-group-flush">
+            <li class="list-group-item list-group-item-secondary">{{ book.title }}</li>
+                {% if book.author %}
+            <li class="list-group-item">{{ book.author }}</li>
+                {% endif %}
+                {% if book.year %}
+            <li class="list-group-item">{{ book.year }} г.</li>
+                {% endif %}
+            </ul>
+
+            <div class="card-body">
+                <a href="{% url 'show' book.id %}" class="card-link" target="_blank">Читать</a>
+                <a href="{% url 'about_book' book.id %}" class="card-link">Подробнее..</a>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+</div>
+{% endblock %}

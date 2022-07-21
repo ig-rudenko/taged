@@ -13,13 +13,14 @@
 <body>
     {# Меню #}
     <ul class="menu-main" style="padding-top: 20px">
-      <li><a href="/" class="current">Search</a></li>
-      <li><a href="/create">Create Note</a></li>
+      <li><a href="/">Поиск</a></li>
+      <li><a href="/create">Создать Заметку</a></li>
+      <li><a href="/books">Библиотека</a></li>
         {% if superuser %}
-        <li><a href="/tags">Tags</a></li>
-        <li><a href="/users">Users</a></li>
+        <li><a href="/tags">Теги</a></li>
+        <li><a href="/users">Пользователи</a></li>
         {% endif %}
-      <li><a href="/logout">Logout</a></li>
+      <li><a href="/logout">Выйти</a></li>
     </ul>
 
 <div class="container">
@@ -34,9 +35,12 @@
                     <br>
                 <a href="/edit/{{ post_id }}" style="color: #03a2ff">редактировать</a>
                     <time></time>
-{#                {% if superuser %}#}
-                <a style="color: #ff6363; cursor: pointer" onclick="delete_post('{{ post_id }}', '{{ title }}')">удалить</a>
-{#                {% endif %}#}
+
+{#                    УДАЛИТЬ #}
+                    <form name="delete_form" method="post" action="/delete/{{ post_id }}">
+                        {% csrf_token %}
+                        <a style="color: #ff6363; cursor: pointer" onclick="delete_post()">удалить</a>
+                    </form>
 
                 </div>
             </div>
@@ -67,9 +71,9 @@
 </div>
 
 <script>
-function delete_post(id, name) {
-    if (confirm("Вы согласны удалить запись \"" + name + "\" ? {{ tags }}")) {
-        window.location.href = "/delete/" + id
+function delete_post() {
+    if (confirm("Вы согласны удалить запись {{ title }} ?")) {
+        document.delete_form.submit();
     }
 }
 </script>

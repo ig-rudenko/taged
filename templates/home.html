@@ -47,13 +47,14 @@
 
     {# МЕНЮ #}
     <ul class="menu-main">
-      <li><a href="/" class="current">Search</a></li>
-      <li><a href="/create">Create Note</a></li>
+      <li><a href="/" class="current">Поиск</a></li>
+      <li><a href="/create">Создать Заметку</a></li>
+      <li><a href="/books">Библиотека</a></li>
         {% if superuser %}
-      <li><a href="/tags">Tags</a></li>
-      <li><a href="/users">Users</a></li>
+      <li><a href="/tags">Теги</a></li>
+      <li><a href="/users">Пользователи</a></li>
         {% endif %}
-      <li><a href="/logout">Logout</a></li>
+      <li><a href="/logout">Выйти</a></li>
     </ul>
 
     {# СТРОКА ПОИСКА #}
@@ -104,7 +105,7 @@
 
 
 </div>
-{% if not search_mode %}
+{% if not search_mode and superuser %}
 <div class="last-post-text">
     Всего записей: {{ posts_count }}
     <div>

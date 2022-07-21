@@ -1,7 +1,9 @@
 venv
 esdata
+media
 test*
 taged_web/migrations/
 logs
 db.sqlite3
 .gitignore
+static/debug_toolbar

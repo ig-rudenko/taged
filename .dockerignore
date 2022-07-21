@@ -1,4 +1,6 @@
 *
+static/debug_toolbar
+!books
 !static
 !taged
 !taged_web

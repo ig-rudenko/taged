@@ -37,7 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'taged_web.apps.TagedWebConfig',
+    # 'debug_toolbar',
+    'django.contrib.humanize',
+    'taged_web',
+    'books'
 ]
 
 MIDDLEWARE = [
@@ -140,4 +143,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 50_000_000  # 50МБ
+DATA_UPLOAD_MAX_MEMORY_SIZE = 100_000_000  # 100МБ

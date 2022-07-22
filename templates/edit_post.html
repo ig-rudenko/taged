@@ -8,26 +8,15 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/checkselect.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/menu.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/buttons.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.cleditor.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'css/upload_file.css' %}" />
-
     <script src="{% static 'js/jquery.min.js' %}"></script>
-    <script src="{% static 'js/jquery.cleditor.min.js' %}"></script>
+
+    <script type="text/javascript" src="{% static "ckeditor/ckeditor-init.js" %}"></script>
+    <script type="text/javascript" src="{% static "ckeditor/ckeditor/ckeditor.js" %}"></script>
 
 
-    <script type="text/javascript">
-      $(document).ready(function() {
-        editor = $("#input").cleditor({width:"100%", height:"100%"})[0].focus();
-        $(window).resize();
-      });
-      $(window).resize(function() {
-        var $win = $(window);
-        $("#container").width($win.width() - 32).height($win.height() - 33).offset({left:15, top:15});
-        editor.refresh();
-      });
-    </script>
     <meta charset="UTF-8">
-    <title>Add Note</title>
+    <title>Создание заметки</title>
 </head>
 
 <body style="height: 80%">
@@ -35,7 +24,7 @@
       <li><a href="/">Поиск</a></li>
       <li><a href="/create" class="current">Создать Заметку</a></li>
       <li><a href="/books">Библиотека</a></li>
-        {% if superuser %}
+        {% if user.is_superuser %}
       <li><a href="/tags">Теги</a></li>
       <li><a href="/users">Пользователи</a></li>
         {% endif %}
@@ -90,18 +79,27 @@
         <div id="file_list"></div>
 
         {# ХРАНЕНИЕ ID ЗАПИСИ #}
-        <input type="text" name="post_id" value="{{ post_id }}" style="display: none" readonly>
+        <input type="text" name="post_id" value="{{ post_id }}" hidden readonly>
 
         {# TITLE #}
-        <input type="text" name="title" required placeholder="Название заметки" value="{{ title }}">
+        {{ form.title }}
 
         {# CONTENT #}
-        <textarea id="input" name="input" required>{{ content }}</textarea>
+{#        <textarea id="input" name="input" required>{{ content }}</textarea>#}
+
+        <div style="width: 100%">
+            {{ form.input }}
+        </div>
     </form>
 
     {# РАБОТА С ОТОБРАЖЕНИЕМ ТЕГОВ #}
 <script src="{% static 'js/tags_control.js' %}"></script>
 <script>
+
+    $(document).ready ( function(){
+        $(".django-ckeditor-widget").css({"width" : "100%"});
+        $("#cke_id_input").css({"width" : ''});
+    });
 
 function file_format(file_name) {
     if (file_name.endsWith('.docx') || file_name.endsWith('.doc') || file_name.endsWith('.rtf')){

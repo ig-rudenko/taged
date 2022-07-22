@@ -13,6 +13,8 @@ from taged_web.models import Tags
 from datetime import datetime
 import random
 
+from .forms import PostForm
+
 
 def icon_path(file: str):
     icon = 'images/icons/file.png'
@@ -30,7 +32,8 @@ def icon_path(file: str):
         icon = 'images/icons/xml.png'
     if file.endswith('.vds') or file.endswith('.vsdx'):
         icon = 'images/icons/visio.png'
-    if file.endswith('.rar') or file.endswith('.7z') or file.endswith('.zip') or file.endswith('.tar') or file.endswith('.iso'):
+    if file.endswith('.rar') or file.endswith('.7z') or file.endswith('.zip') or file.endswith('.tar') or file.endswith(
+            '.iso'):
         icon = 'images/icons/archive.png'
     if file.endswith('.png') or file.endswith('.jpeg') or file.endswith('.gif') or file.endswith('.jpg') \
             or file.endswith('.bpm'):
@@ -49,8 +52,8 @@ def autocomplete(request):
 
 @login_required(login_url='accounts/login/')
 def home(request):
-
-    available_tags = Tags.objects.all() if request.user.is_superuser else Tags.objects.filter(user__username=request.user.username)
+    available_tags = Tags.objects.all() if request.user.is_superuser else Tags.objects.filter(
+        user__username=request.user.username)
     unavailable_tags = list({t.tag_name for t in Tags.objects.all()} - {t.tag_name for t in available_tags})
     print('User:', request.user.username)
 
@@ -80,7 +83,8 @@ def home(request):
         if not request.POST.get('search', '') and not tags_in:
             return HttpResponseRedirect('/')
 
-        data = elasticsearch_control.find_posts(es, string=request.POST.get('search', ''), tags_in=tags_in, tags_off=tags_off)
+        data = elasticsearch_control.find_posts(es, string=request.POST.get('search', ''), tags_in=tags_in,
+                                                tags_off=tags_off)
 
         for d in data:
             if isinstance(d['tags'], str):
@@ -144,7 +148,6 @@ def edit_post(request, post_id):
             )
 
     if request.method == 'GET':
-        print(request.GET)
         es = connect_elasticsearch()  # Подключаемся к elasticsearch
         try:
             res = es.get(index='company', id=post_id)['_source']  # Получаем запись по ID
@@ -154,26 +157,26 @@ def edit_post(request, post_id):
             print('ID not exist')  # Данный ID не существует
             return HttpResponseNotFound()
         print(res)
-        res['superuser'] = request.user.is_superuser
         res['post_id'] = post_id
         res['tags'] = [
-                    {'tag': t, 'checked': False if t not in res['tags'] else True}
-                    for t in available_tags
-                ]  # Определяем, какие теги были добавлены в записе
+            {'tag': t, 'checked': False if t not in res['tags'] else True}
+            for t in available_tags
+        ]  # Определяем, какие теги были добавлены в записе
         res['files'] = files  # Прикрепленные файлы
+        res['form'] = PostForm({"title": res['title'], "input": res['content'], 'tags_checked': res['tags']})
 
     if request.method == 'POST':
-        print(request.POST)
-        if request.POST.get('title') and request.POST.get('input') and request.POST.get('tags_checked'):
-            # Если были введены все данные
+        user_form = PostForm(request.POST)
+
+        if user_form.is_valid():  # Если были введены все данные
             es = connect_elasticsearch()  # Подключаемся к elasticsearch
 
             # Обновляем существующую в elasticsearch запись
             res = elasticsearch_control.update_post(es, 'company', {
-                'content': request.POST['input'],
+                'content': user_form.cleaned_data['input'],
                 'published_at': datetime.now(),
                 'tags': dict(request.POST)['tags_checked'],
-                'title': request.POST['title']
+                'title': user_form.cleaned_data['title']
             }, id_=post_id)
 
             # Прикрепленные файлы
@@ -197,14 +200,13 @@ def edit_post(request, post_id):
             # Если не все поля были указаны
             # Отправляем данные, которые были введены
             res = {
-                'title': request.POST.get('title'),
-                'content': request.POST.get('input'),
                 'tags': [
-                        {'tag': t, 'checked': False if t not in dict(request.POST).get('tags_checked') else True}
-                        for t in available_tags
+                    {'tag': t, 'checked': False if t not in dict(request.POST).get('tags_checked') else True}
+                    for t in available_tags
                 ],
                 'error': "Необходимо указать хотя бы один тег, название заметки и её содержимое!",
-                'files': files
+                'files': files,
+                'form': user_form
             }
 
     return render(request, 'edit_post.html', res)
@@ -291,17 +293,20 @@ def create_post(request):
         if request.user.is_superuser else \
         [t.tag_name for t in Tags.objects.filter(user__username=request.user.username)]
 
-    if request.method == 'POST':
+    user_form = PostForm()  # Создаем форму
 
-        # Создаем новую запись
-        if request.POST.get('title') and request.POST.get('input') and request.POST.get('tags_checked'):
+    if request.method == 'POST':
+        user_form = PostForm(request.POST)  # Заполняем форму
+
+        if user_form.is_valid():  # Проверяем форму
             es = connect_elasticsearch()
             res = elasticsearch_control.create_post(es, 'company', {
-                'content': request.POST['input'],
+                'content': user_form.cleaned_data['input'],
                 'published_at': datetime.now(),
                 'tags': dict(request.POST)['tags_checked'],
-                'title': request.POST['title']
+                'title': user_form.cleaned_data['title']
             })
+
             if res.get("_id") and request.FILES.get('files'):
                 os.makedirs(f'{sys.path[0]}/media/{res["_id"]}')  # Создаем папку для текущей заметки
                 for file in dict(request.FILES)['files']:  # Для каждого файла
@@ -312,24 +317,26 @@ def create_post(request):
             return HttpResponseRedirect(f'/post/{res["_id"]}')
 
         else:
-            tags_checked = dict(request.POST).get('tags_checked') or []     # Выбранные теги
+            tags_checked = dict(request.POST).get('tags_checked') or []  # Выбранные теги
+
             # Если не все поля были указаны
-            return render(request, 'edit_post.html', {
-                'title': request.POST.get('title'),
-                'content': request.POST.get('input'),
-                'tags': [
-                    {'tag': t, 'checked': True if t in tags_checked else False}
-                    for t in available_tags
-                ],
-                'error': "Необходимо указать хотя бы один тег, название заметки и её содержимое!",
-                'superuser': request.user.is_superuser
-            })
+            return render(request, 'edit_post.html',
+                          {
+                              'tags': [
+                                  {'tag': t, 'checked': True if t in tags_checked else False}
+                                  for t in available_tags
+                              ],
+                              'error': "Необходимо указать хотя бы один тег, название заметки и её содержимое!",
+                              'form': user_form
+                          }
+                          )
 
     tags_ = sorted(
         [{'tag': t, 'cheched': False} for t in available_tags],
         key=lambda x: x['tag'].lower()  # Сортируем по алфавиту
     )  # Если новая запись, то все теги изначально отключены
-    return render(request, 'edit_post.html', {'tags': tags_, 'superuser': request.user.is_superuser})
+
+    return render(request, 'edit_post.html', {'tags': tags_, 'superuser': request.user.is_superuser, 'form': user_form})
 
 
 @login_required(login_url='accounts/login/')
@@ -352,7 +359,7 @@ def delete_post(request, post_id):
             "fields": ['_id']
         }
     })
-    if post['_shards']['successful']:    # Если нашли
+    if post['_shards']['successful']:  # Если нашли
         post_tags = post['hits']['hits'][0]['_source']['tags']  # Смотрим его теги
 
     else:
@@ -453,7 +460,7 @@ def user_access_edit(request, username):
     elif request.method == 'POST':
         user = User.objects.get(username=username)  # Пользователь
         for tag in Tags.objects.all():
-            if request.POST.get(f'tag_id_{tag.id}'):    # Если данная группа была выбрана
+            if request.POST.get(f'tag_id_{tag.id}'):  # Если данная группа была выбрана
                 user.tags_set.add(tag)  # Добавляем пользователя в группу
             else:
                 user.tags_set.remove(tag)  # Удаляем

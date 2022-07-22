@@ -49,6 +49,8 @@ urlpatterns = [
     # AJAX
     path('ajax/autocomplete/', views.autocomplete),
     path('ajax/extend_post/<post_id>', views.pre_show_post),
+
+    path('ckeditor/', include('ckeditor_uploader.urls')),
 ]
 
 handler404 = 'taged_web.errors_views.page404'

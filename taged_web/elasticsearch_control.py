@@ -140,8 +140,8 @@ def find_posts(elacticsearch: Elasticsearch, tags_in: list = None, tags_off: lis
         for post in res['hits']['hits']:
             if isinstance(post['_source']['tags'], str):
                 post['_source']['tags'] = [post['_source']['tags']]  # Переводим один тег в список из одного тега
-            # Если имеются необходимые теги (tags_in) и они встречаются в записе, а также
-            # имеются нежелательные теги (tags_off) и они отсутствуют в записе
+            # Если имеются необходимые теги (tags_in) и они встречаются в записи, а также
+            # имеются нежелательные теги (tags_off) и они отсутствуют в записи
             # Пересечение тегов поста и тегов поиска равно списку тегов поиска (т.е. теги поиска содержатся в посте)
             if (not tags_in or sorted(list(set(post['_source']['tags']) & set(tags_in))) == sorted(tags_in)) \
                     and \

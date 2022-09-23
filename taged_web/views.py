@@ -2,7 +2,7 @@ import os.path
 import sys
 
 from django.shortcuts import render
-from django.http import HttpResponseRedirect, JsonResponse, HttpResponse, HttpResponseNotFound, HttpResponseNotAllowed
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponse, Http404, HttpResponseNotAllowed
 from dateconverter import DateConverter
 import elasticsearch
 from django.contrib.auth.decorators import login_required
@@ -43,10 +43,8 @@ def icon_path(file: str):
 
 @login_required(login_url='accounts/login/')
 def autocomplete(request):
-    print(request.GET)
     es = elasticsearch_control.connect_elasticsearch()
     titles = elasticsearch_control.get_titles(es, request.GET.get('term'))
-    print(titles)
     return JsonResponse({'data': titles})
 
 
@@ -54,8 +52,7 @@ def autocomplete(request):
 def home(request):
     available_tags = Tags.objects.all() if request.user.is_superuser else Tags.objects.filter(
         user__username=request.user.username)
-    unavailable_tags = list({t.tag_name for t in Tags.objects.all()} - {t.tag_name for t in available_tags})
-    print('User:', request.user.username)
+    #unavailable_tags = list({t.tag_name for t in Tags.objects.all()} - {t.tag_name for t in available_tags})
 
     tags_in = tags_off = tags_ = sorted(
         [
@@ -74,17 +71,18 @@ def home(request):
             posts_count = elasticsearch_control.posts_count()
 
     if request.method == 'POST':
-        print(request.POST)
         es = connect_elasticsearch()
         tags_in = dict(request.POST).get('tags-in')
         tags_off = dict(request.POST).get('tags-off') or []
-        tags_off += unavailable_tags
 
-        if not request.POST.get('search', '') and not tags_in:
+        # Если (нет поиска по слову)           и (нет тегов)  или (теги содержат запрещенные) (определяем разностью)
+        if not request.POST.get('search', '') and not tags_in or set(tags_in or set()) - {t.tag_name for t in available_tags}:
             return HttpResponseRedirect('/')
 
-        data = elasticsearch_control.find_posts(es, string=request.POST.get('search', ''), tags_in=tags_in,
-                                                tags_off=tags_off)
+        # Поиск записей
+        data = elasticsearch_control.find_posts(
+            es, string=request.POST.get('search', ''), tags_in=tags_in, tags_off=tags_off
+        )
 
         for d in data:
             if isinstance(d['tags'], str):
@@ -130,16 +128,18 @@ def edit_post(request, post_id):
     :return:
     """
 
-    res = {}  # Результат поиска в elasticsearch
-
+    # У супер пользователя доступны все теги
+    # Список тегов ['tag1', 'tag2', ... ]
     available_tags = [t.tag_name for t in Tags.objects.all()] \
         if request.user.is_superuser else \
         [t.tag_name for t in Tags.objects.filter(user__username=request.user.username)]
 
     # Прикрепленные файлы
     files = []
+    # Если существует папка для данного post_id и в ней есть файлы
     if os.path.exists(f'{sys.path[0]}/media/{post_id}') and os.listdir(f'{sys.path[0]}/media/{post_id}'):
         for f in os.listdir(f'{sys.path[0]}/media/{post_id}'):
+            # Добавляем имя файла + иконку в список
             files.append(
                 {
                     'name': f,
@@ -147,61 +147,79 @@ def edit_post(request, post_id):
                 }
             )
 
-    if request.method == 'GET':
-        es = connect_elasticsearch()  # Подключаемся к elasticsearch
-        try:
-            res = es.get(index='company', id=post_id)['_source']  # Получаем запись по ID
-            if isinstance(res['tags'], str):
-                res['tags'] = [res['tags']]  # Переводим теги в list
-        except elasticsearch.exceptions.NotFoundError:
-            print('ID not exist')  # Данный ID не существует
-            return HttpResponseNotFound()
-        print(res)
-        res['post_id'] = post_id
-        res['tags'] = [
-            {'tag': t, 'checked': False if t not in res['tags'] else True}
-            for t in available_tags
-        ]  # Определяем, какие теги были добавлены в записе
-        res['files'] = files  # Прикрепленные файлы
-        res['form'] = PostForm({"title": res['title'], "input": res['content'], 'tags_checked': res['tags']})
+    es = connect_elasticsearch()  # Подключаемся к elasticsearch
+    try:
+        res = es.get(index='company', id=post_id)['_source']  # Получаем запись по ID
+        if isinstance(res['tags'], str):
+            res['tags'] = [res['tags']]  # Переводим теги в список
+    except elasticsearch.exceptions.NotFoundError:
+        print('ID not exist')  # Данный ID не существует
+        raise Http404()
+
+    res['post_id'] = post_id
+
+    # сохраняем все теги, которые уже существуют у данного поста
+    exists_tags = res['tags']
+
+    # Определяем, какие теги существуют в посте из разрешенных для пользователя и отмечаем их как checked
+    res['tags'] = [
+        {'tag': t, 'checked': False if t not in res['tags'] else True}
+        for t in available_tags
+    ]
+
+    # Прикрепленные файлы
+    res['files'] = files
+
+    # Форма для пользователя с начальными данными
+    res['form'] = PostForm({"title": res['title'], "input": res['content'], 'tags_checked': res['tags']})
 
     if request.method == 'POST':
         user_form = PostForm(request.POST)
 
-        if user_form.is_valid():  # Если были введены все данные
+        if user_form.is_valid():  # Если данные были введены верно
             es = connect_elasticsearch()  # Подключаемся к elasticsearch
 
+            # Список тегов, которые будут обновлены
+            # Состоят из тегов, которые были у записи, но недоступные для пользователя + те, что он указал явно
+            tags_to_save = [
+                               t for t in exists_tags if t not in available_tags
+                           ] + dict(request.POST)['tags_checked']
+
             # Обновляем существующую в elasticsearch запись
-            res = elasticsearch_control.update_post(es, 'company', {
-                'content': user_form.cleaned_data['input'],
-                'published_at': datetime.now(),
-                'tags': dict(request.POST)['tags_checked'],
-                'title': user_form.cleaned_data['title']
-            }, id_=post_id)
+            update_post = elasticsearch_control.update_post(
+                es, 'company',
+                {
+                    'content': user_form.cleaned_data['input'],
+                    'published_at': datetime.now(),
+                    'tags': tags_to_save,
+                    'title': user_form.cleaned_data['title']
+                },
+                id_=post_id
+            )
 
             # Прикрепленные файлы
-            # Удаляем файлы
             if os.path.exists(f'{sys.path[0]}/media/{post_id}'):
-                for f in os.listdir(f'{sys.path[0]}/media/{post_id}'):
-                    if not request.POST.get(f'checkbox_{f}'):
-                        os.remove(f'{sys.path[0]}/media/{post_id}/{f}')  # Удаляем ненужные файлы
+                for f in os.listdir(f'{sys.path[0]}/media/{post_id}'):  # Смотрим все, что есть
+                    if not request.POST.get(f'checkbox_{f}'):  # Если пользователь отключил данный файл
+                        os.remove(f'{sys.path[0]}/media/{post_id}/{f}')  # Удаляем
             else:
-                os.makedirs(f'{sys.path[0]}/media/{post_id}')
-            if request.FILES.get('files'):
-                print(request.FILES)
+                os.makedirs(f'{sys.path[0]}/media/{post_id}')  # Создаем папку для файлов, если нет
+
+            if request.FILES.get('files'):  # Если пользователь добавил файлы
                 for file in dict(request.FILES)['files']:  # Для каждого файла
-                    print(file)
                     with open(f'{sys.path[0]}/media/{post_id}/{file.name}', 'wb+') as upload_file:
                         for chunk_ in file.chunks():
                             upload_file.write(chunk_)  # Записываем файл
-            return HttpResponseRedirect(f'/post/{res["_id"]}')
+
+            # Перенаправляем на обновленную запись
+            return HttpResponseRedirect(f'/post/{post_id}')
 
         else:
             # Если не все поля были указаны
             # Отправляем данные, которые были введены
             res = {
                 'tags': [
-                    {'tag': t, 'checked': False if t not in dict(request.POST).get('tags_checked') else True}
+                    {'tag': t, 'checked': False if t not in dict(request.POST).get('tags_checked', []) else True}
                     for t in available_tags
                 ],
                 'error': "Необходимо указать хотя бы один тег, название заметки и её содержимое!",
@@ -238,7 +256,8 @@ def show_post(request, post_id):
             res['tags'] = [res['tags']]
     except elasticsearch.exceptions.NotFoundError:
         print('ID not exist')
-        return HttpResponseNotFound()
+        raise Http404()
+
     res['superuser'] = request.user.is_superuser
     res['post_id'] = post_id
 
@@ -268,7 +287,6 @@ def pre_show_post(request, post_id):
     es = connect_elasticsearch()  # Подключаемся к elasticsearch
     try:
         res = es.get(index='company', id=post_id)['_source']  # Получаем запись по ID
-        print(res)
 
     except elasticsearch.exceptions.NotFoundError:
         print('ID not exist')
@@ -336,6 +354,30 @@ def create_post(request):
         key=lambda x: x['tag'].lower()  # Сортируем по алфавиту
     )  # Если новая запись, то все теги изначально отключены
 
+    # Клонируем заметку
+    if request.GET.get('cl'):
+        es = connect_elasticsearch()
+        try:
+            res = es.get(index='company', id=request.GET.get('cl'))['_source']  # Получаем запись по ID
+            # Если имеется всего один тег, то он имеет тип str, переводим его в list
+            if isinstance(res['tags'], str):
+                res['tags'] = [res['tags']]
+
+            # Только разрешенные теги добавятся в клонированную заметку
+            res['tags'] = set(res['tags']) & set(available_tags)
+
+            res['input'] = res['content']
+            res['title'] += ' (копия)'  # Добавляем в конце заголовка приписку (копия)
+
+            user_form = PostForm(res)
+
+            tags_ = [
+                {'tag': t, 'checked': True if t in res['tags'] else False}
+                for t in available_tags
+            ]
+        except elasticsearch.exceptions.NotFoundError:
+            pass
+
     return render(request, 'edit_post.html', {'tags': tags_, 'superuser': request.user.is_superuser, 'form': user_form})
 
 
@@ -364,7 +406,7 @@ def delete_post(request, post_id):
 
     else:
         print('ID not exist')
-        return HttpResponseNotFound()
+        raise Http404()
 
     # Если теги поста разрешены данному пользователю, то удаляем пост
     if set(post_tags).issubset(available_tags):

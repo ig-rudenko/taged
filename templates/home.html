@@ -9,34 +9,11 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/menu.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/tags.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/checkselect.css' %}">
-    <script src="{% static 'js/jquery.min.js' %}"></script>
-
-
     <link rel="stylesheet" type="text/css" href="{% static 'css/jquery-ui.css' %}">
+
+    <script src="{% static 'js/jquery.min.js' %}"></script>
     <script src="{% static 'js/jquery-ui.js' %}"></script>
-    <script>
-    $( function() {
-
-    $( "#search" ).autocomplete({
-      source: function( request, response ) {
-        $.ajax( {
-          url: "/ajax/autocomplete",
-
-          data: {
-            term: request.term
-          },
-          success: function( data ) {
-              console.log(data.data)
-              response( data.data );
-
-          }
-        } );
-      },
-      minLength: 4,
-    } );
-    } );
-    </script>
-
+    <script src="{% static 'js/autocomplete_title.js' %}"></script>
 
     <meta charset="UTF-8">
     <title>Taged</title>
@@ -64,7 +41,7 @@
           {% csrf_token %}
 
               <img src="static/images/cat{{ image }}.gif" width="110" height="108" style="vertical-align: middle">
-              <input id="search" type="text" name="search" placeholder="Искать здесь..." value="{{ search_text }}">
+              <input id="search" type="text" name="search" placeholder="Искать здесь..." autofocus value="{{ search_text }}">
 
           <button type="submit"></button>
 
@@ -101,10 +78,8 @@
 
         </form>
     </div>
-
-
-
 </div>
+
 {% if not search_mode and superuser %}
 <div class="last-post-text">
     Всего записей: {{ posts_count }}
@@ -112,8 +87,8 @@
     Последние изменения
     </div>
 </div>
-
 {% endif %}
+
 <div class="post-wrap">
 
     {% for post in data %}
@@ -135,40 +110,7 @@
     {% endfor %}
 
 </div>
-
-<script src="{% static 'js/tags_control.js' %}"></script>
-<script>
-    $(document).ready(
-      function (){
-          // Наведение на объект
-          $('.post-link').mouseover(function (){
-              let post_id = $(this).attr('id');
-              if ($('#content-'+post_id).html()) {
-                  // Скрываем все открытые элементы
-                  $('.pre_post_visible').removeClass('pre_post_visible').addClass('pre_post_hidden')
-                  // Показываем
-                  $('#content-'+post_id).removeClass('pre_post_hidden').addClass('pre_post_visible');
-              } else {
-                  // Загружаем, если нет
-                  $.ajax( {
-                    url: "/ajax/extend_post/" + post_id,
-                    success: function( data ) {
-                        // Скрываем все открытые элементы
-                        $('.pre_post_visible').removeClass('pre_post_visible').addClass('pre_post_hidden')
-                        // Затем показываем
-                        $('#content-'+post_id).html(data.post).removeClass('pre_post_hidden').addClass('pre_post_visible');
-                    }
-                  } );
-              }
-          }).mouseleave(function (){
-              // Скрываем все открытые элементы
-              $('.pre_post_visible').removeClass('pre_post_visible').addClass('pre_post_hidden')
-          })
-
-      }
-    );
-
-
-</script>
+    <script src="{% static 'js/tags_control.js' %}"></script>
+    <script src="{% static 'js/preview_post.js' %}"></script>
 </body>
 </html>

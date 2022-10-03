@@ -9,8 +9,8 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/menu.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/buttons.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/upload_file.css' %}" />
-    <script src="{% static 'js/jquery.min.js' %}"></script>
 
+    <script type="text/javascript" src="{% static 'js/jquery.min.js' %}"></script>
     <script type="text/javascript" src="{% static "ckeditor/ckeditor-init.js" %}"></script>
     <script type="text/javascript" src="{% static "ckeditor/ckeditor/ckeditor.js" %}"></script>
 
@@ -94,72 +94,13 @@
 
     {# РАБОТА С ОТОБРАЖЕНИЕМ ТЕГОВ #}
 <script src="{% static 'js/tags_control.js' %}"></script>
+<script src="{% static 'js/file_format.js' %}"></script>
+<script src="{% static 'js/input_files_control.js' %}"></script>
 <script>
-
-    $(document).ready ( function(){
-        $(".django-ckeditor-widget").css({"width" : "100%"});
-        $("#cke_id_input").css({"width" : ''});
-    });
-
-function file_format(file_name) {
-    if (file_name.endsWith('.docx') || file_name.endsWith('.doc') || file_name.endsWith('.rtf')){
-        return 'docx'
-    }
-    if (file_name.endsWith('.xls') || file_name.endsWith('.xlsx') || file_name.endsWith('.xlsm')){
-        return 'xlsx'
-    }
-    if (file_name.endsWith('.pdf')){
-        return 'pdf'
-    }
-    if (file_name.endsWith('.xml')){
-        return 'xml'
-    }
-    if (file_name.endsWith('.drawio')){
-        return 'drawio'
-    }
-    if (file_name.endsWith('.txt')){
-        return 'txt'
-    }
-    if (file_name.endsWith('.vsd') || file_name.endsWith('.vsdx')){
-        return 'visio'
-    }
-    if (file_name.endsWith('.png') || file_name.endsWith('.jpeg') || file_name.endsWith('.jpg') || file_name.endsWith('.gif') || file_name.endsWith('.bpm')){
-        return 'img'
-    }
-    if (file_name.endsWith('.rar') || file_name.endsWith('.7z') || file_name.endsWith('.zip') || file_name.endsWith('.tar') || file_name.endsWith('.iso')){
-        return 'archive'
-    }
-    return 'file'
-}
-
-function delete_file(file_name){
-    console.log(document.getElementById('file_' + file_name).style.backgroundColor)
-    if (document.getElementById('file_' + file_name).style.backgroundColor === 'red'){
-        document.getElementById('file_' + file_name).style.backgroundColor = 'white';
-        document.getElementById('checkbox_' + file_name).checked = true;
-    } else {
-        document.getElementById('file_' + file_name).style.backgroundColor = 'red';
-        document.getElementById('checkbox_' + file_name).checked = false;
-    }
-}
-
-$(document).ready(function() {
-
-    $(".main_input_file").change(function() {
-
-        console.log('next')
-        console.log($(this).get(0).files)
-        var files_html_ = '<div class="post-file">'
-
-        for (var i = 0; i < $(this).get(0).files.length; ++i) {
-            files_html_ += `<a><img src="/static/images/icons/`+file_format($(this).get(0).files[i].name)+
-                `.png" width="40px" height="40px" alt="">`+$(this).get(0).files[i].name+`</a>`
-        }
-
-        document.getElementById('file_list').innerHTML = files_html_ + '</div>'
-    });
+$(document).ready ( function(){
+    $(".django-ckeditor-widget").css({"width" : "100%"});
+    $("#cke_id_input").css({"width" : ''});
 });
-
 </script>
 </body>
 </html>

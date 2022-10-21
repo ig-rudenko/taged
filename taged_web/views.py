@@ -52,7 +52,7 @@ def autocomplete(request):
 def home(request):
     available_tags = Tags.objects.all() if request.user.is_superuser else Tags.objects.filter(
         user__username=request.user.username)
-    #unavailable_tags = list({t.tag_name for t in Tags.objects.all()} - {t.tag_name for t in available_tags})
+    # unavailable_tags = list({t.tag_name for t in Tags.objects.all()} - {t.tag_name for t in available_tags})
 
     tags_in = tags_off = tags_ = sorted(
         [

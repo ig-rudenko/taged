@@ -7,6 +7,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/show_post.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/menu.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/tags.css' %}">
+    <script src="{% static 'js/jquery.min.js' %}"></script>
     <meta charset="UTF-8">
     <title>{{ title }}</title>
 </head>
@@ -69,9 +70,8 @@
             </div>
 
             {# СОДЕРЖАНИЕ #}
-            <div style="color: black; font-family: 'Teams', sans-serif">
-                {{ content|safe }}
-            </div>
+            <div id="post-content" style="color: black; font-family: 'Teams', sans-serif"></div>
+
         </div>
     </div>
 </div>
@@ -82,6 +82,16 @@ function delete_post() {
         document.delete_form.submit();
     }
 }
+$.ajax( {
+  url: "/ajax/extend_post/{{ post_id }}",
+  success: function( data ) {
+      if (data.post.length) {
+          $('#post-content').html(data.post)
+      } else {
+          $('#post-content').html('Error')
+      }
+  }
+} );
 </script>
 
 </body>

@@ -1,8 +1,8 @@
 version: '2'
 
 services:
-  taged_elasticsearch:
-    container_name: taged_elasticsearch
+  elasticsearch:
+    container_name: elasticsearch
     image: elasticsearch:7.14.1
     restart: always
     ports:
@@ -15,37 +15,37 @@ services:
       discovery.type: 'single-node'
     mem_limit: 3g
     networks:
-      - taged-network
+      - network
 
-  taged:
-    container_name: taged_container
+  web:
+    container_name: taged
     build: .
     restart: always
-    command: /bin/bash /home/run.sh
+    command: /bin/bash /app/run.sh
     environment:
-      ELASTICSEARCH_HOST: 'taged_elasticsearch'
+      ELASTICSEARCH_HOST: 'elasticsearch'
       ELASTICSEARCH_request_timeout: 90
     ports:
       - '8001:8000'
     mem_limit: 300m
     volumes:
-      - ./static:/home/static
-      - ./taged:/home/taged
-      - ./taged_web:/home/taged_web
-      - ./templates:/home/templates
-      - ./db.sqlite3:/home/db.sqlite3
-      - ./media:/home/media
-      - ./test.py:/home/test.py
-      - ./run.sh:/home/run.sh
-      - ./books:/home/books
+      - ./static:/app/static
+      - ./taged:/app/taged
+      - ./taged_web:/app/taged_web
+      - ./templates:/app/templates
+      - ./db.sqlite3:/app/db.sqlite3
+      - ./media:/app/media
+      - ./test.py:/app/test.py
+      - ./run.sh:/app/run.sh
+      - ./books:/app/books
     depends_on:
-      - taged_elasticsearch
+      - elasticsearch
     networks:
-      - taged-network
+      - network
 
 
 networks:
-  taged-network:
+  network:
     ipam:
       driver: default
       config:

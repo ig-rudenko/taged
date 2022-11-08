@@ -3,45 +3,45 @@
 {% block title %} {{ book.title }} {% endblock %}
 
 {% block content %}
-    <div class="card mb-2" style="text-align: left">
-      <div class="row no-gutters">
-        <div class="col-md-5">
-          <a href="{% url 'show' book.id %}" target="_blank">
-              <img style="max-width: 460px; object-fit: fill" class="show-preview" src="/media/books/{{ book.id }}/preview.png">
-          </a>
-        </div>
-        <div class="col-md-7">
-          <div class="card-body">
+<div class="card mb-2" style="text-align: left">
+  <div class="row no-gutters">
+    <div class="col-md-5">
+      <a href="{% url 'show' book.id %}" target="_blank">
+          <img style="max-width: 100%; object-fit: fill" class="show-preview" src="/media/books/{{ book.id }}/preview.png">
+      </a>
+    </div>
+    <div class="col-md-7">
+      <div class="card-body">
 
-            <ul class="list-group ">
+        <ul class="list-group ">
 
 {#                Кнопки изменить и удалить     #}
-                {% if user.is_superuser %}
-                  <li class="list-group-item" style="text-align: right">
-                      <a href="{% url 'update' book.id %}" class="badge badge-pill badge-primary" style="padding: 6px">Изменить</a>
-                      <button type="button" class="badge badge-pill badge-danger" data-toggle="modal"
-                              data-target="#exampleModal" style="padding: 6px; border: none">Удалить</button>
-                  </li>
-                {% endif %}
+            {% if user.is_superuser %}
+              <li class="list-group-item" style="text-align: right">
+                  <a href="{% url 'update' book.id %}" class="badge badge-pill badge-primary" style="padding: 6px">Изменить</a>
+                  <button type="button" class="badge badge-pill badge-danger" data-toggle="modal"
+                          data-target="#exampleModal" style="padding: 6px; border: none">Удалить</button>
+              </li>
+            {% endif %}
 
 {#            Название книги     #}
-                <li class="list-group-item active">{{ book.title }}{% if book.year %} ({{ book.year }} г.){% endif %}</li>
+            <li class="list-group-item active">{{ book.title }}{% if book.year %} ({{ book.year }} г.){% endif %}</li>
 
 {#            Автор     #}
-              <li class="list-group-item">{% if book.author %}{{ book.author }}{% else %}
-                  <small class="text-muted">Автор не указан</small>{% endif %}</li>
-            </ul>
-            <br>
+          <li class="list-group-item">{% if book.author %}{{ book.author }}{% else %}
+              <small class="text-muted">Автор не указан</small>{% endif %}</li>
+        </ul>
+        <br>
 {#          Описание     #}
-            <p class="card-text">{{ book.about|linebreaks }}</p>
-            <br>
+        <p class="card-text">{{ book.about|linebreaks }}</p>
+        <br>
 
-            <p class="card-text"><small class="text-muted">Последнее изменение {{ book.published_at | naturaltime }}</small></p>
+        <p class="card-text"><small class="text-muted">Последнее изменение {{ book.published_at | naturaltime }}</small></p>
 
-          </div>
-        </div>
       </div>
     </div>
+  </div>
+</div>
 
 {#    Окно удаления    #}
 {% if user.is_superuser %}

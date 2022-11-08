@@ -2,5 +2,5 @@ from django.apps import AppConfig
 
 
 class TagedWebConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'taged_web'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "taged_web"

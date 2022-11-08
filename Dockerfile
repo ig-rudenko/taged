@@ -1,8 +1,13 @@
-FROM python:3
-ENV PYTHONUNBUFFERED 1
-WORKDIR /home
+FROM python:3.8-slim
 
-COPY . .
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt && \
+ENV PYTHONUNBUFFERED 1
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
     apt-get update && \
-    apt-get install -y iputils-ping nano && mkdir "media"
+    apt-get install -y iputils-ping nano && \
+    mkdir "media"
+COPY . .

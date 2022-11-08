@@ -18,43 +18,40 @@ from django.urls import path, include, re_path
 from taged_web import views
 from django.views.static import serve
 from taged import settings
+
 # import debug_toolbar
 
 
 urlpatterns = [
     # BOOKS
-    path('books/', include('books.urls')),
-
-    path('admin/', admin.site.urls),
-    path('', views.home),
-    path('accounts/', include('django.contrib.auth.urls')),
-    path('edit/<str:post_id>', views.edit_post),
-    path('post/<str:post_id>', views.show_post),
-    path('delete/<str:post_id>', views.delete_post),
-    path('create/', views.create_post),
-    path('tags/', views.tags),
-    path('delete/tag/<str:tag_id>', views.delete_tag),
-    path('download/<str:post_id>/<str:file_name>', views.download_file),
-
-    path('logout', views.logout),
-
+    path("books/", include("books.urls")),
+    path("admin/", admin.site.urls),
+    path("", views.home),
+    path("accounts/", include("django.contrib.auth.urls")),
+    path("edit/<str:post_id>", views.edit_post),
+    path("post/<str:post_id>", views.show_post),
+    path("delete/<str:post_id>", views.delete_post),
+    path("create/", views.create_post),
+    path("tags/", views.tags),
+    path("delete/tag/<str:tag_id>", views.delete_tag),
+    path("download/<str:post_id>/<str:file_name>", views.download_file),
+    path("logout", views.logout),
     # User
-    path('users/', views.users),
-    path('users/<username>', views.user_access_edit),
-
+    path("users/", views.users),
+    path("users/<username>", views.user_access_edit),
     # STATIC
-    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATICFILES_DIRS[0]}),
-    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
-
+    re_path(
+        r"^static/(?P<path>.*)$", serve, {"document_root": settings.STATICFILES_DIRS[0]}
+    ),
+    re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
     # AJAX
-    path('ajax/autocomplete/', views.autocomplete),
-    path('ajax/extend_post/<post_id>', views.pre_show_post),
-
-    path('ckeditor/', include('ckeditor_uploader.urls')),
+    path("ajax/autocomplete/", views.autocomplete),
+    path("ajax/extend_post/<post_id>", views.pre_show_post),
+    path("ckeditor/", include("ckeditor_uploader.urls")),
 ]
 
-handler404 = 'taged_web.errors_views.page404'
-handler500 = 'taged_web.errors_views.page500'
+handler404 = "taged_web.errors_views.page404"
+handler500 = "taged_web.errors_views.page500"
 
 
 # if settings.DEBUG:

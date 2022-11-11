@@ -49,14 +49,14 @@ def icon_path(file: str):
     return "images/icons/" + icon
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def autocomplete(request):
     es = elasticsearch_control.connect_elasticsearch()
     titles = elasticsearch_control.get_titles(es, request.GET.get("term"))
     return JsonResponse({"data": titles})
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def home(request):
     available_tags = (
         Tags.objects.all()
@@ -148,7 +148,7 @@ def home(request):
     )
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def edit_post(request, post_id: str):
     """
     Редактирование существующей записи
@@ -270,7 +270,7 @@ def edit_post(request, post_id: str):
     return render(request, "edit_post.html", res)
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def download_file(request, post_id: str, file_name: str):
     # Отправляем пользователю файл
     if os.path.exists(MEDIA_ROOT / post_id / file_name):
@@ -280,7 +280,7 @@ def download_file(request, post_id: str, file_name: str):
         return response
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def show_post(request, post_id: str):
     """
     Выводим содержимое заметки
@@ -315,7 +315,7 @@ def show_post(request, post_id: str):
     return render(request, "post.html", res)
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def pre_show_post(request, post_id):
     """
     Выводим содержимое заметки
@@ -334,7 +334,7 @@ def pre_show_post(request, post_id):
     return JsonResponse({"post": res["content"]})
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def create_post(request):
     """
     Создаем новую запись
@@ -438,7 +438,7 @@ def create_post(request):
     )
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def delete_post(request, post_id):
     if request.method != "POST":
         return HttpResponseNotAllowed(["post"])
@@ -482,7 +482,7 @@ def delete_post(request, post_id):
     return HttpResponseRedirect("/")
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def tags(request):
     """
     Смотрим и создаем теги
@@ -505,7 +505,7 @@ def tags(request):
         return HttpResponseRedirect("/tags")
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def delete_tag(request, tag_id):
     """
     Смотрим и создаем теги
@@ -522,7 +522,7 @@ def delete_tag(request, tag_id):
     return HttpResponseRedirect("/tags")
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def users(request):
     if not request.user.is_superuser:
         return HttpResponseRedirect("/")
@@ -530,7 +530,7 @@ def users(request):
     return render(request, "user_control/users.html", {"users": u})
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def user_access_edit(request, username):
     if not request.user.is_superuser:
         return HttpResponseRedirect("/")
@@ -569,6 +569,6 @@ def user_access_edit(request, username):
         return HttpResponseRedirect("/users")
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def logout(request):
     return render(request, "registration/logout.html")

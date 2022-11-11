@@ -15,7 +15,7 @@ from taged_web import elasticsearch_control
 from books.forms import BookCreateFrom, SearchForm
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def create(request):
     if not request.user.is_superuser:  # Не суперпользователям недоступно создание
         return HttpResponseNotFound()
@@ -119,7 +119,7 @@ def update(request, book_id):
     return render(request, "books/create.html", {"form": book_form, "type": "update"})
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def delete(request, book_id):
     if not request.user.is_superuser:  # Не суперпользователям недоступно редактирование
         return HttpResponseNotFound()
@@ -145,7 +145,7 @@ def delete(request, book_id):
         return redirect("books")
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def show(request, book_id):
     es = connect_elasticsearch()  # Подключаемся к elasticsearch
     try:
@@ -162,7 +162,7 @@ def show(request, book_id):
     return HttpResponseNotFound()
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def about_book(request, book_id):
     es = connect_elasticsearch()  # Подключаемся к elasticsearch
     try:
@@ -179,7 +179,7 @@ def about_book(request, book_id):
     return HttpResponseNotFound()
 
 
-@login_required(login_url="accounts/login/")
+@login_required
 def all_books(request):
     search_form = SearchForm(request.GET)
     print(request.GET)

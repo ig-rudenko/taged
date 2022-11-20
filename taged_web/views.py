@@ -1,5 +1,4 @@
 import os.path
-import sys
 import random
 import elasticsearch
 from datetime import datetime
@@ -357,7 +356,9 @@ def create_post(request):
         user_form = PostForm(request.POST)  # Заполняем форму
 
         if user_form.is_valid():  # Проверяем форму
+            # Подключение к серверу elasticsearch.
             es = connect_elasticsearch()
+            # Создание записи в базе данных elasticsearch.
             res = elasticsearch_control.create_post(
                 es,
                 "company",

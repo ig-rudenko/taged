@@ -114,7 +114,7 @@ def update(request, book_id):
                 id_=book_id,
             )
 
-            return redirect(f'/books/about/{res["_id"]}')
+            return redirect(f'/books/about/{res.get("_id", "")}')
 
     return render(request, "books/create.html", {"form": book_form, "type": "update"})
 

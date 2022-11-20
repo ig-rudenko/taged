@@ -14,8 +14,10 @@
    padding: 10px;
 }
 .post-item-wrap {
-   background: #F7F7F2;
+   background: #ffffff;
    position: relative;
+   border: #dddddd 1px solid;
+   height: 100%;
 }
 .post-item-wrap:after {
    content: "";
@@ -57,7 +59,7 @@
 
    position: absolute;
    z-index: 99999;
-   background: #F7F7F2;
+   background: #ffffff;
 
    width: 400px;
    padding: 20px 30px 30px 30px;

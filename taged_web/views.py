@@ -11,7 +11,7 @@ from django.http import (
     HttpResponseNotAllowed,
 )
 from dateconverter import DateConverter
-
+from django.core.cache import cache
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from taged_web.elasticsearch_control import connect_elasticsearch
@@ -23,40 +23,59 @@ from .forms import PostForm
 
 
 def icon_path(file: str):
+    """
+    Если расширение файла есть в списке расширений, вернуть значок для этого расширения
+
+    :param file: Имя файла, который вы хотите отобразить
+    :return: Путь к значку для типа файла
+    """
     icon = "file.png"
     file_suffix = file.split(".")[-1]
 
     if file_suffix in ["doc", "docx", "rtf"]:
         icon = "docx.png"
-    if file_suffix in ["xls", "xlsx", "xlsm"]:
+    elif file_suffix in ["xls", "xlsx", "xlsm"]:
         icon = "xlsx.png"
-    if file_suffix in ["pdf"]:
+    elif file_suffix in ["pdf"]:
         icon = "pdf.png"
-    if file_suffix in ["txt"]:
+    elif file_suffix in ["txt"]:
         icon = "txt.png"
-    if file_suffix in ["drawio"]:
+    elif file_suffix in ["drawio"]:
         icon = "drawio.png"
-    if file_suffix in ["xml"]:
+    elif file_suffix in ["xml"]:
         icon = "xml.png"
-    if file_suffix in ["vds", "vsdx"]:
+    elif file_suffix in ["vds", "vsdx"]:
         icon = "visio.png"
-    if file_suffix in ["rar", "7z", "zip", "tar", "iso"]:
+    elif file_suffix in ["rar", "7z", "zip", "tar", "iso"]:
         icon = "archive.png"
-    if file_suffix in ["png", "jpeg", "gif", "jpg", "bpm"]:
+    elif file_suffix in ["png", "jpeg", "gif", "jpg", "bpm"]:
         icon = "img.png"
 
+    # Возврат пути к иконке
     return "images/icons/" + icon
 
 
 @login_required
 def autocomplete(request):
+    """
+    Подключаемся к серверу Elasticsearch, получаем начало заголовки документов,
+    соответствующие поисковому запросу, и возвращаем их полные названия в виде ответа JSON.
+
+    :param request: Объект запроса
+    :return: Список заголовков.
+    """
+
+    # Подключение к серверу elasticsearch.
     es = elasticsearch_control.connect_elasticsearch()
     titles = elasticsearch_control.get_titles(es, request.GET.get("term"))
+
     return JsonResponse({"data": titles})
 
 
 @login_required
 def home(request):
+    # Проверка, является ли пользователь суперпользователем или нет. Если пользователь является суперпользователем, он
+    # вернет все теги. Если пользователь не является суперпользователем, он вернет теги, связанные с пользователем.
     available_tags = (
         Tags.objects.all()
         if request.user.is_superuser
@@ -64,6 +83,7 @@ def home(request):
     )
     # unavailable_tags = list({t.tag_name for t in Tags.objects.all()} - {t.tag_name for t in available_tags})
 
+    # Создание списка тегов. Каждый тег имеет имя и логическое значение (был выбран или нет).
     tags_in = tags_off = tags_ = sorted(
         [{"tag": t.tag_name, "checked": False} for t in available_tags],
         key=lambda x: x["tag"].lower(),  # Сортируем по алфавиту
@@ -71,18 +91,36 @@ def home(request):
     data = []
     posts_count = None
 
+    # Проверка того, является ли метод запроса GET и является ли пользователь суперпользователем. Если оба условия
+    # выполняются, он получает последние опубликованные сообщения от Elasticsearch.
     if request.method == "GET":
         es = connect_elasticsearch()
         if es and request.user.is_superuser:
             # Просмотр последних статей доступен только суперпользователю
-            data = elasticsearch_control.get_last_published(es)
-            posts_count = elasticsearch_control.posts_count()
+
+            # Проверяем, есть ли в кеше last_updated_posts, и если да, то используем его
+            data = cache.get("last_updated_posts")
+            if not data:
+                # Если нет, то вычисляем
+                data = elasticsearch_control.get_last_published(es)
+                # Установка кеша для last_updated_posts на значение data на 600 секунд.
+                cache.set("last_updated_posts", data, 600)
+
+            # Проверяем, есть ли в кеше all_posts_count, и если да, то используем его
+            posts_count = cache.get("all_posts_count")
+            if not posts_count:
+                # Если нет, то вычисляем
+                posts_count = elasticsearch_control.posts_count()
+                # Установка кеша для all_posts_count на значение posts_count на 600 секунд.
+                cache.set("all_posts_count", posts_count, 600)
 
     if request.method == "POST":
         es = connect_elasticsearch()
         tags_in = dict(request.POST).get("tags-in")
         tags_off = dict(request.POST).get("tags-off") or []
 
+        # Проверка, ввел ли пользователь поисковый запрос или теги.
+        # Если нет, он перенаправляет пользователя на домашнюю страницу.
         if (
             not request.POST.get("search", "")  # Если (нет поиска по слову)
             and not tags_in  # и (нет тегов)
@@ -91,7 +129,7 @@ def home(request):
         ):
             return HttpResponseRedirect("/")
 
-        # Поиск записей
+        # Поиск постов в базе данных elasticsearch.
         data = elasticsearch_control.find_posts(
             es,
             string=request.POST.get("search", ""),
@@ -103,6 +141,7 @@ def home(request):
             if isinstance(d["tags"], str):
                 d["tags"] = [d["tags"]]
             # Проверяем прикрепленные файлы
+            # Проверяем, существует ли каталог и есть ли в нем какие-либо файлы.
             if os.path.exists(MEDIA_ROOT / f'{d["id"]}') and os.listdir(
                 MEDIA_ROOT / f'{d["id"]}'
             ):
@@ -131,6 +170,7 @@ def home(request):
             key=lambda x: x["tag"].lower(),  # Сортируем по алфавиту
         )
 
+    # Отрисовка страницы home.html с данными из базы данных.
     return render(
         request,
         "home.html",
@@ -156,8 +196,9 @@ def edit_post(request, post_id: str):
     :return:
     """
 
-    # У супер пользователя доступны все теги
-    # Список тегов ['tag1', 'tag2', ... ]
+    # Проверка, является ли пользователь суперпользователем или нет. Если пользователь является суперпользователем, он
+    # вернет все теги в базе данных. Если пользователь не является суперпользователем, он вернет все теги, доступные
+    # пользователю.
     available_tags = (
         [t.tag_name for t in Tags.objects.all()]
         if request.user.is_superuser
@@ -307,8 +348,10 @@ def show_post(request, post_id: str):
 
     # Если имеются файлы у записи
     res["files"] = []
+    # Проверяем, существует ли каталог и есть ли в нем какие-либо файлы.
     if os.path.exists(MEDIA_ROOT / post_id) and os.listdir(MEDIA_ROOT / post_id):
         for file in os.listdir(MEDIA_ROOT / post_id):
+            # Добавление файлов в текущем каталоге в список файлов.
             res["files"].append({"name": file, "icon": icon_path(file)})
 
     return render(request, "post.html", res)

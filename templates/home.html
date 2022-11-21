@@ -94,16 +94,16 @@
     {% for post in data %}
         <div class="post-item">
             <div class="post-item-wrap {% if post.score > 0.48 %} post-item-wrap-main {% endif %}">
-            <a id="{{ post.id }}" href="post/{{ post.id }}" class="post-link">
-            {% if post.files %}
-                <img class="post-title-img" src="{% static "/images/icons/clip3.png" %}" alt="clip">
-            {% endif %}
-            <h3 class="post-title">{{ post.title }}</h3>
-                {% for tag in post.tags %}
-                <p class="post-content">{{ tag }}</p>
-                {% endfor %}
+                <a id="{{ post.id }}" href="post/{{ post.id }}" class="post-link">
+                {% if post.files %}
+                    <img class="post-title-img" src="{% static "/images/icons/clip3.png" %}" alt="clip">
+                {% endif %}
+                    <h3 class="post-title">{{ post.title }}</h3>
+                    {% for tag in post.tags %}
+                        <p class="post-content">{{ tag }}</p>
+                    {% endfor %}
 
-            </a>
+                </a>
             <div id="content-{{ post.id }}" class="pre_post_hidden" style="width: 426.66px"></div>
             </div>
         </div>

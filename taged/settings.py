@@ -153,6 +153,12 @@ LOGOUT_REDIRECT_URL = "/accounts/login/"
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 100_000_000  # 100МБ
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': 'cache',
+    }
+}
 
 CKEDITOR_UPLOAD_PATH = "/media/"
 

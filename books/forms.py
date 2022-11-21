@@ -1,6 +1,7 @@
 from django import forms
 
 
+# Форма, для создания новой книги
 class BookCreateFrom(forms.Form):
     title = forms.CharField(
         max_length=100,

@@ -14,8 +14,7 @@ from dateconverter import DateConverter
 from django.core.cache import cache
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from taged_web.elasticsearch_control import connect_elasticsearch
-from taged_web import elasticsearch_control
+from taged_web.elasticsearch_control import ElasticsearchConnect
 from taged_web.models import Tags
 
 from taged.settings import MEDIA_ROOT
@@ -61,13 +60,13 @@ def autocomplete(request):
     Подключаемся к серверу Elasticsearch, получаем начало заголовки документов,
     соответствующие поисковому запросу, и возвращаем их полные названия в виде ответа JSON.
 
-    :param request: Объект запроса
+    :param request: Объект запроса.
     :return: Список заголовков.
     """
 
     # Подключение к серверу elasticsearch.
-    es = elasticsearch_control.connect_elasticsearch()
-    titles = elasticsearch_control.get_titles(es, request.GET.get("term"))
+    elastic_search = ElasticsearchConnect()
+    titles = elastic_search.get_titles(string=request.GET.get("term"))
 
     return JsonResponse({"data": titles})
 
@@ -94,15 +93,15 @@ def home(request):
     # Проверка того, является ли метод запроса GET и является ли пользователь суперпользователем. Если оба условия
     # выполняются, он получает последние опубликованные сообщения от Elasticsearch.
     if request.method == "GET":
-        es = connect_elasticsearch()
-        if es and request.user.is_superuser:
+        elastic_search = ElasticsearchConnect()
+        if elastic_search and request.user.is_superuser:
             # Просмотр последних статей доступен только суперпользователю
 
             # Проверяем, есть ли в кеше last_updated_posts, и если да, то используем его
             data = cache.get("last_updated_posts")
             if not data:
                 # Если нет, то вычисляем
-                data = elasticsearch_control.get_last_published(es)
+                data = elastic_search.get_last_published()
                 # Установка кеша для last_updated_posts на значение data на 600 секунд.
                 cache.set("last_updated_posts", data, 600)
 
@@ -110,12 +109,12 @@ def home(request):
             posts_count = cache.get("all_posts_count")
             if not posts_count:
                 # Если нет, то вычисляем
-                posts_count = elasticsearch_control.posts_count()
+                posts_count = elastic_search.posts_count()
                 # Установка кеша для all_posts_count на значение posts_count на 600 секунд.
                 cache.set("all_posts_count", posts_count, 600)
 
     if request.method == "POST":
-        es = connect_elasticsearch()
+        elastic_search = ElasticsearchConnect()
         tags_in = dict(request.POST).get("tags-in")
         tags_off = dict(request.POST).get("tags-off") or []
 
@@ -130,8 +129,7 @@ def home(request):
             return HttpResponseRedirect("/")
 
         # Поиск постов в базе данных elasticsearch.
-        data = elasticsearch_control.find_posts(
-            es,
+        data = elastic_search.find_posts(
             string=request.POST.get("search", ""),
             tags_in=tags_in,
             tags_off=tags_off,
@@ -216,9 +214,11 @@ def edit_post(request, post_id: str):
             # Добавляем имя файла + иконку в список
             files.append({"name": f, "icon": icon_path(f)})
 
-    es = connect_elasticsearch()  # Подключаемся к elasticsearch
+    elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
     try:
-        res = es.get(index="company", id=post_id)["_source"]  # Получаем запись по ID
+        res = elastic_search.get(index="company", id=post_id)[
+            "_source"
+        ]  # Получаем запись по ID
         if isinstance(res["tags"], str):
             res["tags"] = [res["tags"]]  # Переводим теги в список
     except elasticsearch.exceptions.NotFoundError:
@@ -248,17 +248,15 @@ def edit_post(request, post_id: str):
         user_form = PostForm(request.POST)
 
         if user_form.is_valid():  # Если данные были введены верно
-            es = connect_elasticsearch()  # Подключаемся к elasticsearch
 
-            # Список тегов, которые будут обновлены
+            # Список тегов, которые будут обновлены.
             # Состоят из тегов, которые были у записи, но недоступные для пользователя + те, что он указал явно
             tags_to_save = [t for t in exists_tags if t not in available_tags] + dict(
                 request.POST
             )["tags_checked"]
 
             # Обновляем существующую в elasticsearch запись
-            update_post = elasticsearch_control.update_post(
-                es,
+            update_post = elastic_search.update_post(
                 "company",
                 {
                     "content": user_form.cleaned_data["input"],
@@ -290,7 +288,7 @@ def edit_post(request, post_id: str):
             return HttpResponseRedirect(f"/post/{post_id}")
 
         else:
-            # Если не все поля были указаны
+            # Если не все поля были указаны.
             # Отправляем данные, которые были введены
             res = {
                 "tags": [
@@ -328,9 +326,11 @@ def show_post(request, post_id: str):
     :param post_id: ID записи в elasticsearch
     :return:
     """
-    es = connect_elasticsearch()  # Подключаемся к elasticsearch
+    elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
     try:
-        res = es.get(index="company", id=post_id)["_source"]  # Получаем запись по ID
+        res = elastic_search.get(index="company", id=post_id)[
+            "_source"
+        ]  # Получаем запись по ID
         # Если имеется всего один тег, то он имеет тип str, переводим его в list
         if isinstance(res["tags"], str):
             res["tags"] = [res["tags"]]
@@ -365,9 +365,11 @@ def pre_show_post(request, post_id):
     :param post_id: ID записи в elasticsearch
     :return:
     """
-    es = connect_elasticsearch()  # Подключаемся к elasticsearch
+    elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
     try:
-        res = es.get(index="company", id=post_id)["_source"]  # Получаем запись по ID
+        res = elastic_search.get(index="company", id=post_id)[
+            "_source"
+        ]  # Получаем запись по ID
 
     except elasticsearch.exceptions.NotFoundError:
         print("ID not exist")
@@ -400,10 +402,9 @@ def create_post(request):
 
         if user_form.is_valid():  # Проверяем форму
             # Подключение к серверу elasticsearch.
-            es = connect_elasticsearch()
+            elastic_search = ElasticsearchConnect()
             # Создание записи в базе данных elasticsearch.
-            res = elasticsearch_control.create_post(
-                es,
+            res = elastic_search.create_post(
                 "company",
                 {
                     "content": user_form.cleaned_data["input"],
@@ -451,9 +452,9 @@ def create_post(request):
 
     # Клонируем заметку
     if request.GET.get("cl"):
-        es = connect_elasticsearch()
+        elastic_search = ElasticsearchConnect()
         try:
-            res = es.get(index="company", id=request.GET.get("cl"))[
+            res = elastic_search.get(index="company", id=request.GET.get("cl"))[
                 "_source"
             ]  # Получаем запись по ID
             # Если имеется всего один тег, то он имеет тип str, переводим его в list
@@ -498,10 +499,10 @@ def delete_post(request, post_id):
     )
 
     # Подключаемся к Elasticsearch
-    es = connect_elasticsearch()
+    elastic_search = ElasticsearchConnect()
 
     # Ищем пост по его ID
-    post = es.search(
+    post = elastic_search.search(
         index="company",
         _source=["_id", "tags"],
         query={"simple_query_string": {"query": post_id, "fields": ["_id"]}},
@@ -516,7 +517,7 @@ def delete_post(request, post_id):
     # Если теги поста разрешены данному пользователю, то удаляем пост
     if set(post_tags).issubset(available_tags):
         print("delete:", post_id)
-        es.delete(index="company", id=post_id)
+        elastic_search.delete(index="company", id=post_id)
         if os.path.exists(MEDIA_ROOT / post_id):
             # Если есть прикрепленные файлы
             for f in os.listdir(MEDIA_ROOT / post_id):

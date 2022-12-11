@@ -10,8 +10,7 @@ import elasticsearch
 from django.http import HttpResponseNotFound
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from taged_web.elasticsearch_control import connect_elasticsearch
-from taged_web import elasticsearch_control
+from taged_web.elasticsearch_control import ElasticsearchConnect
 from books.forms import BookCreateFrom, SearchForm
 
 
@@ -35,9 +34,8 @@ def create(request):
         book_form = BookCreateFrom(request.POST)
         # Проверяем, действительна ли форма и загружен ли файл.
         if book_form.is_valid() and request.FILES.get("book_file"):
-            es = connect_elasticsearch()
-            res = elasticsearch_control.create_post(
-                es,
+            elastic_search = ElasticsearchConnect()
+            res = elastic_search.create_post(
                 "books",
                 {
                     "title": book_form.cleaned_data["title"],
@@ -104,9 +102,11 @@ def update(request, book_id):
     book_form = BookCreateFrom()
 
     if request.method == "GET":
-        es = connect_elasticsearch()  # Подключаемся к elasticsearch
+        elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
         try:
-            res = es.get(index="books", id=book_id)["_source"]  # Получаем запись по ID
+            res = elastic_search.get(index="books", id=book_id)[
+                "_source"
+            ]  # Получаем запись по ID
         except elasticsearch.exceptions.NotFoundError:
             print("ID not exist")
             return HttpResponseNotFound()
@@ -123,10 +123,9 @@ def update(request, book_id):
         book_form = BookCreateFrom(request.POST)
         # Проверка правильности формы.
         if book_form.is_valid():
-            es = connect_elasticsearch()
+            elastic_search = ElasticsearchConnect()
             # Обновление книги новыми данными.
-            res = elasticsearch_control.update_post(
-                es,
+            res = elastic_search.update_post(
                 "books",
                 {
                     "title": book_form.cleaned_data["title"],
@@ -155,10 +154,10 @@ def delete(request, book_id):
         return HttpResponseNotFound()
     if request.method == "POST":
         # Подключаемся к Elasticsearch
-        es = connect_elasticsearch()
+        elastic_search = ElasticsearchConnect()
 
         # Поиск книги с заданным book_id.
-        post = es.search(
+        post = elastic_search.search(
             index="books",
             _source=["_id"],
             query={"simple_query_string": {"query": book_id, "fields": ["_id"]}},
@@ -169,7 +168,7 @@ def delete(request, book_id):
                 shutil.rmtree(f"{sys.path[0]}/media/books/{book_id}")
             print("delete:", book_id)
             # Удаление книги с указанным book_id.
-            es.delete(index="books", id=book_id)
+            elastic_search.delete(index="books", id=book_id)
             return redirect("books")
         else:
             # Возвращает страницу ошибки 404.
@@ -183,12 +182,14 @@ def show(request, book_id):
     """
     Он принимает запрос и book_id и возвращает ответ.
 
-    :param request: Это объект запроса, который передается из представления
-    :param book_id: идентификатор книги, которую мы хотим показать
+    :param request: Это объект запроса, который передается из представления.
+    :param book_id: идентификатор книги, которую мы хотим показать.
     """
-    es = connect_elasticsearch()  # Подключаемся к elasticsearch
+    elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
     try:
-        res = es.get(index="books", id=book_id)["_source"]  # Получаем запись по ID
+        res = elastic_search.get(index="books", id=book_id)[
+            "_source"
+        ]  # Получаем запись по ID
         if res:  # Проверяет, существует ли файл книги. Если да, то возвращает его.
             file_name = os.listdir(f"{sys.path[0]}/media/books/{book_id}")
             file_name = [f for f in file_name if f != "preview.png"]
@@ -212,9 +213,11 @@ def about_book(request, book_id):
     запросе, который был сделан на сервер
     :param book_id: Идентификатор книги, которую мы рассматриваем
     """
-    es = connect_elasticsearch()  # Подключаемся к elasticsearch
+    elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
     try:
-        res = es.get(index="books", id=book_id)["_source"]  # Получаем запись по ID
+        res = elastic_search.get(index="books", id=book_id)[
+            "_source"
+        ]  # Получаем запись по ID
         # Преобразование формата даты
         res["published_at"] = datetime.strptime(
             res["published_at"], "%Y-%m-%dT%H:%M:%S.%f"
@@ -270,17 +273,17 @@ def all_books(request):
         query = {}
 
     # Подключение к серверу elasticsearch.
-    es = connect_elasticsearch()
+    elastic_search = ElasticsearchConnect()
     print(query)
     # Проверка корректности запроса и корректности формы поиска.
     if query and search_form.is_valid():
         # Ищем по полям, переданным в запросе
-        result = es.search(
+        result = elastic_search.search(
             size=100,
             index="books",
             _source=["title", "year", "author"],
             query=query,
-            request_timeout=elasticsearch_control.ELASTICSEARCH_request_timeout,
+            request_timeout=elastic_search.ELASTICSEARCH_request_timeout,
         )
         res_books = []
         print(result)
@@ -293,11 +296,9 @@ def all_books(request):
     else:
         # Резервный вариант, когда запрос недействителен.
         search_form.is_valid()
-        es = connect_elasticsearch()
+        elastic_search = ElasticsearchConnect()
         # Получение последних 100 книг из базы данных.
-        res_books = elasticsearch_control.get_last_published(
-            es, index="books", limit=100
-        )
+        res_books = elastic_search.get_last_published(index="books", limit=100)
 
     return render(
         request,

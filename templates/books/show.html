@@ -29,13 +29,13 @@
 </form>
 
 {#    КНИГИ    #}
-<div class="row row-cols-md-3">
+<div class="align-items-stretch row row-cols-1 row-cols-lg-3">
 {% for book in books %}
-    <div class="col mb-4">
-        <div class="card bg-light" style="width: 322px;">
+    <div class="col py-3">
+        <div class="card card-cover h-100 overflow-hidden text-bg-dark rounded-4 shadow-lg">
 
             <a href="{% url 'about_book' book.id %}">
-                <img style="height: 440px; width: 320px; object-fit: cover; object-position: right;"
+                <img style="object-fit: cover; object-position: right; min-height: 400px; max-height: 500px"
                      src="/media/books/{{ book.id }}/preview.png" class="card-img-top" alt="img:'{{ book.title }}'">
             </a>
 

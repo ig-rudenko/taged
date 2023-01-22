@@ -315,7 +315,6 @@ class ElasticsearchConnect(Elasticsearch):
         result = []
         if res and res["hits"]["total"]["value"]:
             for b in res["hits"]["hits"]:
-                print(b["_source"])
                 result.append(dict(b["_source"], **{"id": b["_id"], "score": 0}))
         return result
 

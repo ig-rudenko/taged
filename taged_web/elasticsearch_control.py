@@ -9,12 +9,12 @@ class QueryLimit:
     per_page = 50
 
     def __init__(
-        self, es: "ElasticsearchConnect", query: dict, convert_result=None, **extra
+        self, es: "ElasticsearchConnect", params: dict, convert_result=None, **extra
     ):
         self._es = es
-        self._query = query
-        if query["query"]:
-            self.count = es.query_count(query["index"], query["query"])
+        self._params = params
+        if params["body"]:
+            self.count = es.query_count(params["index"], params["body"]["query"])
         else:
             self.count = 0
         self._convert_func = convert_result
@@ -31,7 +31,7 @@ class QueryLimit:
             return []
         query_from, query_size = self.get_limits(page)
         res = self._es.search(
-            **self._query,
+            **self._params,
             **{"from_": query_from, "size": query_size},
         )
 
@@ -185,42 +185,48 @@ class ElasticsearchConnect(Elasticsearch):
         # Если переменная tags_in не пустая, то она присваивается сама себе, иначе присваивается пустой список.
         tags_in = tags_in if tags_in else []
 
+        query = {"query": {"bool": {"must": []}}}
+
         # Если переменная string пустая и переменная tags_in не пустая, то выполняется поиск по тегам.
-        if not string and tags_in:
-            query = {"match": {"tags": " ".join(tags_in)}}
+        if tags_in:
+            query["query"]["bool"]["must"].append(
+                {
+                    "match": {"tags": " ".join(tags_in)},
+                }
+            )
 
         # Поиск по строке в title и content
-        elif string:
-            query = {
-                "simple_query_string": {
-                    "query": string,
-                    "fields": ["title^2", "content"],
+        if string:
+            query["query"]["bool"]["must"].append(
+                {
+                    "simple_query_string": {
+                        "query": string,
+                        "fields": ["title^2", "content"],
+                    }
                 }
-            }
-        else:
-            query = {}
+            )
 
         # Вычисляем кол-во записей по запросу
         query = {
             "index": "company",
             "_source": ["tags", "title"],
-            "query": query,
+            "body": query,
             "request_timeout": settings.ELASTICSEARCH_TIMEOUT,
         }
 
         # Вычисляем отступ и размер выборки
         return QueryLimit(
             es=self,
-            query=query,
+            params=query,
             convert_result=self.convert_post_result,
             tags_in=tags_in,
             tags_off=tags_off,
         )
 
     @staticmethod
-    def convert_post_result(res, tags_in, tags_off):
+    def convert_post_result(res, tags_in, tags_off) -> list:
         # Присваивает переменной max_score максимальный балл из всех записей в ответе.
-        max_score = float(res["hits"]["max_score"] or 0)
+        max_score = float(res["hits"]["max_score"] or 1)
         result = []
         # Проверяет, есть ли хоть одна запись в ответе.
         if res and res["hits"]["total"]["value"]:
@@ -243,17 +249,17 @@ class ElasticsearchConnect(Elasticsearch):
                             "id": post["_id"],
                             "title": post["_source"]["title"],
                             "tags": post["_source"]["tags"],
-                            "score": round(float(post["_score"]) / max_score, 3),
+                            "score": round(float(post["_score"] or 0) / max_score, 3),
                         }
                     )
         return result
 
     def find_books(self, search: str = "", year: str = "") -> QueryLimit:
-        query = {"bool": {"must": []}}
+        query = {"query": {"bool": {"must": []}}, "sort": {"published_at": "desc"}}
 
         if search:
             # Поиск текста
-            query["bool"]["must"].append(
+            query["query"]["bool"]["must"].append(
                 {
                     "simple_query_string": {
                         "query": search,
@@ -264,14 +270,18 @@ class ElasticsearchConnect(Elasticsearch):
 
         if year:
             # Поиск книг по годам
-            query["bool"]["must"].append({"term": {"year": year},})
+            query["query"]["bool"]["must"].append(
+                {
+                    "term": {"year": year},
+                }
+            )
 
         return QueryLimit(
             es=self,
-            query={
+            params={
                 "index": "books",
                 "_source": ["title", "year", "author"],
-                "query": query,
+                "body": query,
                 "request_timeout": settings.ELASTICSEARCH_TIMEOUT,
             },
             convert_result=self.convert_books_result,
@@ -293,7 +303,7 @@ class ElasticsearchConnect(Elasticsearch):
         ## Возвращает ```limit``` последних опубликованных записей из индекса ```index```
 
         :param index: Имя индекса для поиска, defaults to company (optional)
-        :param limit: Количество возвращаемых результатов, defaults to 20 (optional)
+        :param limit: Количество возвращаемых результатов, defaults to ```QueryLimit.per_page``` (optional)
         """
 
         res = self.search(
@@ -305,6 +315,7 @@ class ElasticsearchConnect(Elasticsearch):
         result = []
         if res and res["hits"]["total"]["value"]:
             for b in res["hits"]["hits"]:
+                print(b["_source"])
                 result.append(dict(b["_source"], **{"id": b["_id"], "score": 0}))
         return result
 

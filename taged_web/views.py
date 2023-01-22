@@ -130,11 +130,13 @@ class HomeView(View):
                 return HttpResponseRedirect("/")
 
             # Поиск постов в базе данных elasticsearch.
-            data = elastic_search.find_posts(
+            query_limiter = elastic_search.find_posts(
                 string=search_str,
                 tags_in=tags_in,
                 tags_off=tags_off,
-            ).get_page(request.GET.get("page"))
+            )
+            data = query_limiter.get_page(request.GET.get("page"))
+            posts_count = query_limiter.count
 
         self.add_file_mark(data)
         tags_in = self.mark_selected_tags(tags_in, available_tags)

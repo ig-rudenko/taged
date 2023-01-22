@@ -9,8 +9,12 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
+import logging
+import os
+import time
 from pathlib import Path
+from requests.exceptions import ConnectionError as ElasticConnectionError
+from taged_web.elasticsearch_control import ElasticsearchConnect
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-o$84xxrt-ip(b7&)wy)ka(@s@7tq()0vs0u(hu*mo7-^uvc_54"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -151,12 +155,16 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_REDIRECT_URL = "/accounts/login/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
 
+ELASTICSEARCH_HOST = os.getenv("ELASTICSEARCH_HOST", "localhost")
+ELASTICSEARCH_TIMEOUT = int(os.getenv("ELASTICSEARCH_request_timeout", 10))
+
+
 DATA_UPLOAD_MAX_MEMORY_SIZE = 100_000_000  # 100МБ
 
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': 'cache',
+    "default": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": "cache",
     }
 }
 
@@ -280,3 +288,77 @@ CKEDITOR_CONFIGS = {
         ),
     }
 }
+
+
+settings_company = {
+    "settings": {
+        "analysis": {
+            "filter": {
+                "ru_stop": {"type": "stop", "stopwords": "_russian_"},
+                "ru_stemmer": {"type": "stemmer", "language": "russian"},
+            },
+            "analyzer": {
+                "default": {
+                    "char_filter": ["html_strip"],
+                    "tokenizer": "standard",
+                    "filter": ["lowercase", "ru_stop", "ru_stemmer"],
+                }
+            },
+        }
+    },
+    "mappings": {
+        "dynamic": "strict",
+        "properties": {
+            "title": {"type": "text"},
+            "content": {"type": "text"},
+            "tags": {"type": "text"},
+            "published_at": {"type": "date"},
+        },
+    },
+}
+settings_books = {
+    "settings": {
+        "analysis": {
+            "filter": {
+                "ru_stop": {"type": "stop", "stopwords": "_russian_"},
+                "ru_stemmer": {"type": "stemmer", "language": "russian"},
+            },
+            "analyzer": {
+                "default": {
+                    "char_filter": ["html_strip"],
+                    "tokenizer": "standard",
+                    "filter": ["lowercase", "ru_stop", "ru_stemmer"],
+                }
+            },
+        }
+    },
+    "mappings": {
+        "dynamic": "strict",
+        "properties": {
+            "title": {"type": "text"},
+            "author": {"type": "text"},
+            "about": {"type": "text"},
+            "year": {"type": "text"},
+            "published_at": {"type": "date"},
+        },
+    },
+}
+
+logging.basicConfig(filename="logs", level=logging.INFO)
+
+while True:
+    try:
+        # Проверяем, работает ли elasticsearch или нет.
+        # Если он запущен, он подключится к elasticsearch.
+        es = ElasticsearchConnect()
+        if es and es.available():
+            # Создаем индекс с именем company в Elasticsearch.
+            es.create_index(settings_company, "company")
+            # Создаем индекс с именем books в Elasticsearch.
+            es.create_index(settings_books, "books")
+            break
+        print("Wait for elastic search")
+        time.sleep(10)
+    except ElasticConnectionError as e:
+        print(e)
+        time.sleep(10)

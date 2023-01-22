@@ -2,6 +2,7 @@ import os.path
 import random
 import elasticsearch
 from datetime import datetime
+
 from django.shortcuts import render
 from django.http import (
     HttpResponseRedirect,
@@ -11,10 +12,12 @@ from django.http import (
     HttpResponseNotAllowed,
 )
 from dateconverter import DateConverter
+from django.views import View
 from django.core.cache import cache
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from taged_web.elasticsearch_control import ElasticsearchConnect
+from django.utils.decorators import method_decorator
+from taged_web.elasticsearch_control import ElasticsearchConnect, QueryLimit
 from taged_web.models import Tags
 
 from taged.settings import MEDIA_ROOT
@@ -71,118 +74,112 @@ def autocomplete(request):
     return JsonResponse({"data": titles})
 
 
-@login_required
-def home(request):
-    # Проверка, является ли пользователь суперпользователем или нет. Если пользователь является суперпользователем, он
-    # вернет все теги. Если пользователь не является суперпользователем, он вернет теги, связанные с пользователем.
-    available_tags = (
-        Tags.objects.all()
-        if request.user.is_superuser
-        else Tags.objects.filter(user__username=request.user.username)
-    )
-    # unavailable_tags = list({t.tag_name for t in Tags.objects.all()} - {t.tag_name for t in available_tags})
-
-    # Создание списка тегов. Каждый тег имеет имя и логическое значение (был выбран или нет).
-    tags_in = tags_off = tags_ = sorted(
-        [{"tag": t.tag_name, "checked": False} for t in available_tags],
-        key=lambda x: x["tag"].lower(),  # Сортируем по алфавиту
-    )
-    data = []
-    posts_count = None
-
-    # Проверка того, является ли метод запроса GET и является ли пользователь суперпользователем. Если оба условия
-    # выполняются, он получает последние опубликованные сообщения от Elasticsearch.
-    if request.method == "GET":
+@method_decorator(login_required, name="dispatch")
+class HomeView(View):
+    def get(self, request):
         elastic_search = ElasticsearchConnect()
-        if elastic_search and request.user.is_superuser:
-            # Просмотр последних статей доступен только суперпользователю
 
-            # Проверяем, есть ли в кеше last_updated_posts, и если да, то используем его
-            data = cache.get("last_updated_posts")
-            if not data:
-                # Если нет, то вычисляем
-                data = elastic_search.get_last_published()
-                # Установка кеша для last_updated_posts на значение data на 600 секунд.
-                cache.set("last_updated_posts", data, 600)
+        tags_in = request.GET.getlist("tags-in", [])
+        tags_off = request.GET.getlist("tags-off", [])
+        search_str = request.GET.get("search", "")
 
-            # Проверяем, есть ли в кеше all_posts_count, и если да, то используем его
-            posts_count = cache.get("all_posts_count")
-            if not posts_count:
-                # Если нет, то вычисляем
-                posts_count = elastic_search.posts_count()
-                # Установка кеша для all_posts_count на значение posts_count на 600 секунд.
-                cache.set("all_posts_count", posts_count, 600)
+        # Проверка, является ли пользователь суперпользователем или нет. Если пользователь является суперпользователем, он
+        # вернет все теги. Если пользователь не является суперпользователем, он вернет теги, связанные с пользователем.
+        user_tags = (
+            Tags.objects.all().values("tag_name")
+            if request.user.is_superuser
+            else Tags.objects.filter(user=request.user)
+        )
+        # Создание списка тегов доступных тегов
+        available_tags = [t["tag_name"] for t in user_tags]
+        data = []
+        posts_count = None
 
-    if request.method == "POST":
-        elastic_search = ElasticsearchConnect()
-        tags_in = dict(request.POST).get("tags-in")
-        tags_off = dict(request.POST).get("tags-off") or []
+        # Проверка того, является ли метод запроса GET и является ли пользователь суперпользователем. Если оба условия
+        # выполняются, он получает последние опубликованные сообщения от Elasticsearch.
+        if not tags_in and not tags_off and not search_str:
 
-        # Проверка, ввел ли пользователь поисковый запрос или теги.
-        # Если нет, он перенаправляет пользователя на домашнюю страницу.
-        if (
-            not request.POST.get("search", "")  # Если (нет поиска по слову)
-            and not tags_in  # и (нет тегов)
-            or set(tags_in or set())  # или (теги содержат запрещенные)
-            - {t.tag_name for t in available_tags}  # (определяем разностью)
-        ):
-            return HttpResponseRedirect("/")
+            if request.user.is_superuser:
+                # Просмотр последних статей доступен только суперпользователю
 
-        # Поиск постов в базе данных elasticsearch.
-        data = elastic_search.find_posts(
-            string=request.POST.get("search", ""),
-            tags_in=tags_in,
-            tags_off=tags_off,
+                # Проверяем, есть ли в кеше last_updated_posts, и если да, то используем его
+                data = cache.get("last_updated_posts")
+                if not data:
+                    # Если нет, то вычисляем
+                    data = elastic_search.get_last_published(index="company")
+                    # Установка кеша для last_updated_posts на значение data на 600 секунд.
+                    cache.set("last_updated_posts", data, 600)
+
+                # Проверяем, есть ли в кеше all_posts_count, и если да, то используем его
+                posts_count = cache.get("all_posts_count")
+                if not posts_count:
+                    # Если нет, то вычисляем
+                    posts_count = elastic_search.posts_count()
+                    # Установка кеша для all_posts_count на значение posts_count на 600 секунд.
+                    cache.set("all_posts_count", posts_count, 600)
+
+        else:
+            # Проверка, ввел ли пользователь поисковый запрос или теги.
+            # Если нет, он перенаправляет пользователя на домашнюю страницу.
+            if (
+                not search_str  # Если (нет поиска по слову)
+                and not tags_in  # и (нет тегов)
+                or set(tags_in or set())  # или (теги содержат запрещенные)
+                - set(available_tags)  # (определяем разностью)
+            ):
+                return HttpResponseRedirect("/")
+
+            # Поиск постов в базе данных elasticsearch.
+            data = elastic_search.find_posts(
+                string=search_str,
+                tags_in=tags_in,
+                tags_off=tags_off,
+            ).get_page(request.GET.get("page"))
+
+        self.add_file_mark(data)
+        tags_in = self.mark_selected_tags(tags_in, available_tags)
+        tags_off = self.mark_selected_tags(tags_off, available_tags)
+
+        # Отрисовка страницы home.html с данными из базы данных.
+        return render(
+            request,
+            "home.html",
+            {
+                "posts_count": posts_count,
+                "data": data,
+                "tags_in": tags_in,
+                "tags_off": tags_off,
+                "image": random.randint(0, 9),
+            },
         )
 
-        for d in data:
-            if isinstance(d["tags"], str):
-                d["tags"] = [d["tags"]]
+    @staticmethod
+    def add_file_mark(objects: list):
+        for post in objects:
+            if isinstance(post["tags"], str):
+                post["tags"] = [post["tags"]]
             # Проверяем прикрепленные файлы
             # Проверяем, существует ли каталог и есть ли в нем какие-либо файлы.
-            if os.path.exists(MEDIA_ROOT / f'{d["id"]}') and os.listdir(
-                MEDIA_ROOT / f'{d["id"]}'
+            if os.path.exists(MEDIA_ROOT / f'{post["id"]}') and os.listdir(
+                MEDIA_ROOT / f'{post["id"]}'
             ):
-                d["files"] = True
+                post["files"] = True
             else:
-                d["files"] = False
+                post["files"] = False
 
-        tags_in = sorted(
-            [
+    @staticmethod
+    def mark_selected_tags(selected_tags, available_tags):
+        if not selected_tags:
+            tags_ = [{"name": tag, "checked": False} for tag in available_tags]
+        else:
+            tags_ = [
                 {
-                    "tag": t["tag"],
-                    "checked": True if tags_in and t["tag"] in tags_in else False,
+                    "name": tag,
+                    "checked": True if tag in selected_tags else False,
                 }
-                for t in tags_
-            ],
-            key=lambda x: x["tag"].lower(),  # Сортируем по алфавиту
-        )
-        tags_off = sorted(
-            [
-                {
-                    "tag": t["tag"],
-                    "checked": True if tags_off and t["tag"] in tags_off else False,
-                }
-                for t in tags_
-            ],
-            key=lambda x: x["tag"].lower(),  # Сортируем по алфавиту
-        )
-
-    # Отрисовка страницы home.html с данными из базы данных.
-    return render(
-        request,
-        "home.html",
-        {
-            "posts_count": posts_count,
-            "search_mode": request.method == "POST",
-            "data": data,
-            "superuser": request.user.is_superuser,
-            "tags_in": tags_in,
-            "tags_off": tags_off,
-            "image": random.randint(0, 9),
-            "search_text": request.POST.get("search") or "",
-        },
-    )
+                for tag in available_tags
+            ]
+        return sorted(tags_, key=lambda x: x["name"].lower())  # Сортируем по алфавиту
 
 
 @login_required
@@ -216,9 +213,8 @@ def edit_post(request, post_id: str):
 
     elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
     try:
-        res = elastic_search.get(index="company", id=post_id)[
-            "_source"
-        ]  # Получаем запись по ID
+        # Получаем запись по ID
+        res = elastic_search.get(index="company", id=post_id)["_source"]
         if isinstance(res["tags"], str):
             res["tags"] = [res["tags"]]  # Переводим теги в список
     except elasticsearch.exceptions.NotFoundError:
@@ -266,6 +262,9 @@ def edit_post(request, post_id: str):
                 },
                 id_=post_id,
             )
+
+            cache.delete("all_posts_count")
+            cache.delete("last_updated_posts")
 
             # Прикрепленные файлы
             if os.path.exists(MEDIA_ROOT / post_id):
@@ -424,6 +423,9 @@ def create_post(request):
                         for chunk_ in file.chunks():
                             upload_file.write(chunk_)  # Записываем файл
 
+            cache.delete("all_posts_count")
+            cache.delete("last_updated_posts")
+
             return HttpResponseRedirect(f'/post/{res["_id"]}')
 
         else:
@@ -509,20 +511,20 @@ def delete_post(request, post_id):
     )
     if post["_shards"]["successful"]:  # Если нашли
         post_tags = post["hits"]["hits"][0]["_source"]["tags"]  # Смотрим его теги
-
     else:
-        print("ID not exist")
         raise Http404()
 
-    # Если теги поста разрешены данному пользователю, то удаляем пост
     if set(post_tags).issubset(available_tags):
-        print("delete:", post_id)
+        # Если теги поста разрешены данному пользователю, то удаляем пост
         elastic_search.delete(index="company", id=post_id)
         if os.path.exists(MEDIA_ROOT / post_id):
             # Если есть прикрепленные файлы
             for f in os.listdir(MEDIA_ROOT / post_id):
                 os.remove(MEDIA_ROOT / post_id / f)  # Удаляем файл
             os.rmdir(MEDIA_ROOT / post_id)  # Удаляем папку
+
+        cache.delete("all_posts_count")
+        cache.delete("last_updated_posts")
 
     return HttpResponseRedirect("/")
 

@@ -17,12 +17,7 @@ from books.forms import BookCreateFrom, SearchForm
 @login_required
 def create(request):
     """
-    Если пользователь не является суперпользователем, верните 404. Если пользователь является суперпользователем и метод
-    запроса POST, создайте новую запись книги в базе данных и сохраните загруженный файл на сервер.
-
-    :param request: Объект запроса является экземпляром HttpRequest. Он содержит метаданные о запросе, такие как метод HTTP,
-    хост, путь и т. д
-    :return: объект ответа.
+    Создаем новую книгу
     """
     if not request.user.is_superuser:  # Не суперпользователям недоступно создание
         return HttpResponseNotFound()
@@ -93,8 +88,8 @@ def update(request, book_id):
     """
     Функция update() принимает запрос и book_id, а затем обновляет книгу с заданным book_id данными из запроса.
 
-    :param request: Это объект запроса, который передается из представления
-    :param book_id: Идентификатор книги, которую мы обновляем
+    :param request: Это объект запроса, который передается из представления.
+    :param book_id: Идентификатор книги, которую мы обновляем.
     """
     if not request.user.is_superuser:  # Не суперпользователям недоступно редактирование
         return HttpResponseNotFound()
@@ -145,10 +140,10 @@ def update(request, book_id):
 @login_required
 def delete(request, book_id):
     """
-    удаляет книгу с идентификатором book_id.
+    Удаляет книгу с идентификатором book_id.
 
-    :param request: Это объект запроса, который передается Django
-    :param book_id: Идентификатор книги, которую необходимо удалить
+    :param request: Это объект запроса, который передается Django.
+    :param book_id: Идентификатор книги, которую необходимо удалить.
     """
     if not request.user.is_superuser:  # Не суперпользователям недоступно редактирование
         return HttpResponseNotFound()
@@ -183,7 +178,7 @@ def show(request, book_id):
     Он принимает запрос и book_id и возвращает ответ.
 
     :param request: Это объект запроса, который передается из представления.
-    :param book_id: идентификатор книги, которую мы хотим показать.
+    :param book_id: Идентификатор книги, которую мы хотим показать.
     """
     elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
     try:
@@ -210,8 +205,8 @@ def about_book(request, book_id):
     Он принимает запрос и book_id и возвращает ответ.
 
     :param request: Объект запроса является первым параметром каждой функции представления. Он содержит информацию о
-    запросе, который был сделан на сервер
-    :param book_id: Идентификатор книги, которую мы рассматриваем
+    запросе, который был сделан на сервер.
+    :param book_id: Идентификатор книги, которую мы рассматриваем.
     """
     elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
     try:
@@ -236,72 +231,32 @@ def about_book(request, book_id):
 def all_books(request):
     # Создание нового экземпляра класса SearchForm и передача данных request.GET.
     search_form = SearchForm(request.GET)
-    print(request.GET)
-
-    # Проверка, ввел ли пользователь текст поиска и год поиска.
-    if request.GET.get("search_text") and request.GET.get("search_year"):
-        # Текст + год
-        # Запрос для elasticsearch.
-        query = {
-            "bool": {
-                "must": [
-                    # Запрос для поиска определенного года.
-                    {"term": {"year": request.GET["search_year"]}},
-                    {
-                        "simple_query_string": {
-                            "query": request.GET["search_text"],
-                            "fields": ["title^2", "about", "author"],
-                        }
-                    },
-                ]
-            }
-        }
-    # Поиск по описанию книги
-    elif request.GET.get("search_text"):
-        # Только поиск текста
-        query = {
-            "simple_query_string": {
-                "query": request.GET["search_text"],
-                "fields": ["title^2", "about", "author"],
-            }
-        }
-    # Поиск книг по годам
-    elif request.GET.get("search_year"):
-        # Только год
-        query = {"bool": {"must": [{"term": {"year": request.GET["search_year"]}}]}}
-    else:
-        query = {}
+    search_text = request.GET.get("search_text")
+    search_year = request.GET.get("search_year")
 
     # Подключение к серверу elasticsearch.
     elastic_search = ElasticsearchConnect()
-    print(query)
+
+    res_books = []
     # Проверка корректности запроса и корректности формы поиска.
-    if query and search_form.is_valid():
+    if search_form.is_valid():
         # Ищем по полям, переданным в запросе
-        result = elastic_search.search(
-            size=100,
-            index="books",
-            _source=["title", "year", "author"],
-            query=query,
-            request_timeout=elastic_search.ELASTICSEARCH_request_timeout,
-        )
-        res_books = []
-        print(result)
-        if result:
-            # Создаем список книг с ключами id, title, year, author
-            # Проходит по всем книгам из базы данных и добавляет их в список `res_books`.
-            for b in result["hits"]["hits"]:
-                # Создание нового словаря с ключами из `b["_source"]` и ключом `id` со значением `b["_id"]`.
-                res_books.append(dict(b["_source"], **{"id": b["_id"]}))
-    else:
+        res_books = elastic_search.find_books(
+            search_text,
+            search_year,
+        ).get_page(request.GET.get("page"))
+
+    if not res_books:
         # Резервный вариант, когда запрос недействителен.
         search_form.is_valid()
-        elastic_search = ElasticsearchConnect()
-        # Получение последних 100 книг из базы данных.
-        res_books = elastic_search.get_last_published(index="books", limit=100)
+        res_books = elastic_search.get_last_published(index="books")
 
     return render(
         request,
         "books/show.html",
-        {"books": res_books, "user": request.user, "form": search_form.cleaned_data},
+        {
+            "books": res_books,
+            "user": request.user,
+            "form": search_form.cleaned_data,
+        },
     )

@@ -21,7 +21,6 @@
 
 <body>
 <div style="text-align: center; padding: 20px">
-
     {# МЕНЮ #}
     <ul class="menu-main">
       <li><a href="/" class="current">Поиск</a></li>
@@ -33,61 +32,56 @@
         {% endif %}
       <li><a href="/logout">Выйти</a></li>
     </ul>
-
-    {# СТРОКА ПОИСКА #}
-
-    <div class="d1" style="padding-top: 40px">
-        <form method="post">
-          {% csrf_token %}
-
-              <img src="static/images/cat{{ image }}.gif" width="110" height="108" style="vertical-align: middle">
-              <input id="search" type="text" name="search" placeholder="Искать здесь..." autofocus value="{{ search_text }}">
-
-          <button type="submit"></button>
-
-          {# ПОИСК ПО ТЕГАМ #}
-
-            {# TAGS IN #}
-            <div style="text-align: right">
-                <div class="checkselect">
-                {% for t in tags_in %}
-                <label style="float:left">
-                    <input type="checkbox"
-                           name="tags-in" value="{{ t.tag }}" {% if t.checked %} checked {% endif %}>
-                    {{ t.tag }}
-                </label>
-                {% endfor %}
-                </div>
-            </div>
-
-            {# TAGS OFF #}
-            <div style="text-align: right">
-                <div class="checkselect">
-                {% for t in tags_off %}
-                <label style="float:left">
-                    <input type="checkbox" style="width: 20px; height: 20px"
-                           name="tags-off" value="{{ t.tag }}" {% if t.checked %} checked {% endif %}>
-                    {{ t.tag }}
-                </label>
-                {% endfor %}
-                </div>
-            </div>
-
-          <div id="tag-start-tags-in"></div>  {# МЕСТО ДЛЯ ТРЕБУЕМЫХ ТЕГОВ #}
-          <div id="tag-start-tags-off"></div> {# МЕСТО ДЛЯ ТЕГОВ ИСКЛЮЧЕНИЯ #}
-
-        </form>
-    </div>
 </div>
 
-{% if not search_mode and superuser %}
-<div class="last-post-text">
-    Всего записей: {{ posts_count }}
-    <div>
-    Последние изменения
+
+{# СТРОКА ПОИСКА #}
+<form>
+<div class="d1" style="padding-top: 40px; text-align: center;">
+
+    {% csrf_token %}
+    <img src="static/images/cat{{ image }}.gif" width="110" height="108" style="vertical-align: middle">
+    <input id="search" type="text" name="search" placeholder="Искать здесь..." autofocus value="{{ request.GET.search }}">
+
+    <button type="submit"></button>
+
+    {# ПОИСК ПО ТЕГАМ #}
+      {# TAGS IN #}
+      <div style="text-align: right">
+          <div class="checkselect">
+          {% for t in tags_in %}
+          <label style="float:left">
+              <input type="checkbox"
+                     name="tags-in" value="{{ t.name }}" {% if t.checked %} checked {% endif %}>
+              {{ t.name }}
+          </label>
+          {% endfor %}
+          </div>
+      </div>
+
+      {# TAGS OFF #}
+      <div style="text-align: right">
+          <div class="checkselect">
+          {% for t in tags_off %}
+          <label style="float:left">
+              <input type="checkbox" style="width: 20px; height: 20px"
+                     name="tags-off" value="{{ t.name }}" {% if t.checked %} checked {% endif %}>
+              {{ t.name }}
+          </label>
+          {% endfor %}
+          </div>
+      </div>
+
+    <div id="tag-start-tags-in"></div>  {# МЕСТО ДЛЯ ТРЕБУЕМЫХ ТЕГОВ #}
+    <div id="tag-start-tags-off"></div> {# МЕСТО ДЛЯ ТЕГОВ ИСКЛЮЧЕНИЯ #}
+
+    <div class="last-post-text">
+        Всего записей: {{ posts_count }}
     </div>
+
 </div>
-{% endif %}
+</form>
+
 
 <div class="post-wrap">
 

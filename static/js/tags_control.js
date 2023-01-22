@@ -1,10 +1,11 @@
 hashCode = s => String(s.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0))
 
 function create_tags(tags, tags_name) {
+	let tags_class;
 	if (tags_name === 'tags-off') {
-		var tags_class = 'tag-in tag-off'
+		tags_class = 'tag-in tag-off';
 	} else {
-		var tags_class = 'tag-in'
+		tags_class = 'tag-in';
 	}
 	$('#tag-start-'+tags_name).after(`<div id="tags_all-`+tags_name+`"><div id="tags-`+tags_name+`"></div></div>`)
 	for (let i=0;i<tags.length;i++) {
@@ -19,7 +20,8 @@ function create_tags(tags, tags_name) {
 }
 (function($) {
 	function setChecked(target) {
-		var checked = $(target).find("input[type='checkbox']:checked");
+		let desc;
+		let checked = $(target).find("input[type='checkbox']:checked");
 
 
 		// Определяем имя блока тегов
@@ -36,9 +38,9 @@ function create_tags(tags, tags_name) {
 
 		// Создаем подпись
 		if (tags_name === 'tags-off') {
-			var desc = '– tag'
+			desc = '– tag';
 		} else {
-			var desc = '+ tag'
+			desc = '+ tag';
 		}
 		if (checked.length) {
 			$(target).find('select option:first').html(desc + ': ' + checked.length);

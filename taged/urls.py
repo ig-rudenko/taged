@@ -26,7 +26,7 @@ urlpatterns = [
     # BOOKS
     path("books/", include("books.urls")),
     path("admin/", admin.site.urls),
-    path("", views.home),
+    path("", views.HomeView.as_view()),
     path("accounts/", include("django.contrib.auth.urls")),
     path("edit/<str:post_id>", views.edit_post),
     path("post/<str:post_id>", views.show_post),

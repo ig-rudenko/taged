@@ -1,35 +1,59 @@
-import os
-import time
-import logging
-import datetime
-
 import requests
-from requests.exceptions import ConnectionError as ElasticConnectionError
+from django.conf import settings
 from pprint import pprint
 from elasticsearch import Elasticsearch
 from elasticsearch.client.indices import IndicesClient
 
 
-# Установка значения переменной `ELASTICSEARCH_HOST` в значение переменной среды `ELASTICSEARCH_HOST`, если она
-# существует, в противном случае она устанавливается в `localhost`.
-ELASTICSEARCH_HOST = os.getenv("ELASTICSEARCH_HOST") or "localhost"
+class QueryLimit:
+    per_page = 50
 
+    def __init__(
+        self, es: "ElasticsearchConnect", query: dict, convert_result=None, **extra
+    ):
+        self._es = es
+        self._query = query
+        if query["query"]:
+            self.count = es.query_count(query["index"], query["query"])
+        else:
+            self.count = 0
+        self._convert_func = convert_result
+        self.extra_parameters = extra
 
-# Он устанавливает уровень ведения журнала на ERROR и имя файла на logs.
-logging.basicConfig(level=logging.ERROR, filename="logs")
+    def get_limits(self, page_num: int):
+        number = self.validate_number(page_num)
+        bottom = (number - 1) * self.per_page
+        top = bottom + self.per_page
+        return bottom, top
+
+    def get_page(self, page: int) -> list:
+        if not self.count:
+            return []
+        query_from, query_size = self.get_limits(page)
+        res = self._es.search(
+            **self._query,
+            **{"from_": query_from, "size": query_size},
+        )
+
+        if self._convert_func:
+            return self._convert_func(res, **self.extra_parameters)
+
+    def validate_number(self, number: int):
+        try:
+            number = int(number)
+        except (ValueError, TypeError):
+            number = 1
+
+        if number > self.count:
+            number = self.count
+        elif number <= 0:
+            number = 1
+        return number
 
 
 class ElasticsearchConnect(Elasticsearch):
-    ELASTICSEARCH_HOST = os.getenv("ELASTICSEARCH_HOST") or "localhost"
-    try:
-        ELASTICSEARCH_request_timeout = (
-            int(os.getenv("ELASTICSEARCH_request_timeout")) or 10
-        )
-    except (ValueError, TypeError):
-        ELASTICSEARCH_request_timeout = 20
-
     def __init__(self):
-        super().__init__([{"host": self.ELASTICSEARCH_HOST, "port": 9200}])
+        super().__init__([{"host": settings.ELASTICSEARCH_HOST, "port": 9200}])
 
     def available(self) -> bool:
         if self.ping():
@@ -38,12 +62,12 @@ class ElasticsearchConnect(Elasticsearch):
             print("No ping")
             return False
 
-    def create_index(self, settings: dict, index_name="company") -> bool:
+    def create_index(self, settings_: dict, index_name) -> bool:
         """
         ## Создает индекс под названием **index_name** с настройками, указанными в словаре **settings**
 
-        :param settings: словарь с настройками для индекса
-        :param index_name: Имя индекса, который вы хотите создать, defaults to company (optional)
+        :param settings_: словарь с настройками для индекса
+        :param index_name: Имя индекса, который вы хотите создать
         :return: Создан ```True``` или нет ```False```
         """
         created = False
@@ -54,9 +78,9 @@ class ElasticsearchConnect(Elasticsearch):
             if not IndicesClient(client=self).exists(index=index_name):
                 # Создание индекса с именем `index_name` и настройками `settings`
                 resp = requests.put(
-                    url=f"http://{self.ELASTICSEARCH_HOST}:9200/{index_name}?pretty",
+                    url=f"http://{settings.ELASTICSEARCH_HOST}:9200/{index_name}?pretty",
                     headers={"Content-Type": "application/json"},
-                    json=settings,
+                    json=settings_,
                 )
                 pprint(resp.json())
                 print("Created Index")
@@ -80,7 +104,7 @@ class ElasticsearchConnect(Elasticsearch):
             result = self.index(
                 index=index_name,
                 document=record,
-                request_timeout=self.ELASTICSEARCH_request_timeout,
+                request_timeout=settings.ELASTICSEARCH_TIMEOUT,
             )
         except Exception as ex:
             print("Error in indexing data")
@@ -104,7 +128,7 @@ class ElasticsearchConnect(Elasticsearch):
                 index=index_name,
                 document=record,
                 id=id_,
-                request_timeout=self.ELASTICSEARCH_request_timeout,
+                request_timeout=settings.ELASTICSEARCH_TIMEOUT,
             )
         except Exception as ex:
             print("Error in indexing data")
@@ -126,18 +150,27 @@ class ElasticsearchConnect(Elasticsearch):
             index=index,
             _source=["title"],
             query={"simple_query_string": {"query": string, "fields": ["title"]}},
-            request_timeout=self.ELASTICSEARCH_request_timeout,
+            request_timeout=settings.ELASTICSEARCH_TIMEOUT,
         )
-        pprint(res)
         # Проверяет, есть ли хоть одна запись в ответе.
         if res["hits"]["total"]["value"]:
             return [line["_source"]["title"] for line in res["hits"]["hits"]]
         else:
             return []
 
+    def query_count(self, index: str, query: dict) -> int:
+        return self.count(
+            index=index,
+            body={"query": query},
+            request_timeout=settings.ELASTICSEARCH_TIMEOUT,
+        )["count"]
+
     def find_posts(
-        self, tags_in: list = None, tags_off: list = None, string: str = ""
-    ) -> list:
+        self,
+        tags_in: list = None,
+        tags_off: list = None,
+        string: str = "",
+    ) -> QueryLimit:
         """
         ## Возвращает список записей, которые были отфильтрованы
 
@@ -151,38 +184,41 @@ class ElasticsearchConnect(Elasticsearch):
         tags_off = tags_off if tags_off else []
         # Если переменная tags_in не пустая, то она присваивается сама себе, иначе присваивается пустой список.
         tags_in = tags_in if tags_in else []
-        print("def find_posts(elacticsearch)", tags_in, tags_off, string)
 
         # Если переменная string пустая и переменная tags_in не пустая, то выполняется поиск по тегам.
         if not string and tags_in:
-            # Поиск по тегам
-            res = self.search(
-                size=1000,
-                index="company",
-                _source=["tags", "title"],
-                query={"match": {"tags": " ".join(tags_in)}},
-                request_timeout=self.ELASTICSEARCH_request_timeout,
-            )
-            pprint(res)
+            query = {"match": {"tags": " ".join(tags_in)}}
 
+        # Поиск по строке в title и content
         elif string:
-            # Поиск по строке в title и content
-            res = self.search(
-                size=100,
-                index="company",
-                _source=["tags", "title"],
-                query={
-                    "simple_query_string": {
-                        "query": string,
-                        "fields": ["title^2", "content"],
-                    }
-                },
-                request_timeout=self.ELASTICSEARCH_request_timeout,
-            )
-            pprint(res)
+            query = {
+                "simple_query_string": {
+                    "query": string,
+                    "fields": ["title^2", "content"],
+                }
+            }
         else:
-            return []
+            query = {}
 
+        # Вычисляем кол-во записей по запросу
+        query = {
+            "index": "company",
+            "_source": ["tags", "title"],
+            "query": query,
+            "request_timeout": settings.ELASTICSEARCH_TIMEOUT,
+        }
+
+        # Вычисляем отступ и размер выборки
+        return QueryLimit(
+            es=self,
+            query=query,
+            convert_result=self.convert_post_result,
+            tags_in=tags_in,
+            tags_off=tags_off,
+        )
+
+    @staticmethod
+    def convert_post_result(res, tags_in, tags_off):
         # Присваивает переменной max_score максимальный балл из всех записей в ответе.
         max_score = float(res["hits"]["max_score"] or 0)
         result = []
@@ -212,135 +248,76 @@ class ElasticsearchConnect(Elasticsearch):
                     )
         return result
 
-    def get_last_published(self, index="company", limit=20):
+    def find_books(self, search: str = "", year: str = "") -> QueryLimit:
+        query = {"bool": {"must": []}}
+
+        if search:
+            # Поиск текста
+            query["bool"]["must"].append(
+                {
+                    "simple_query_string": {
+                        "query": search,
+                        "fields": ["title^2", "about", "author"],
+                    }
+                }
+            )
+
+        if year:
+            # Поиск книг по годам
+            query["bool"]["must"].append({"term": {"year": year},})
+
+        return QueryLimit(
+            es=self,
+            query={
+                "index": "books",
+                "_source": ["title", "year", "author"],
+                "query": query,
+                "request_timeout": settings.ELASTICSEARCH_TIMEOUT,
+            },
+            convert_result=self.convert_books_result,
+        )
+
+    @staticmethod
+    def convert_books_result(res: dict) -> list:
+        result = []
+        if res:
+            # Создаем список книг с ключами id, title, year, author
+            # Проходит по всем книгам из базы данных и добавляет их в список `res_books`.
+            for b in res["hits"]["hits"]:
+                # Создание нового словаря с ключами из `b["_source"]` и ключом `id` со значением `b["_id"]`.
+                result.append(dict(b["_source"], **{"id": b["_id"]}))
+        return result
+
+    def get_last_published(self, index, limit=QueryLimit.per_page):
         """
         ## Возвращает ```limit``` последних опубликованных записей из индекса ```index```
 
-        :param elacticsearch: Объект Elasticsearch
         :param index: Имя индекса для поиска, defaults to company (optional)
-        :param limit: Количество возвращаемых результатов, defaults to 6 (optional)
+        :param limit: Количество возвращаемых результатов, defaults to 20 (optional)
         """
 
         res = self.search(
             index=index,
             body={"sort": {"published_at": "desc"}},
             size=limit,
-            request_timeout=self.ELASTICSEARCH_request_timeout,
+            request_timeout=settings.ELASTICSEARCH_TIMEOUT,
         )
         result = []
         if res and res["hits"]["total"]["value"]:
-            for post in res["hits"]["hits"]:
-                # COMPANY
-                if index == "company":
-                    if isinstance(post["_source"]["tags"], str):
-                        # Переводим один тег в список из одного тега
-                        post["_source"]["tags"] = [post["_source"]["tags"]]
-                    result.append(
-                        {
-                            "id": post["_id"],
-                            "title": post["_source"]["title"],
-                            "tags": post["_source"]["tags"],
-                            "score": 0,
-                        }
-                    )
-                # BOOKS
-                elif index == "books":
-                    result.append(
-                        {
-                            "id": post["_id"],
-                            "title": post["_source"]["title"],
-                            "author": post["_source"]["author"],
-                            "year": post["_source"]["year"],
-                            "about": post["_source"]["about"],
-                            "published_at": datetime.datetime.strptime(
-                                post["_source"]["published_at"], "%Y-%m-%dT%H:%M:%S.%f"
-                            ),
-                        }
-                    )
+            for b in res["hits"]["hits"]:
+                result.append(dict(b["_source"], **{"id": b["_id"], "score": 0}))
         return result
 
-    def posts_count(self, index="company") -> int:
+    @staticmethod
+    def posts_count(index="company") -> int:
         """
         ## Возвращает количество записей в индексе
 
         :param index: Имя индекса для поиска, defaults to company (optional)
         """
-        resp = requests.get(f"http://{self.ELASTICSEARCH_HOST}:9200/{index}/_doc/_count")
+        resp = requests.get(
+            f"http://{settings.ELASTICSEARCH_HOST}:9200/{index}/_doc/_count"
+        )
         if resp.status_code == 200:
             return resp.json()["count"]
         return -1
-
-
-if __name__ == "__main__":
-    settings_company = {
-        "settings": {
-            "analysis": {
-                "filter": {
-                    "ru_stop": {"type": "stop", "stopwords": "_russian_"},
-                    "ru_stemmer": {"type": "stemmer", "language": "russian"},
-                },
-                "analyzer": {
-                    "default": {
-                        "char_filter": ["html_strip"],
-                        "tokenizer": "standard",
-                        "filter": ["lowercase", "ru_stop", "ru_stemmer"],
-                    }
-                },
-            }
-        },
-        "mappings": {
-            "dynamic": "strict",
-            "properties": {
-                "title": {"type": "text"},
-                "content": {"type": "text"},
-                "tags": {"type": "text"},
-                "published_at": {"type": "date"},
-            },
-        },
-    }
-    settings_books = {
-        "settings": {
-            "analysis": {
-                "filter": {
-                    "ru_stop": {"type": "stop", "stopwords": "_russian_"},
-                    "ru_stemmer": {"type": "stemmer", "language": "russian"},
-                },
-                "analyzer": {
-                    "default": {
-                        "char_filter": ["html_strip"],
-                        "tokenizer": "standard",
-                        "filter": ["lowercase", "ru_stop", "ru_stemmer"],
-                    }
-                },
-            }
-        },
-        "mappings": {
-            "dynamic": "strict",
-            "properties": {
-                "title": {"type": "text"},
-                "author": {"type": "text"},
-                "about": {"type": "text"},
-                "year": {"type": "text"},
-                "published_at": {"type": "date"},
-            },
-        },
-    }
-    # Создание индекса
-    logging.basicConfig(filename="logs", level=logging.ERROR)
-
-    while True:
-        try:
-            # Проверяем, работает ли elasticsearch или нет.
-            # Если он запущен, он подключится к elasticsearch.
-            es = ElasticsearchConnect()
-            if es and es.available():
-                # Создаем индекс с именем company в Elasticsearch.
-                es.create_index(settings_company, "company")
-                # Создаем индекс с именем books в Elasticsearch.
-                es.create_index(settings_books, "books")
-                break
-            print("Wait for elastic search")
-            time.sleep(10)
-        except ElasticConnectionError as e:
-            print(e)
-            time.sleep(10)

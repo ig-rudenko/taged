@@ -26,7 +26,7 @@
       <li><a href="/" class="current">Поиск</a></li>
       <li><a href="/create">Создать Заметку</a></li>
       <li><a href="/books">Библиотека</a></li>
-        {% if superuser %}
+        {% if request.user.is_superuser %}
       <li><a href="/tags">Теги</a></li>
       <li><a href="/users">Пользователи</a></li>
         {% endif %}

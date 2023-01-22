@@ -11,13 +11,13 @@ from django.http import (
     Http404,
     HttpResponseNotAllowed,
 )
-from dateconverter import DateConverter
+
 from django.views import View
 from django.core.cache import cache
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.utils.decorators import method_decorator
-from taged_web.elasticsearch_control import ElasticsearchConnect, QueryLimit
+from taged_web.elasticsearch_control import ElasticsearchConnect
 from taged_web.models import Tags
 
 from taged.settings import MEDIA_ROOT
@@ -188,7 +188,6 @@ def edit_post(request, post_id: str):
     Редактирование существующей записи
     :param request: запрос
     :param post_id: ID записи в elasticsearch
-    :return:
     """
 
     # Проверка, является ли пользователь суперпользователем или нет. Если пользователь является суперпользователем, он
@@ -327,22 +326,19 @@ def show_post(request, post_id: str):
     """
     elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
     try:
-        res = elastic_search.get(index="company", id=post_id)[
-            "_source"
-        ]  # Получаем запись по ID
+        # Получаем запись по ID
+        res = elastic_search.get(index="company", id=post_id)["_source"]
         # Если имеется всего один тег, то он имеет тип str, переводим его в list
         if isinstance(res["tags"], str):
             res["tags"] = [res["tags"]]
     except elasticsearch.exceptions.NotFoundError:
-        print("ID not exist")
         raise Http404()
 
-    res["superuser"] = request.user.is_superuser
     res["post_id"] = post_id
 
-    d = res["published_at"]  # 2021-10-13T14:58:05.866799
-    res["published_at"] = (
-        str(DateConverter(f"{d[8:10]} {d[5:7]} {d[:4]}")) + " / " + d[11:19]
+    # 2021-10-13T14:58:05.866799
+    res["published_at"] = datetime.strptime(
+        res["published_at"][:19], "%Y-%m-%dT%H:%M:%S"
     )
 
     # Если имеются файлы у записи
@@ -366,38 +362,28 @@ def pre_show_post(request, post_id):
     """
     elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
     try:
-        res = elastic_search.get(index="company", id=post_id)[
-            "_source"
-        ]  # Получаем запись по ID
+        # Получаем запись по ID
+        res = elastic_search.get(index="company", id=post_id)["_source"]
+        return JsonResponse({"post": res["content"]})
 
     except elasticsearch.exceptions.NotFoundError:
-        print("ID not exist")
         return JsonResponse({"error": "not found"})
 
-    return JsonResponse({"post": res["content"]})
 
-
-@login_required
-def create_post(request):
+@method_decorator(login_required, name="dispatch")
+class CreatePostView(View):
     """
     Создаем новую запись
-    :param request: запрос
-    :return:
     """
 
-    available_tags = (
-        [t.tag_name for t in Tags.objects.all()]
-        if request.user.is_superuser
-        else [
-            t.tag_name
-            for t in Tags.objects.filter(user__username=request.user.username)
-        ]
-    )
-
-    user_form = PostForm()  # Создаем форму
-
-    if request.method == "POST":
+    def post(self, request):
         user_form = PostForm(request.POST)  # Заполняем форму
+
+        available_tags = (
+            [t.tag_name for t in Tags.objects.all()]
+            if request.user.is_superuser
+            else [t.tag_name for t in Tags.objects.filter(user=request.user)]
+        )
 
         if user_form.is_valid():  # Проверяем форму
             # Подключение к серверу elasticsearch.
@@ -429,9 +415,8 @@ def create_post(request):
             return HttpResponseRedirect(f'/post/{res["_id"]}')
 
         else:
-            tags_checked = (
-                dict(request.POST).get("tags_checked") or []
-            )  # Выбранные теги
+            # Выбранные теги
+            tags_checked = dict(request.POST).get("tags_checked") or []
 
             # Если не все поля были указаны
             return render(
@@ -447,42 +432,56 @@ def create_post(request):
                 },
             )
 
-    tags_ = sorted(
-        [{"tag": t, "cheched": False} for t in available_tags],
-        key=lambda x: x["tag"].lower(),  # Сортируем по алфавиту
-    )  # Если новая запись, то все теги изначально отключены
+    def get(self, request):
 
-    # Клонируем заметку
-    if request.GET.get("cl"):
-        elastic_search = ElasticsearchConnect()
-        try:
-            res = elastic_search.get(index="company", id=request.GET.get("cl"))[
-                "_source"
-            ]  # Получаем запись по ID
-            # Если имеется всего один тег, то он имеет тип str, переводим его в list
-            if isinstance(res["tags"], str):
-                res["tags"] = [res["tags"]]
+        user_form = PostForm()  # Создаем форму
 
-            # Только разрешенные теги добавятся в клонированную заметку
-            res["tags"] = set(res["tags"]) & set(available_tags)
+        available_tags = (
+            [t.tag_name for t in Tags.objects.all()]
+            if request.user.is_superuser
+            else [t.tag_name for t in Tags.objects.filter(user=request.user)]
+        )
 
-            res["input"] = res["content"]
-            res["title"] += " (копия)"  # Добавляем в конце заголовка приписку (копия)
+        tags_ = sorted(
+            [{"tag": t, "cheched": False} for t in available_tags],
+            key=lambda x: x["tag"].lower(),  # Сортируем по алфавиту
+        )  # Если новая запись, то все теги изначально отключены
 
-            user_form = PostForm(res)
+        # Клонируем заметку
+        if request.GET.get("cl"):
+            elastic_search = ElasticsearchConnect()
+            try:
+                res = elastic_search.get(index="company", id=request.GET.get("cl"))[
+                    "_source"
+                ]  # Получаем запись по ID
+                # Если имеется всего один тег, то он имеет тип str, переводим его в list
+                if isinstance(res["tags"], str):
+                    res["tags"] = [res["tags"]]
 
-            tags_ = [
-                {"tag": t, "checked": True if t in res["tags"] else False}
-                for t in available_tags
-            ]
-        except elasticsearch.exceptions.NotFoundError:
-            pass
+                # Только разрешенные теги добавятся в клонированную заметку
+                res["tags"] = set(res["tags"]) & set(available_tags)
+                res["input"] = res["content"]
+                # Добавляем в конце заголовка приписку (копия)
+                res["title"] += " (копия)"
 
-    return render(
-        request,
-        "edit_post.html",
-        {"tags": tags_, "superuser": request.user.is_superuser, "form": user_form},
-    )
+                user_form = PostForm(res)
+
+                tags_ = [
+                    {"tag": t, "checked": True if t in res["tags"] else False}
+                    for t in available_tags
+                ]
+            except elasticsearch.exceptions.NotFoundError:
+                pass
+
+        return render(
+            request,
+            "edit_post.html",
+            {
+                "tags": tags_,
+                "superuser": request.user.is_superuser,
+                "form": user_form,
+            },
+        )
 
 
 @login_required
@@ -529,21 +528,18 @@ def delete_post(request, post_id):
     return HttpResponseRedirect("/")
 
 
-@login_required
-def tags(request):
+@method_decorator(login_required, name="dispatch")
+@method_decorator(user_passes_test(lambda u: u.is_superuser), name="dispatch")
+class TagsView(View):
     """
     Смотрим и создаем теги
-    :param request: запрос
-    :return:
     """
-    if not request.user.is_superuser:  # Только суперпользователи
-        return HttpResponseRedirect("/")
 
-    if request.method == "GET":
+    def get(self, request):
         all_tags = Tags.objects.all()  # Все существующие теги
         return render(request, "tags.html", {"tags": all_tags})
 
-    if request.method == "POST":
+    def post(self, request):
         # Добавляем новый тег
         if request.POST.get("new_tag"):
             t = Tags()
@@ -552,37 +548,29 @@ def tags(request):
         return HttpResponseRedirect("/tags")
 
 
-@login_required
-def delete_tag(request, tag_id):
+@method_decorator(login_required, name="dispatch")
+@method_decorator(user_passes_test(lambda u: u.is_superuser), name="dispatch")
+class DeleteTagsView(View):
     """
-    Смотрим и создаем теги
-    :param request: запрос
-    :param tag_id: ID тега
-    :return:
+    Удаляем теги
     """
-    if not request.user.is_superuser:  # Только суперпользователи
-        return HttpResponseRedirect("/")
 
-    t = Tags.objects.get(id=tag_id)
-    print(t.tag_name)
-    t.delete()
-    return HttpResponseRedirect("/tags")
+    def post(self, request, tag_id):
+        Tags.objects.filter(id=tag_id).delete()
+        return HttpResponseRedirect("/tags")
 
 
-@login_required
-def users(request):
-    if not request.user.is_superuser:
-        return HttpResponseRedirect("/")
-    u = User.objects.all()
-    return render(request, "user_control/users.html", {"users": u})
+@method_decorator(login_required, name="dispatch")
+@method_decorator(user_passes_test(lambda u: u.is_superuser), name="dispatch")
+class UsersView(View):
+    def get(self, request):
+        return render(request, "user_control/users.html", {"users": User.objects.all()})
 
 
-@login_required
-def user_access_edit(request, username):
-    if not request.user.is_superuser:
-        return HttpResponseRedirect("/")
-
-    if request.method == "GET":
+@method_decorator(login_required, name="dispatch")
+@method_decorator(user_passes_test(lambda u: u.is_superuser), name="dispatch")
+class UserTagControlView(View):
+    def get(self, request, username):
         if not username:
             return HttpResponseRedirect("/users")
 
@@ -590,8 +578,8 @@ def user_access_edit(request, username):
 
         for tag in Tags.objects.all():
             try:
-                is_enable = Tags.objects.get(id=tag.id).user.get(username=username)
-            except Exception:
+                is_enable = Tags.objects.get(id=tag.id, user__username=username)
+            except Tags.DoesNotExist:
                 is_enable = 0
 
             data[tag.id] = {
@@ -602,10 +590,13 @@ def user_access_edit(request, username):
         return render(
             request,
             "user_control/user_access_group.html",
-            {"username": username, "data": data},
+            {
+                "username": username,
+                "data": data,
+            },
         )
 
-    elif request.method == "POST":
+    def post(self, request, username):
         user = User.objects.get(username=username)  # Пользователь
         for tag in Tags.objects.all():
             if request.POST.get(f"tag_id_{tag.id}"):  # Если данная группа была выбрана

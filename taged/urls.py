@@ -23,22 +23,25 @@ from taged import settings
 
 
 urlpatterns = [
-    # BOOKS
-    path("books/", include("books.urls")),
     path("admin/", admin.site.urls),
+    # POSTS
     path("", views.HomeView.as_view()),
-    path("accounts/", include("django.contrib.auth.urls")),
     path("edit/<str:post_id>", views.edit_post),
     path("post/<str:post_id>", views.show_post),
     path("delete/<str:post_id>", views.delete_post),
-    path("create/", views.create_post),
-    path("tags/", views.tags),
-    path("delete/tag/<str:tag_id>", views.delete_tag),
+    path("create/", views.CreatePostView.as_view()),
     path("download/<str:post_id>/<str:file_name>", views.download_file),
+    # TAGS
+    path("tags/", views.TagsView.as_view()),
+    path("delete/tag/<str:tag_id>", views.DeleteTagsView.as_view()),
+    # ACCOUNT
+    path("accounts/", include("django.contrib.auth.urls")),
     path("logout", views.logout),
-    # User
-    path("users/", views.users),
-    path("users/<username>", views.user_access_edit),
+    # USERS CONTROL
+    path("users/", views.UsersView.as_view()),
+    path("users/<username>", views.UserTagControlView.as_view()),
+    # BOOKS
+    path("books/", include("books.urls")),
     # STATIC
     re_path(
         r"^static/(?P<path>.*)$", serve, {"document_root": settings.STATICFILES_DIRS[0]}

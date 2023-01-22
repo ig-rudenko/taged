@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-{% load static %}
+{% load static humanize %}
 <html lang="ru">
 <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
 <head>
@@ -9,7 +9,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/tags.css' %}">
     <script src="{% static 'js/jquery.min.js' %}"></script>
     <meta charset="UTF-8">
-    <title>{{ title }}</title>
+    <title>{{ title | upper }}</title>
 </head>
 <body>
     {# Меню #}
@@ -17,7 +17,7 @@
       <li><a href="/">Поиск</a></li>
       <li><a href="/create">Создать Заметку</a></li>
       <li><a href="/books">Библиотека</a></li>
-        {% if superuser %}
+        {% if request.user.is_superuser %}
         <li><a href="/tags">Теги</a></li>
         <li><a href="/users">Пользователи</a></li>
         {% endif %}
@@ -32,7 +32,7 @@
             <div class="post-header" style="font-family: 'Montserrat', sans-serif;">
                 <h1>{{ title }}</h1>
                 <div class="post-meta">
-                    <time datetime="">{{ published_at }}</time>
+                    <time datetime="">{{ published_at | naturaltime }}</time>
                     <br>
 
 {#                    Редактировать  #}

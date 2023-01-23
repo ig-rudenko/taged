@@ -4,7 +4,7 @@
 
 {#    Поиск    #}
 <form method="get">
-    <div class="form-row">
+    <div class="row">
         <div class="col-md-8 mb-3">
             <label for="search">Поиск</label>
             <input name="search_text" type="text" id="search" class="form-control" aria-describedby="passwordHelpBlock"
@@ -23,19 +23,19 @@
             </small>
         </div>
         <div class="col-md-1 mb-5">
-              <button class="btn btn-primary" type="submit" style="margin-top: 32px">Поиск</button>
+              <button class="btn btn-primary" type="submit" style="margin-top: 24px">Поиск</button>
         </div>
     </div>
 </form>
 
 {#    КНИГИ    #}
-<div class="align-items-stretch row row-cols-1 row-cols-lg-3">
+<div class="align-items-stretch row row-cols-1 row-cols-lg-4">
 {% for book in books %}
     <div class="col py-3">
-        <div class="card card-cover h-100 overflow-hidden text-bg-dark rounded-4 shadow-lg">
+        <div class="card card-cover h-100 overflow-hidden rounded-4 shadow-lg">
 
-            <a href="{% url 'about_book' book.id %}">
-                <img style="object-fit: cover; object-position: right; height: 500px"
+            <a href="{% url 'book-about' book.id %}">
+                <img style="object-fit: cover; object-position: right; min-height: 430px" height="100%"
                      src="/media/books/{{ book.id }}/preview.png" class="card-img-top" alt="img:'{{ book.title }}'">
             </a>
 
@@ -49,10 +49,6 @@
                 {% endif %}
             </ul>
 
-            <div class="card-body">
-                <a href="{% url 'show' book.id %}" class="card-link" target="_blank">Читать</a>
-                <a href="{% url 'about_book' book.id %}" class="card-link">Подробнее..</a>
-            </div>
         </div>
     </div>
 {% endfor %}

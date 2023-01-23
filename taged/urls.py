@@ -14,32 +14,21 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.http.response import HttpResponseRedirect
 from django.urls import path, include, re_path
 from taged_web import views
 from django.views.static import serve
 from taged import settings
 
-# import debug_toolbar
-
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    # POSTS
-    path("", views.HomeView.as_view()),
-    path("edit/<str:post_id>", views.edit_post),
-    path("post/<str:post_id>", views.show_post),
-    path("delete/<str:post_id>", views.delete_post),
-    path("create/", views.CreatePostView.as_view()),
-    path("download/<str:post_id>/<str:file_name>", views.download_file),
-    # TAGS
-    path("tags/", views.TagsView.as_view()),
-    path("delete/tag/<str:tag_id>", views.DeleteTagsView.as_view()),
+    # NOTE
+    path("", lambda x: HttpResponseRedirect("/notes"), name="home"),
+    path("notes/", include("taged_web.urls")),
     # ACCOUNT
     path("accounts/", include("django.contrib.auth.urls")),
-    path("logout", views.logout),
-    # USERS CONTROL
-    path("users/", views.UsersView.as_view()),
-    path("users/<username>", views.UserTagControlView.as_view()),
+    path("logout", views.logout, name="submit-logout"),
     # BOOKS
     path("books/", include("books.urls")),
     # STATIC

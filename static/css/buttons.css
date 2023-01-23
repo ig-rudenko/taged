@@ -100,7 +100,6 @@ input[type=text] {
    width: 200%;
    height: 108%;
    background: #F58262;
-   transform: skew(-15deg, 0);
    transition: .5s;
 }
 .arrow-btn:after {

@@ -107,6 +107,7 @@
    z-index: 10;
 }
 .post-title {
+   font-size: larger;
    color: #33261D;
    margin-bottom: 15px;
    transition: .3s ease-in-out;

@@ -4,7 +4,6 @@ html{
 
 body{
     font-family: 'Teams', sans-serif;
-    /*height: 95%;*/
     background-color: #ffffff;
 }
 
@@ -64,7 +63,6 @@ text:hover {
 
 .first {
     cursor: pointer;
-    /*font-family: 'Ubuntu Condensed', sans-serif;*/
     font-family: 'Teams', sans-serif;
     text-indent: 22px;
     line-height: 33px;
@@ -74,7 +72,6 @@ text:hover {
 }
 
 .first_blue {
-    /*font-family: 'Ubuntu Condensed', sans-serif;*/
     font-family: 'Teams', sans-serif;
     cursor: pointer;
     background: #ffffff;
@@ -92,13 +89,12 @@ text:hover {
 }
 
 .last-post-text {
-    /*text-align: center;*/
+    text-align: center;
     padding: 10px;
-    margin: 20px 17% 20px 17%;
+    margin: 20px 0;
     color: white;
     font-family: 'Teams', sans-serif;
     background: #F58262;
-    /*background: repeating-linear-gradient(45deg, white, white 10px, #F58262 10px, #F58262 20px);*/
     border-radius: 10px
 }
 

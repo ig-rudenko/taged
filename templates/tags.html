@@ -1,25 +1,11 @@
-<!DOCTYPE html>
+{% extends 'base.html' %}
 {% load static %}
-<html lang="ru">
-<link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
-<head>
-    <link rel="stylesheet" type="text/css" href="{% static 'css/tags.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/buttons.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/menu.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/show_post.css' %}">
-    <meta charset="UTF-8">
-    <title>Tags</title>
-</head>
-<body>
-    <ul class="menu-main" style="padding-top: 20px">
-      <li><a href="/">Поиск</a></li>
-      <li><a href="/create">Создать Заметку</a></li>
-      <li><a href="/books">Библиотека</a></li>
-      <li><a href="/tags" class="current">Теги</a></li>
-      <li><a href="/users" >Пользователи</a></li>
-      <li><a href="/logout">Выйти</a></li>
-    </ul>
+
+{% block links %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/buttons.css' %}">
+{% endblock %}
+
+{% block main %}
     <div class="container" style="text-align: center; max-width: unset">
         <div class="post">
             <div class="post-content">
@@ -34,7 +20,7 @@
 
             {% for t in tags %}
 
-                    <a class="tag-in" onclick="delete_tag('{{ t.id }}', '{{ t.tag_name }}')">{{ t.tag_name }}</a>
+                <a class="tag-in" onclick="delete_tag('{{ t.id }}', '{{ t.tag_name }}')">{{ t.tag_name }}</a>
 
             {% endfor %}
             </div>
@@ -44,10 +30,8 @@
 <script>
 function delete_tag(id, name) {
     if (confirm("Вы согласны удалить тег \"" + name + "\" ?")) {
-        window.location.href = "/delete/tag/" + id
+        window.location.href = "/notes/tag/delete/" + id
     }
 }
 </script>
-
-</body>
-</html>
+{% endblock %}

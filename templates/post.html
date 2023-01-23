@@ -1,29 +1,16 @@
-<!DOCTYPE html>
+{% extends 'base.html' %}
 {% load static humanize %}
-<html lang="ru">
-<link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
-<head>
-    <link rel="stylesheet" type="text/css" href="{% static 'css/upload_file.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/show_post.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/menu.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/tags.css' %}">
-    <script src="{% static 'js/jquery.min.js' %}"></script>
-    <meta charset="UTF-8">
-    <title>{{ title | upper }}</title>
-</head>
-<body>
-    {# Меню #}
-    <ul class="menu-main" style="padding-top: 20px">
-      <li><a href="/">Поиск</a></li>
-      <li><a href="/create">Создать Заметку</a></li>
-      <li><a href="/books">Библиотека</a></li>
-        {% if request.user.is_superuser %}
-        <li><a href="/tags">Теги</a></li>
-        <li><a href="/users">Пользователи</a></li>
-        {% endif %}
-      <li><a href="/logout">Выйти</a></li>
-    </ul>
 
+{% block links %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/upload_file.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'css/show_post.css' %}">
+{% endblock %}
+
+
+{% block title %}{{ title }}{% endblock %}
+
+
+{% block main %}
 <div class="container">
     <div class="post">
         <div class="post-content">
@@ -32,22 +19,42 @@
             <div class="post-header" style="font-family: 'Montserrat', sans-serif;">
                 <h1>{{ title }}</h1>
                 <div class="post-meta">
-                    <time datetime="">{{ published_at | naturaltime }}</time>
+                    <time>{{ published_at | naturaltime }}</time>
                     <br>
 
 {#                    Редактировать  #}
-                <a href="/edit/{{ post_id }}" style="color: #03a2ff">редактировать</a>
+                <a href="{% url 'note-edit' post_id %}" style="color: #03a2ff">редактировать</a>
                     <time></time>
 
 {#                    Клонировать    #}
-                <a href="/create?cl={{ post_id }}" style="color: #48af70">клонировать</a>
+                <a href="{% url 'note-create' %}?cl={{ post_id }}" style="color: #48af70">клонировать</a>
                     <time></time>
 
 {#                      УДАЛИТЬ #}
-                    <form name="delete_form" method="post" action="/delete/{{ post_id }}">
-                        {% csrf_token %}
-                        <a style="color: #ff6363; cursor: pointer" onclick="delete_post()">удалить</a>
-                    </form>
+                <a style="color: #ff6363; cursor: pointer" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                  удалить
+                </a>
+
+                <!-- Modal -->
+                <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="exampleModalLabel">Удалить данную заметку?</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Не удалять</button>
+                        <form name="delete_form" method="post" action="{% url 'note-delete' post_id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Удалить</button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
 
                 </div>
             </div>
@@ -62,7 +69,7 @@
             {# ФАЙЛЫ #}
             <div class="post-file">
             {% for f in files %}
-                <a href="/download/{{ post_id }}/{{ f.name }}">
+                <a href="{% url 'download-file' post_id f.name %}">
                     <img src="{% static f.icon %}" width="40px" height="40px" alt="">
                     {{ f.name }}
                 </a>
@@ -77,22 +84,16 @@
 </div>
 
 <script>
-function delete_post() {
-    if (confirm("Вы согласны удалить запись {{ title }} ?")) {
-        document.delete_form.submit();
+$.ajax({
+    url: "/ajax/extend_post/{{ post_id }}",
+    success: function( data ) {
+        if (data.post.length) {
+            $('#post-content').html(data.post)
+        } else {
+            $('#post-content').html('<h1>Не удалось загрузить содержимое</h1>')
+        }
     }
-}
-$.ajax( {
-  url: "/ajax/extend_post/{{ post_id }}",
-  success: function( data ) {
-      if (data.post.length) {
-          $('#post-content').html(data.post)
-      } else {
-          $('#post-content').html('Error')
-      }
-  }
-} );
+});
 </script>
 
-</body>
-</html>
+{% endblock %}

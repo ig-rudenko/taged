@@ -9,22 +9,33 @@ import elasticsearch
 
 from django.http import HttpResponseNotFound
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.utils.decorators import method_decorator
+from django.views import View
+
 from taged_web.elasticsearch_control import ElasticsearchConnect
 from books.forms import BookCreateFrom, SearchForm
 
 
-@login_required
-def create(request):
+@method_decorator(login_required, name="dispatch")
+@method_decorator(user_passes_test(lambda u: u.is_superuser), name="dispatch")
+class CreateBookView(View):
     """
     Создаем новую книгу
     """
-    if not request.user.is_superuser:  # Не суперпользователям недоступно создание
-        return HttpResponseNotFound()
 
-    book_form = BookCreateFrom()
+    def get(self, request):
+        return render(
+            request,
+            "books/create.html",
+            {
+                "form": BookCreateFrom(),
+                "type": "create",
+                "page_name": "book-create",
+            }
+        )
 
-    if request.method == "POST":
+    def post(self, request):
         # Создаем новую запись
         book_form = BookCreateFrom(request.POST)
         # Проверяем, действительна ли форма и загружен ли файл.
@@ -80,23 +91,25 @@ def create(request):
 
                 return redirect(f'/books/about/{res["_id"]}')
 
-    return render(request, "books/create.html", {"form": book_form, "type": "create"})
+        return render(
+            request,
+            "books/create.html",
+            {
+                "form": book_form,
+                "type": "create",
+                "page_name": "book-create",
+            }
+        )
 
 
-@login_required(login_url="accounts/login")
-def update(request, book_id):
+@method_decorator(login_required, name="dispatch")
+@method_decorator(user_passes_test(lambda u: u.is_superuser), name="dispatch")
+class UpdateBookView(View):
     """
-    Функция update() принимает запрос и book_id, а затем обновляет книгу с заданным book_id данными из запроса.
-
-    :param request: Это объект запроса, который передается из представления.
-    :param book_id: Идентификатор книги, которую мы обновляем.
+    Обновляет книгу с заданным book_id данными из запроса.
     """
-    if not request.user.is_superuser:  # Не суперпользователям недоступно редактирование
-        return HttpResponseNotFound()
 
-    book_form = BookCreateFrom()
-
-    if request.method == "GET":
+    def get(self, request, book_id: str):
         elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
         try:
             res = elastic_search.get(index="books", id=book_id)[
@@ -111,9 +124,18 @@ def update(request, book_id):
             "year": res["year"],
             "about": res["about"],
         }
-        book_form = BookCreateFrom(data)
 
-    if request.method == "POST":
+        return render(
+            request,
+            "books/create.html",
+            {
+                "form": BookCreateFrom(data),
+                "type": "update",
+                "page_name": "book-edit",
+            },
+        )
+
+    def post(self, request, book_id: str):
         # Создаем новую запись
         book_form = BookCreateFrom(request.POST)
         # Проверка правильности формы.
@@ -134,20 +156,25 @@ def update(request, book_id):
 
             return redirect(f'/books/about/{res.get("_id", "")}')
 
-    return render(request, "books/create.html", {"form": book_form, "type": "update"})
+        return render(
+            request,
+            "books/create.html",
+            {
+                "form": book_form,
+                "type": "update",
+                "page_name": "book-edit",
+            },
+        )
 
 
-@login_required
-def delete(request, book_id):
+@method_decorator(login_required, name="dispatch")
+@method_decorator(user_passes_test(lambda u: u.is_superuser), name="dispatch")
+class DeleteBookView(View):
     """
     Удаляет книгу с идентификатором book_id.
-
-    :param request: Это объект запроса, который передается Django.
-    :param book_id: Идентификатор книги, которую необходимо удалить.
     """
-    if not request.user.is_superuser:  # Не суперпользователям недоступно редактирование
-        return HttpResponseNotFound()
-    if request.method == "POST":
+
+    def post(self, request, book_id: str):
         # Подключаемся к Elasticsearch
         elastic_search = ElasticsearchConnect()
 
@@ -159,17 +186,15 @@ def delete(request, book_id):
         )
         if post["_shards"]["successful"]:  # Если нашли
             # Проверяем, существует ли путь к книге. Если да, то удаляет папку с книгой.
-            if os.path.exists(f"{sys.path[0]}/media/books/{book_id}"):
-                shutil.rmtree(f"{sys.path[0]}/media/books/{book_id}")
-            print("delete:", book_id)
+            shutil.rmtree(f"{sys.path[0]}/media/books/{book_id}", ignore_errors=True)
+
             # Удаление книги с указанным book_id.
             elastic_search.delete(index="books", id=book_id)
             return redirect("books")
+
         else:
             # Возвращает страницу ошибки 404.
             return render(request, "errors/404.html", status=404)
-    else:
-        return redirect("books")
 
 
 @login_required
@@ -219,7 +244,13 @@ def about_book(request, book_id):
         )
         res["id"] = book_id
         return render(
-            request, "books/about_book.html", {"book": res, "user": request.user}
+            request,
+            "books/about_book.html",
+            {
+                "book": res,
+                "user": request.user,
+                "page_name": "book-about",
+            },
         )
     # Перехват исключения, которое выдается, когда книга не найдена.
     except elasticsearch.exceptions.NotFoundError:
@@ -256,6 +287,7 @@ def all_books(request):
         "books/show.html",
         {
             "books": res_books,
+            "page_name": "books-list",
             "user": request.user,
             "form": search_form.cleaned_data,
         },

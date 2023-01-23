@@ -11,6 +11,7 @@ from django.http import (
     Http404,
     HttpResponseNotAllowed,
 )
+from django.urls import reverse
 
 from django.views import View
 from django.core.cache import cache
@@ -149,10 +150,11 @@ class HomeView(View):
             "home.html",
             {
                 "posts_count": posts_count,
+                "page_name": "notes-list",
                 "data": data,
                 "tags_in": tags_in,
                 "tags_off": tags_off,
-                "image": random.randint(0, 9),
+                "image": f'images/cat{random.randint(0, 9)}.gif',
             },
         )
 
@@ -186,11 +188,11 @@ class HomeView(View):
 
 
 @login_required
-def edit_post(request, post_id: str):
+def edit_post(request, note_id: str):
     """
     Редактирование существующей записи
     :param request: запрос
-    :param post_id: ID записи в elasticsearch
+    :param note_id: ID записи в elasticsearch
     """
 
     # Проверка, является ли пользователь суперпользователем или нет. Если пользователь является суперпользователем, он
@@ -208,29 +210,30 @@ def edit_post(request, post_id: str):
     # Прикрепленные файлы
     files = []
     # Если существует папка для данного post_id и в ней есть файлы
-    if os.path.exists(MEDIA_ROOT / post_id) and os.listdir(MEDIA_ROOT / post_id):
-        for f in os.listdir(MEDIA_ROOT / post_id):
+    if os.path.exists(MEDIA_ROOT / note_id) and os.listdir(MEDIA_ROOT / note_id):
+        for f in os.listdir(MEDIA_ROOT / note_id):
             # Добавляем имя файла + иконку в список
             files.append({"name": f, "icon": icon_path(f)})
 
     elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
     try:
         # Получаем запись по ID
-        res = elastic_search.get(index="company", id=post_id)["_source"]
+        res = elastic_search.get(index="company", id=note_id)["_source"]
         if isinstance(res["tags"], str):
             res["tags"] = [res["tags"]]  # Переводим теги в список
     except elasticsearch.exceptions.NotFoundError:
         print("ID not exist")  # Данный ID не существует
         raise Http404()
 
-    res["post_id"] = post_id
+    res["post_id"] = note_id
+    res["page_name"] = "note-edit"
 
     # сохраняем все теги, которые уже существуют у данного поста
     exists_tags = res["tags"]
 
     # Определяем, какие теги существуют в посте из разрешенных для пользователя и отмечаем их как checked
     res["tags"] = [
-        {"tag": t, "checked": False if t not in res["tags"] else True}
+        {"name": t, "checked": False if t not in res["tags"] else True}
         for t in available_tags
     ]
 
@@ -262,31 +265,31 @@ def edit_post(request, post_id: str):
                     "tags": tags_to_save,
                     "title": user_form.cleaned_data["title"],
                 },
-                id_=post_id,
+                id_=note_id,
             )
 
             cache.delete("all_posts_count")
             cache.delete("last_updated_posts")
 
             # Прикрепленные файлы
-            if os.path.exists(MEDIA_ROOT / post_id):
-                for f in os.listdir(MEDIA_ROOT / post_id):
+            if os.path.exists(MEDIA_ROOT / note_id):
+                for f in os.listdir(MEDIA_ROOT / note_id):
                     # Смотрим все, что есть
                     if not request.POST.get(f"checkbox_{f}"):
                         # Если пользователь отключил данный файл
-                        os.remove(MEDIA_ROOT / post_id / f)  # Удаляем
+                        os.remove(MEDIA_ROOT / note_id / f)  # Удаляем
             else:
                 # Создаем папку для файлов, если нет
-                os.makedirs(MEDIA_ROOT / post_id)
+                os.makedirs(MEDIA_ROOT / note_id)
 
             if request.FILES.get("files"):  # Если пользователь добавил файлы
                 for file in dict(request.FILES)["files"]:  # Для каждого файла
-                    with open(MEDIA_ROOT / post_id / file.name, "wb+") as upload_file:
+                    with open(MEDIA_ROOT / note_id / file.name, "wb+") as upload_file:
                         for chunk_ in file.chunks():
                             upload_file.write(chunk_)  # Записываем файл
 
             # Перенаправляем на обновленную запись
-            return HttpResponseRedirect(f"/post/{post_id}")
+            return HttpResponseRedirect(reverse("note-show", kwargs={"note_id": note_id}))
 
         else:
             # Если не все поля были указаны.
@@ -294,7 +297,7 @@ def edit_post(request, post_id: str):
             res = {
                 "tags": [
                     {
-                        "tag": t,
+                        "name": t,
                         "checked": False
                         if t not in dict(request.POST).get("tags_checked", [])
                         else True,
@@ -304,51 +307,53 @@ def edit_post(request, post_id: str):
                 "error": "Необходимо указать хотя бы один тег, название заметки и её содержимое!",
                 "files": files,
                 "form": user_form,
+                "page_name": "note-edit",
             }
 
     return render(request, "edit_post.html", res)
 
 
 @login_required
-def download_file(request, post_id: str, file_name: str):
+def download_file(request, note_id: str, file_name: str):
     # Отправляем пользователю файл
-    if os.path.exists(MEDIA_ROOT / post_id / file_name):
-        with open(MEDIA_ROOT / post_id / file_name, "rb") as fh:
+    if os.path.exists(MEDIA_ROOT / note_id / file_name):
+        with open(MEDIA_ROOT / note_id / file_name, "rb") as fh:
             response = HttpResponse(fh.read(), content_type="application/vnd.ms-excel")
         response["Content-Disposition"] = f"inline; filename={file_name}"
         return response
 
 
 @login_required
-def show_post(request, post_id: str):
+def show_post(request, note_id: str):
     """
     Выводим содержимое заметки
     :param request: запрос
-    :param post_id: ID записи в elasticsearch
+    :param note_id: ID записи в elasticsearch
     :return:
     """
     elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
     try:
         # Получаем запись по ID
-        res = elastic_search.get(index="company", id=post_id)["_source"]
+        res = elastic_search.get(index="company", id=note_id)["_source"]
         # Если имеется всего один тег, то он имеет тип str, переводим его в list
         if isinstance(res["tags"], str):
             res["tags"] = [res["tags"]]
     except elasticsearch.exceptions.NotFoundError:
         raise Http404()
 
-    res["post_id"] = post_id
+    res["post_id"] = note_id
 
     # 2021-10-13T14:58:05.866799
     res["published_at"] = datetime.strptime(
         res["published_at"][:19], "%Y-%m-%dT%H:%M:%S"
     )
-
     # Если имеются файлы у записи
     res["files"] = []
+    res["page_name"] = "note-show"
+
     # Проверяем, существует ли каталог и есть ли в нем какие-либо файлы.
-    if os.path.exists(MEDIA_ROOT / post_id) and os.listdir(MEDIA_ROOT / post_id):
-        for file in os.listdir(MEDIA_ROOT / post_id):
+    if os.path.exists(MEDIA_ROOT / note_id) and os.listdir(MEDIA_ROOT / note_id):
+        for file in os.listdir(MEDIA_ROOT / note_id):
             # Добавление файлов в текущем каталоге в список файлов.
             res["files"].append({"name": file, "icon": icon_path(file)})
 
@@ -416,7 +421,7 @@ class CreatePostView(View):
             cache.delete("all_posts_count")
             cache.delete("last_updated_posts")
 
-            return HttpResponseRedirect(f'/post/{res["_id"]}')
+            return HttpResponseRedirect(reverse("note-show", kwargs={"note_id": res["_id"]}))
 
         else:
             # Выбранные теги
@@ -428,9 +433,10 @@ class CreatePostView(View):
                 "edit_post.html",
                 {
                     "tags": [
-                        {"tag": t, "checked": True if t in tags_checked else False}
+                        {"name": t, "checked": True if t in tags_checked else False}
                         for t in available_tags
                     ],
+                    "page_name": "note-create",
                     "error": "Необходимо указать хотя бы один тег, название заметки и её содержимое!",
                     "form": user_form,
                 },
@@ -448,8 +454,8 @@ class CreatePostView(View):
         )
 
         tags_ = sorted(
-            [{"tag": t, "cheched": False} for t in available_tags],
-            key=lambda x: x["tag"].lower(),  # Сортируем по алфавиту
+            [{"name": t, "cheched": False} for t in available_tags],
+            key=lambda x: x["name"].lower(),  # Сортируем по алфавиту
         )  # Если новая запись, то все теги изначально отключены
 
         # Клонируем заметку
@@ -472,7 +478,7 @@ class CreatePostView(View):
                 user_form = PostForm(res)
 
                 tags_ = [
-                    {"tag": t, "checked": True if t in res["tags"] else False}
+                    {"name": t, "checked": True if t in res["tags"] else False}
                     for t in available_tags
                 ]
             except elasticsearch.exceptions.NotFoundError:
@@ -483,6 +489,7 @@ class CreatePostView(View):
             "edit_post.html",
             {
                 "tags": tags_,
+                "page_name": "note-create",
                 "superuser": request.user.is_superuser,
                 "form": user_form,
             },
@@ -490,7 +497,7 @@ class CreatePostView(View):
 
 
 @login_required
-def delete_post(request, post_id):
+def delete_post(request, note_id):
     if request.method != "POST":
         return HttpResponseNotAllowed(["post"])
 
@@ -511,7 +518,7 @@ def delete_post(request, post_id):
     post = elastic_search.search(
         index="company",
         _source=["_id", "tags"],
-        query={"simple_query_string": {"query": post_id, "fields": ["_id"]}},
+        query={"simple_query_string": {"query": note_id, "fields": ["_id"]}},
     )
     if post["_shards"]["successful"]:  # Если нашли
         post_tags = post["hits"]["hits"][0]["_source"]["tags"]  # Смотрим его теги
@@ -520,12 +527,12 @@ def delete_post(request, post_id):
 
     if set(post_tags).issubset(available_tags):
         # Если теги поста разрешены данному пользователю, то удаляем пост
-        elastic_search.delete(index="company", id=post_id)
-        if os.path.exists(MEDIA_ROOT / post_id):
+        elastic_search.delete(index="company", id=note_id)
+        if os.path.exists(MEDIA_ROOT / note_id):
             # Если есть прикрепленные файлы
-            for f in os.listdir(MEDIA_ROOT / post_id):
-                os.remove(MEDIA_ROOT / post_id / f)  # Удаляем файл
-            os.rmdir(MEDIA_ROOT / post_id)  # Удаляем папку
+            for f in os.listdir(MEDIA_ROOT / note_id):
+                os.remove(MEDIA_ROOT / note_id / f)  # Удаляем файл
+            os.rmdir(MEDIA_ROOT / note_id)  # Удаляем папку
 
         cache.delete("all_posts_count")
         cache.delete("last_updated_posts")
@@ -543,7 +550,7 @@ class TagsView(View):
     @staticmethod
     def get(request):
         all_tags = Tags.objects.all()  # Все существующие теги
-        return render(request, "tags.html", {"tags": all_tags})
+        return render(request, "tags.html", {"tags": all_tags, "page_name": "notes-tags",})
 
     @staticmethod
     def post(request):
@@ -552,7 +559,7 @@ class TagsView(View):
             t = Tags()
             t.tag_name = request.POST["new_tag"]
             t.save()
-        return HttpResponseRedirect("/tags")
+        return HttpResponseRedirect(reverse("notes-tags"))
 
 
 @method_decorator(login_required, name="dispatch")

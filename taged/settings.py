@@ -152,8 +152,8 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-LOGIN_REDIRECT_URL = "/accounts/login/"
-LOGOUT_REDIRECT_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"
 
 ELASTICSEARCH_HOST = os.getenv("ELASTICSEARCH_HOST", "localhost")
 ELASTICSEARCH_TIMEOUT = int(os.getenv("ELASTICSEARCH_request_timeout", 10))

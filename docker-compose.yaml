@@ -1,8 +1,8 @@
 version: '2'
 
 services:
-  elasticsearch:
-    container_name: elasticsearch
+  taged_elasticsearch:
+    container_name: taged_elasticsearch
     image: elasticsearch:7.14.1
     restart: always
     ports:
@@ -15,18 +15,18 @@ services:
       discovery.type: 'single-node'
     mem_limit: 3g
     networks:
-      - network
+      - taged-network
 
-  web:
-    container_name: taged
-    build: .
+  taged:
+    container_name: taged_container
+    image: taged:0.5
     restart: always
     command: /bin/bash /app/run.sh
     environment:
-      ELASTICSEARCH_HOST: 'elasticsearch'
+      ELASTICSEARCH_HOST: 'taged_elasticsearch'
       ELASTICSEARCH_request_timeout: 90
     ports:
-      - '8001:8000'
+      - '80:8000'
     mem_limit: 300m
     volumes:
       - ./static:/app/static
@@ -39,13 +39,20 @@ services:
       - ./run.sh:/app/run.sh
       - ./books:/app/books
     depends_on:
-      - elasticsearch
+      - taged_elasticsearch
+      - redis
     networks:
-      - network
+      - taged-network
+
+  redis:
+    image: redis
+    restart: always
+    networks:
+      - taged-network
 
 
 networks:
-  network:
+  taged-network:
     ipam:
       driver: default
       config:

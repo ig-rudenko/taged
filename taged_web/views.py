@@ -83,8 +83,9 @@ class HomeView(View):
         tags_off = request.GET.getlist("tags-off", [])
         search_str = request.GET.get("search", "")
 
-        # Проверка, является ли пользователь суперпользователем или нет. Если пользователь является суперпользователем, он
-        # вернет все теги. Если пользователь не является суперпользователем, он вернет теги, связанные с пользователем.
+        # Проверка, является ли пользователь суперпользователем или нет.
+        # Если пользователь является суперпользователем, он вернет все теги.
+        # Если пользователь не является суперпользователем, он вернет теги, связанные с пользователем.
         user_tags = (
             Tags.objects.all().values("tag_name")
             if request.user.is_superuser
@@ -106,7 +107,7 @@ class HomeView(View):
                 data = cache.get("last_updated_posts")
                 if not data:
                     # Если нет, то вычисляем
-                    data = elastic_search.get_last_published(index="company")
+                    data = elastic_search.get_last_published(index="company", limit=6)
                     # Установка кеша для last_updated_posts на значение data на 600 секунд.
                     cache.set("last_updated_posts", data, 600)
 
@@ -114,7 +115,7 @@ class HomeView(View):
                 posts_count = cache.get("all_posts_count")
                 if not posts_count:
                     # Если нет, то вычисляем
-                    posts_count = elastic_search.posts_count()
+                    posts_count = elastic_search.query_count("company")
                     # Установка кеша для all_posts_count на значение posts_count на 600 секунд.
                     cache.set("all_posts_count", posts_count, 600)
 
@@ -253,7 +254,7 @@ def edit_post(request, post_id: str):
             )["tags_checked"]
 
             # Обновляем существующую в elasticsearch запись
-            update_post = elastic_search.update_post(
+            elastic_search.update_post(
                 "company",
                 {
                     "content": user_form.cleaned_data["input"],
@@ -378,7 +379,8 @@ class CreatePostView(View):
     Создаем новую запись
     """
 
-    def post(self, request):
+    @staticmethod
+    def post(request):
         user_form = PostForm(request.POST)  # Заполняем форму
 
         available_tags = (
@@ -434,7 +436,8 @@ class CreatePostView(View):
                 },
             )
 
-    def get(self, request):
+    @staticmethod
+    def get(request):
 
         user_form = PostForm()  # Создаем форму
 
@@ -537,11 +540,13 @@ class TagsView(View):
     Смотрим и создаем теги
     """
 
-    def get(self, request):
+    @staticmethod
+    def get(request):
         all_tags = Tags.objects.all()  # Все существующие теги
         return render(request, "tags.html", {"tags": all_tags})
 
-    def post(self, request):
+    @staticmethod
+    def post(request):
         # Добавляем новый тег
         if request.POST.get("new_tag"):
             t = Tags()
@@ -557,7 +562,8 @@ class DeleteTagsView(View):
     Удаляем теги
     """
 
-    def post(self, request, tag_id):
+    @staticmethod
+    def post(request, tag_id):
         Tags.objects.filter(id=tag_id).delete()
         return HttpResponseRedirect("/tags")
 
@@ -565,14 +571,16 @@ class DeleteTagsView(View):
 @method_decorator(login_required, name="dispatch")
 @method_decorator(user_passes_test(lambda u: u.is_superuser), name="dispatch")
 class UsersView(View):
-    def get(self, request):
+    @staticmethod
+    def get(request):
         return render(request, "user_control/users.html", {"users": User.objects.all()})
 
 
 @method_decorator(login_required, name="dispatch")
 @method_decorator(user_passes_test(lambda u: u.is_superuser), name="dispatch")
 class UserTagControlView(View):
-    def get(self, request, username):
+    @staticmethod
+    def get(request, username):
         if not username:
             return HttpResponseRedirect("/users")
 
@@ -598,7 +606,8 @@ class UserTagControlView(View):
             },
         )
 
-    def post(self, request, username):
+    @staticmethod
+    def post(request, username):
         user = User.objects.get(username=username)  # Пользователь
         for tag in Tags.objects.all():
             if request.POST.get(f"tag_id_{tag.id}"):  # Если данная группа была выбрана

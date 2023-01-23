@@ -158,10 +158,13 @@ class ElasticsearchConnect(Elasticsearch):
         else:
             return []
 
-    def query_count(self, index: str, query: dict) -> int:
+    def query_count(self, index: str, query=None) -> int:
+
+        body = {"query": query} if isinstance(query, dict) else {}
+
         return self.count(
             index=index,
-            body={"query": query},
+            body=body,
             request_timeout=settings.ELASTICSEARCH_TIMEOUT,
         )["count"]
 
@@ -317,17 +320,3 @@ class ElasticsearchConnect(Elasticsearch):
             for b in res["hits"]["hits"]:
                 result.append(dict(b["_source"], **{"id": b["_id"], "score": 0}))
         return result
-
-    @staticmethod
-    def posts_count(index="company") -> int:
-        """
-        ## Возвращает количество записей в индексе
-
-        :param index: Имя индекса для поиска, defaults to company (optional)
-        """
-        resp = requests.get(
-            f"http://{settings.ELASTICSEARCH_HOST}:9200/{index}/_doc/_count"
-        )
-        if resp.status_code == 200:
-            return resp.json()["count"]
-        return -1

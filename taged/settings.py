@@ -163,8 +163,8 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 100_000_000  # 100МБ
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
-        "LOCATION": "cache",
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://redis:6379",
     }
 }
 

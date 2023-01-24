@@ -1,3 +1,4 @@
+import math
 import requests
 from django.conf import settings
 from pprint import pprint
@@ -6,30 +7,42 @@ from elasticsearch.client.indices import IndicesClient
 
 
 class QueryLimit:
-    per_page = 50
+    per_page = 10
 
     def __init__(
         self, es: "ElasticsearchConnect", params: dict, convert_result=None, **extra
     ):
         self._es = es
         self._params = params
+        self.page = 1
+
         if params["body"]:
             self.count = es.query_count(params["index"], params["body"]["query"])
         else:
             self.count = 0
+
+        self.max_pages = math.ceil(self.count / self.per_page)
+
         self._convert_func = convert_result
         self.extra_parameters = extra
 
+    @property
+    def has_previous(self):
+        return self.page > 1
+
+    @property
+    def has_next(self):
+        return (self.page + 1) <= self.max_pages
+
     def get_limits(self, page_num: int):
-        number = self.validate_number(page_num)
-        bottom = (number - 1) * self.per_page
-        top = bottom + self.per_page
-        return bottom, top
+        from_ = (page_num - 1) * self.per_page
+        return from_, self.per_page
 
     def get_page(self, page: int) -> list:
+        self.page = self.validate_number(page)
         if not self.count:
             return []
-        query_from, query_size = self.get_limits(page)
+        query_from, query_size = self.get_limits(self.page)
         res = self._es.search(
             **self._params,
             **{"from_": query_from, "size": query_size},
@@ -44,8 +57,8 @@ class QueryLimit:
         except (ValueError, TypeError):
             number = 1
 
-        if number > self.count:
-            number = self.count
+        if self.max_pages and number > self.max_pages:
+            number = self.max_pages
         elif number <= 0:
             number = 1
         return number
@@ -209,19 +222,23 @@ class ElasticsearchConnect(Elasticsearch):
                 }
             )
 
-        # Вычисляем кол-во записей по запросу
-        query = {
-            "index": "company",
-            "_source": ["tags", "title"],
-            "body": query,
-            "request_timeout": settings.ELASTICSEARCH_TIMEOUT,
-        }
+        if tags_off:
+            query["query"]["bool"]["must_not"] = [
+                {
+                    "match": {"tags": " ".join(tags_off)},
+                }
+            ]
 
-        # Вычисляем отступ и размер выборки
         return QueryLimit(
             es=self,
-            params=query,
+            params={
+                "index": "company",
+                "_source": ["tags", "title"],
+                "body": query,
+                "request_timeout": settings.ELASTICSEARCH_TIMEOUT,
+            },
             convert_result=self.convert_post_result,
+            # extra
             tags_in=tags_in,
             tags_off=tags_off,
         )

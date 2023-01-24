@@ -96,6 +96,7 @@ class HomeView(View):
         available_tags = [t["tag_name"] for t in user_tags]
         data = []
         posts_count = None
+        query_limiter = None
 
         # Проверка того, является ли метод запроса GET и является ли пользователь суперпользователем. Если оба условия
         # выполняются, он получает последние опубликованные сообщения от Elasticsearch.
@@ -149,12 +150,13 @@ class HomeView(View):
             request,
             "home.html",
             {
+                "pagination": query_limiter,
                 "posts_count": posts_count,
                 "page_name": "notes-list",
                 "data": data,
                 "tags_in": tags_in,
                 "tags_off": tags_off,
-                "image": f'images/cat{random.randint(0, 9)}.gif',
+                "image": f"images/cat{random.randint(0, 9)}.gif",
             },
         )
 
@@ -289,7 +291,9 @@ def edit_post(request, note_id: str):
                             upload_file.write(chunk_)  # Записываем файл
 
             # Перенаправляем на обновленную запись
-            return HttpResponseRedirect(reverse("note-show", kwargs={"note_id": note_id}))
+            return HttpResponseRedirect(
+                reverse("note-show", kwargs={"note_id": note_id})
+            )
 
         else:
             # Если не все поля были указаны.
@@ -421,7 +425,9 @@ class CreatePostView(View):
             cache.delete("all_posts_count")
             cache.delete("last_updated_posts")
 
-            return HttpResponseRedirect(reverse("note-show", kwargs={"note_id": res["_id"]}))
+            return HttpResponseRedirect(
+                reverse("note-show", kwargs={"note_id": res["_id"]})
+            )
 
         else:
             # Выбранные теги
@@ -550,7 +556,14 @@ class TagsView(View):
     @staticmethod
     def get(request):
         all_tags = Tags.objects.all()  # Все существующие теги
-        return render(request, "tags.html", {"tags": all_tags, "page_name": "notes-tags",})
+        return render(
+            request,
+            "tags.html",
+            {
+                "tags": all_tags,
+                "page_name": "notes-tags",
+            },
+        )
 
     @staticmethod
     def post(request):

@@ -98,6 +98,10 @@
         Всего записей: {{ posts_count }}
     </div>
 
+
+    {% include "pagination.html" with p=pagination %}
+
+
 <div class="post-wrap">
 
     {% for post in data %}

@@ -33,7 +33,7 @@ class CreateBookView(View):
                 "form": BookCreateFrom(),
                 "type": "create",
                 "page_name": "book-create",
-            }
+            },
         )
 
     def post(self, request):
@@ -99,7 +99,7 @@ class CreateBookView(View):
                 "form": book_form,
                 "type": "create",
                 "page_name": "book-create",
-            }
+            },
         )
 
 
@@ -265,28 +265,32 @@ def all_books(request):
     search_form = SearchForm(request.GET)
     search_text = request.GET.get("search_text")
     search_year = request.GET.get("search_year")
-
     # Подключение к серверу elasticsearch.
     elastic_search = ElasticsearchConnect()
-
     res_books = []
-    # Проверка корректности запроса и корректности формы поиска.
-    if search_form.is_valid():
-        # Ищем по полям, переданным в запросе
-        res_books = elastic_search.find_books(
-            search_text,
-            search_year,
-        ).get_page(request.GET.get("page"))
+    query_limiter = None
 
-    if not search_text and not search_year:
-        # Резервный вариант, когда запрос недействителен.
-        search_form.is_valid()
-        res_books = elastic_search.get_last_published(index="books")
+    # Проверка корректности запроса и корректности формы поиска.
+    search_form.is_valid()
+    # Ищем по полям, переданным в запросе
+    query_limiter = elastic_search.find_books(
+        search_text,
+        search_year,
+    )
+    res_books = query_limiter.get_page(request.GET.get("page"))
+
+    # if not search_text and not search_year:
+    #     # Резервный вариант, когда запрос недействителен.
+    #     search_form.is_valid()
+    #     res_books = elastic_search.get_last_published(index="books", limit=10)
+
+    print(query_limiter.page, query_limiter.count, query_limiter.max_pages)
 
     return render(
         request,
         "books/show.html",
         {
+            "paginator": query_limiter,
             "books": res_books,
             "page_name": "books-list",
             "user": request.user,

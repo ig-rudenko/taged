@@ -19,7 +19,7 @@ services:
 
   taged:
     container_name: taged_container
-    image: taged:0.5
+    image: taged:0.5.7
     restart: always
     command: /bin/bash /app/run.sh
     environment:

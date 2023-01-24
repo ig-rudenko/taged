@@ -4,24 +4,6 @@
     {% if type == 'create' %}Добавить книгу{% else %}Редактируем: "{{ form.title.value }}"{% endif %}
 {% endblock title %}
 
-{% block menu %}
-    <ul class="menu-main" style="padding-top: 20px">
-        <li><a href="/" >> Заметки <</a></li>
-
-        {% if user.is_superuser %}
-        <li><a href="/books/create" {% if type == 'create' %}class="current"{% endif %}>Добавить книгу</a></li>
-        {% endif %}
-
-        <li><a href="/books">Библиотека</a></li>
-
-        {% if user.is_superuser %}
-        <li><a href="/users">Пользователи</a></li>
-        {% endif %}
-
-        <li><a href="/accounts/logout">Выйти</a></li>
-    </ul>
-{% endblock %}
-
 {% block content %}
 <form name="book_form" method="post" enctype="multipart/form-data">
 {% csrf_token %}
@@ -93,7 +75,7 @@
         <div class="col-md-1 mb"></div>
         <div class="col-md-10 mb-3">
             <label for="validationServer03" style="color: #1b1b1b">Описание</label>
-            <textarea name="about" cols="100" rows="10" required
+            <textarea name="about" cols="100" rows="18" required
                  class="form-control {% if form.about.errors %}is-invalid{% else %}is-valid{% endif %}"
                  id="validationServer03">{% if form.about.value %}{{ form.about.value }}{% endif %}</textarea>
 
@@ -115,14 +97,4 @@
 </div>
 
 </form>
-{% endblock %}
-
-{% block footer %}
-<script>
-$('.custom-file-input').on('change', function() {
-   let fileName = $(this).val().split('\\').pop();
-   console.log(fileName)
-   $(this).next('.custom-file-label').addClass("selected").html(fileName);
-});
-</script>
 {% endblock %}

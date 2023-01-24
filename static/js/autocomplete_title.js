@@ -1,6 +1,7 @@
 $( function() {
-
-$( "#search" ).autocomplete({
+  let a = $( "#search-input" )
+  console.log(a)
+  a.autocomplete({
   source: function( request, response ) {
     $.ajax( {
       url: "/ajax/autocomplete",

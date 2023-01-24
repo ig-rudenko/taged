@@ -1,7 +1,14 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static math_operations %}
 
 {% block title %}Taged{% endblock %}
+
+
+{% block links %}
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/jquery-ui.js' %}"></script>
+    <script src="{% static 'js/autocomplete_title.js' %}"></script>
+{% endblock %}
 
 
 
@@ -107,15 +114,24 @@
     {% for post in data %}
         <div class="post-item">
             <div class="post-item-wrap {% if post.score > 0.48 %} post-item-wrap-main {% endif %}">
-                <a id="{{ post.id }}" href="{% url 'note-show' post.id %}" class="post-link">
-                {% if post.files %}
-                    <img class="post-title-img" src="{% static "/images/icons/clip3.png" %}" alt="clip">
-                {% endif %}
-                    <h3 class="post-title">{{ post.title }}</h3>
-                    {% for tag in post.tags %}
-                        <span class="badge bg-primary">{{ tag }}</span>
-                    {% endfor %}
 
+                <a class="post-link"
+                   {% if post.score <= 0.48 and post.score > 0.2 %}
+                       style="opacity: {% multiply post.score 2 %}"
+                   {% elif post.score <= 0.2 %}
+                       style="opacity: 0.2"
+                   {% endif %}
+                   id="{{ post.id }}"
+                   href="{% url 'note-show' post.id %}">
+                    {% if post.files %}
+                        <img class="post-title-img" src="{% static "/images/icons/clip3.png" %}" alt="clip">
+                    {% endif %}
+                        <h3 class="post-title">{{ post.title }}</h3>
+                        {% for tag in post.tags %}
+                            <span class="badge bg-primary">{{ tag }}</span>
+                        {% endfor %}
+                    <br><br>
+                    <span class="text-muted">{{ post.score }}</span>
                 </a>
             <div id="content-{{ post.id }}" class="pre_post_hidden" style="width: 426.66px"></div>
             </div>
@@ -125,6 +141,5 @@
 </div>
 
 </div>
-<script src="{% static 'js/autocomplete_title.js' %}"></script>
 <script src="{% static 'js/preview_post.js' %}"></script>
 {% endblock %}

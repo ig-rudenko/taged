@@ -7,7 +7,7 @@ from elasticsearch.client.indices import IndicesClient
 
 
 class QueryLimit:
-    per_page = 12
+    per_page = 24
 
     def __init__(
         self, es: "ElasticsearchConnect", params: dict, convert_result=None, **extra
@@ -335,5 +335,5 @@ class ElasticsearchConnect(Elasticsearch):
         result = []
         if res and res["hits"]["total"]["value"]:
             for b in res["hits"]["hits"]:
-                result.append(dict(b["_source"], **{"id": b["_id"], "score": 0}))
+                result.append(dict(b["_source"], **{"id": b["_id"], "score": 1}))
         return result

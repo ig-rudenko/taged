@@ -29,6 +29,8 @@
 </form>
 
 {#    КНИГИ    #}
+{% if books %}
+
 <div class="align-items-stretch row row-cols-1 row-cols-lg-4">
 {% for book in books %}
     <div class="col py-3">
@@ -52,5 +54,10 @@
         </div>
     </div>
 {% endfor %}
+
+{% else %}
+    <h1 class="text-center">По вашему запросу книги не найдены</h1>
+{% endif %}
+
 </div>
 {% endblock %}

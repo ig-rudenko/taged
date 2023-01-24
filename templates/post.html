@@ -55,14 +55,16 @@
                   </div>
                 </div>
 
-
                 </div>
             </div>
 
             {# ТЕГИ #}
             <div style="padding-bottom: 8px">
                 {% for tag in tags %}
-                    <span class="tag-in">{{ tag }}</span>
+                    <a href="{% url 'notes-list' %}?tags-in={{ tag }}"
+                       class="tag-in text-decoration-none" style="cursor: pointer">
+                        {{ tag }}
+                    </a>
                 {% endfor %}
             </div>
 

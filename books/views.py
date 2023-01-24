@@ -10,6 +10,7 @@ import elasticsearch
 from django.http import HttpResponseNotFound
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 
@@ -154,7 +155,7 @@ class UpdateBookView(View):
                 id_=book_id,
             )
 
-            return redirect(f'/books/about/{res.get("_id", "")}')
+            return redirect(reverse("book-show", args=[res.get("_id", "")]))
 
         return render(
             request,
@@ -190,7 +191,7 @@ class DeleteBookView(View):
 
             # Удаление книги с указанным book_id.
             elastic_search.delete(index="books", id=book_id)
-            return redirect("books")
+            return redirect("books-list")
 
         else:
             # Возвращает страницу ошибки 404.
@@ -277,7 +278,7 @@ def all_books(request):
             search_year,
         ).get_page(request.GET.get("page"))
 
-    if not res_books:
+    if not search_text and not search_year:
         # Резервный вариант, когда запрос недействителен.
         search_form.is_valid()
         res_books = elastic_search.get_last_published(index="books")

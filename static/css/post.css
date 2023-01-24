@@ -125,10 +125,7 @@
 .post-item-wrap:hover .post-title {
    color: #000000;
 }
-.post-content {
-   color: #A69888;
-   font-size: 14px;
-}
+
 @media (min-width: 768px) {
    .post-item {
       flex-basis: 50%;

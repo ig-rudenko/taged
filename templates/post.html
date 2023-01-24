@@ -13,75 +13,73 @@
 {% block main %}
 <div class="container">
     <div class="post">
-        <div class="post-content">
 
-            {# ЗАГОЛОВОК #}
-            <div class="post-header" style="font-family: 'Montserrat', sans-serif;">
-                <h1>{{ title }}</h1>
-                <div class="post-meta">
-                    <time>{{ published_at | naturaltime }}</time>
-                    <br>
+        {# ЗАГОЛОВОК #}
+        <div class="post-header" style="font-family: 'Montserrat', sans-serif;">
+            <h1>{{ title }}</h1>
+            <div class="post-meta">
+                <time>{{ published_at | naturaltime }}</time>
+                <br>
 
 {#                    Редактировать  #}
-                <a href="{% url 'note-edit' post_id %}" style="color: #03a2ff">редактировать</a>
-                    <time></time>
+            <a href="{% url 'note-edit' post_id %}" style="color: #03a2ff">редактировать</a>
+                <time></time>
 
 {#                    Клонировать    #}
-                <a href="{% url 'note-create' %}?cl={{ post_id }}" style="color: #48af70">клонировать</a>
-                    <time></time>
+            <a href="{% url 'note-create' %}?cl={{ post_id }}" style="color: #48af70">клонировать</a>
+                <time></time>
 
 {#                      УДАЛИТЬ #}
-                <a style="color: #ff6363; cursor: pointer" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                  удалить
-                </a>
+            <a style="color: #ff6363; cursor: pointer" data-bs-toggle="modal" data-bs-target="#deleteModal">
+              удалить
+            </a>
 
-                <!-- Modal -->
-                <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                  <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h1 class="modal-title fs-5" id="exampleModalLabel">Удалить данную заметку?</h1>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                      </div>
+            <!-- Modal -->
+            <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Удалить данную заметку?</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
 
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Не удалять</button>
-                        <form name="delete_form" method="post" action="{% url 'note-delete' post_id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger">Удалить</button>
-                        </form>
-                      </div>
-                    </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Не удалять</button>
+                    <form name="delete_form" method="post" action="{% url 'note-delete' post_id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Удалить</button>
+                    </form>
                   </div>
                 </div>
-
-                </div>
+              </div>
             </div>
 
-            {# ТЕГИ #}
-            <div style="padding-bottom: 8px">
-                {% for tag in tags %}
-                    <a href="{% url 'notes-list' %}?tags-in={{ tag }}"
-                       class="tag-in text-decoration-none" style="cursor: pointer">
-                        {{ tag }}
-                    </a>
-                {% endfor %}
             </div>
+        </div>
 
-            {# ФАЙЛЫ #}
-            <div class="post-file">
-            {% for f in files %}
-                <a href="{% url 'download-file' post_id f.name %}">
-                    <img src="{% static f.icon %}" width="40px" height="40px" alt="">
-                    {{ f.name }}
+        {# ТЕГИ #}
+        <div style="padding-bottom: 8px">
+            {% for tag in tags %}
+                <a href="{% url 'notes-list' %}?tags-in={{ tag }}"
+                   class="tag-in text-decoration-none" style="cursor: pointer">
+                    {{ tag }}
                 </a>
             {% endfor %}
-            </div>
-
-            {# СОДЕРЖАНИЕ #}
-            <div id="post-content" style="color: black; font-family: 'Teams', sans-serif"></div>
-
         </div>
+
+        {# ФАЙЛЫ #}
+        <div class="post-file">
+        {% for f in files %}
+            <a href="{% url 'download-file' post_id f.name %}">
+                <img src="{% static f.icon %}" width="40px" height="40px" alt="">
+                {{ f.name }}
+            </a>
+        {% endfor %}
+        </div>
+
+        {# СОДЕРЖАНИЕ #}
+        <div id="post-content"></div>
+
     </div>
 </div>
 

@@ -4,9 +4,19 @@
 [![Code style: black](https://img.shields.io/badge/code_style-black-black.svg)](https://github.com/psf/black)
 
 
-Сервис заметок с тегами + библиотека
+### Сервис заметок с тегами + библиотека
 
-В качестве хранилища и поисковика используется [Elacticsearch](https://www.elastic.co/elastic-stack/)
+<div>
+В качестве хранилища и поисковика используется
+
+<a href="https://www.elastic.co/elasticsearch/" target="_blank" rel="noreferrer">
+<span>Elacticsearch</span>
+<img style="vertical-align: middle" src="https://static-www.elastic.co/v3/assets/bltefdd0b53724fa2ce/blt36f2da8d650732a0/5d0823c3d8ff351753cbc99f/logo-elasticsearch-32-color.svg"
+    alt="elasticsearch" width="40" height="40"/>
+</a>&nbsp
+</div>
+
+
 
 ## Установка
 

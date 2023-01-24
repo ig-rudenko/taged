@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
+    <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
     <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/post.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/search.css' %}">
@@ -28,6 +28,13 @@
 <main>
 {% block main %}{% endblock %}
 </main>
+
+{# FOOTER #}
+<div class="container">
+{% block footer %}
+    {% include 'footer.html' %}
+{% endblock %}
+</div>
 
 </body>
 </html>

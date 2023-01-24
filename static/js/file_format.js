@@ -1,29 +1,29 @@
 function file_format(file_name) {
-    if (file_name.endsWith('.docx') || file_name.endsWith('.doc') || file_name.endsWith('.rtf')){
+    if (file_name.match(/.+\.(doc[x]?|rtf)$/i)){
         return 'docx'
     }
-    if (file_name.endsWith('.xls') || file_name.endsWith('.xlsx') || file_name.endsWith('.xlsm')){
+    if (file_name.match(/.+\.xls[xm]?$/i)){
         return 'xlsx'
     }
-    if (file_name.endsWith('.pdf')){
+    if (file_name.match(/.+\.pdf$/i)){
         return 'pdf'
     }
-    if (file_name.endsWith('.xml')){
+    if (file_name.match(/.+\.xml$/i)){
         return 'xml'
     }
-    if (file_name.endsWith('.drawio')){
+    if (file_name.match(/.+\.drawio$/i)){
         return 'drawio'
     }
-    if (file_name.endsWith('.txt')){
+    if (file_name.match(/.+\.txt$/i)){
         return 'txt'
     }
-    if (file_name.endsWith('.vsd') || file_name.endsWith('.vsdx')){
+    if (file_name.match(/.+\.vsd[x]?$/i)){
         return 'visio'
     }
-    if (file_name.endsWith('.png') || file_name.endsWith('.jpeg') || file_name.endsWith('.jpg') || file_name.endsWith('.gif') || file_name.endsWith('.bpm')){
+    if (file_name.match(/.+\.(png|jp[e]?g|gif|bpm|svg|ico|tiff)$/i)){
         return 'img'
     }
-    if (file_name.endsWith('.rar') || file_name.endsWith('.7z') || file_name.endsWith('.zip') || file_name.endsWith('.tar') || file_name.endsWith('.iso')){
+    if (file_name.match(/.+\.(rar|7z|zip|tar[.gz]|iso)$/i)){
         return 'archive'
     }
     return 'file'

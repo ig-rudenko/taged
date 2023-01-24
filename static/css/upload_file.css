@@ -82,5 +82,7 @@
 }
 .post-file img{
     vertical-align:middle; /* выравниваем картинки по центре по вертикали */
+	width: 40px;
+	height: 40px;
 }
 

@@ -7,7 +7,7 @@ from elasticsearch.client.indices import IndicesClient
 
 
 class QueryLimit:
-    per_page = 10
+    per_page = 12
 
     def __init__(
         self, es: "ElasticsearchConnect", params: dict, convert_result=None, **extra

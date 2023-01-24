@@ -1,5 +1,7 @@
 import os.path
 import random
+import re
+
 import elasticsearch
 from datetime import datetime
 
@@ -32,27 +34,27 @@ def icon_path(file: str):
     :param file: Имя файла, который вы хотите отобразить
     :return: Путь к значку для типа файла
     """
-    icon = "file.png"
-    file_suffix = file.split(".")[-1]
 
-    if file_suffix in ["doc", "docx", "rtf"]:
+    if re.match(r".+\.(doc[x]?|rtf)$", file):
         icon = "docx.png"
-    elif file_suffix in ["xls", "xlsx", "xlsm"]:
+    elif re.match(r".+\.xls[xm]?$", file):
         icon = "xlsx.png"
-    elif file_suffix in ["pdf"]:
+    elif re.match(r".+\.pdf$/i", file):
         icon = "pdf.png"
-    elif file_suffix in ["txt"]:
+    elif re.match(r".+\.(txt|log)$", file):
         icon = "txt.png"
-    elif file_suffix in ["drawio"]:
+    elif re.match(r".+\.(drawio)$", file):
         icon = "drawio.png"
-    elif file_suffix in ["xml"]:
+    elif re.match(r".+\.xml$", file):
         icon = "xml.png"
-    elif file_suffix in ["vds", "vsdx"]:
+    elif re.match(r".+\.vsd[x]?$", file):
         icon = "visio.png"
-    elif file_suffix in ["rar", "7z", "zip", "tar", "iso"]:
+    elif re.match(r".+\.(rar|7z|zip|tar[.gz]|iso)$", file):
         icon = "archive.png"
-    elif file_suffix in ["png", "jpeg", "gif", "jpg", "bpm"]:
+    elif re.match(r".+\.(png|jp[e]?g|gif|bpm|svg|ico|tiff)$", file):
         icon = "img.png"
+    else:
+        icon = "file.png"
 
     # Возврат пути к иконке
     return "images/icons/" + icon

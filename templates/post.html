@@ -71,7 +71,7 @@
         <div class="post-file">
         {% for f in files %}
             <a href="{% url 'download-file' post_id f.name %}">
-                <img src="{% static f.icon %}" width="40px" height="40px" alt="">
+                <img src="{% static f.icon %}" alt="">
                 {{ f.name }}
             </a>
         {% endfor %}

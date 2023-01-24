@@ -17,7 +17,7 @@
 
     <li class="page-item {% if not p.has_previous %}disabled{% endif %}">
       <a class="page-link" onclick="goToPage({{ p.page|add:"-1" }})">
-          Previous</a>
+          Назад</a>
     </li>
 
     {% if p.has_previous %}
@@ -36,7 +36,7 @@
 
     <li class="page-item {% if not p.has_next %}disabled{% endif %}">
       <a class="page-link" onclick="goToPage({{ p.page|add:"1" }})">
-          Next</a>
+          Вперёд</a>
     </li>
 
     {% if p.page|add:"3" < p.max_pages %}

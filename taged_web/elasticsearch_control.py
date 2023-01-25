@@ -137,9 +137,9 @@ class ElasticsearchConnect(Elasticsearch):
 
         result = {}
         try:
-            result = self.index(
+            result = self.update(
                 index=index_name,
-                document=record,
+                body={"doc": record},
                 id=id_,
                 request_timeout=settings.ELASTICSEARCH_TIMEOUT,
             )

@@ -168,7 +168,7 @@ CACHES = {
     }
 }
 
-CKEDITOR_UPLOAD_PATH = "/media/"
+CKEDITOR_UPLOAD_PATH = "notes/"
 
 CKEDITOR_CONFIGS = {
     "default": {

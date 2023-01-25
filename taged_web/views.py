@@ -1,11 +1,10 @@
-import os.path
-import random
 import re
+import random
+import shutil
 
 import elasticsearch
 from datetime import datetime
 
-from django.shortcuts import render
 from django.http import (
     HttpResponseRedirect,
     JsonResponse,
@@ -14,16 +13,17 @@ from django.http import (
     HttpResponseNotAllowed,
 )
 from django.urls import reverse
-
 from django.views import View
+from django.shortcuts import render
 from django.core.cache import cache
-from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required, user_passes_test
+
 from taged_web.elasticsearch_control import ElasticsearchConnect
 from taged_web.models import Tags
-
 from taged.settings import MEDIA_ROOT
+from .image_decoder import ReplaceImagesInHtml
 from .forms import PostForm
 
 
@@ -35,11 +35,11 @@ def icon_path(file: str):
     :return: Путь к значку для типа файла
     """
 
-    if re.match(r".+\.(doc[x]?|rtf)$", file):
+    if re.match(r".+\.(docx?|rtf)$", file):
         icon = "docx.png"
     elif re.match(r".+\.xls[xm]?$", file):
         icon = "xlsx.png"
-    elif re.match(r".+\.pdf$/i", file):
+    elif re.match(r".+\.pdf$", file):
         icon = "pdf.png"
     elif re.match(r".+\.(txt|log)$", file):
         icon = "txt.png"
@@ -47,11 +47,11 @@ def icon_path(file: str):
         icon = "drawio.png"
     elif re.match(r".+\.xml$", file):
         icon = "xml.png"
-    elif re.match(r".+\.vsd[x]?$", file):
+    elif re.match(r".+\.vsdx?$", file):
         icon = "visio.png"
     elif re.match(r".+\.(rar|7z|zip|tar[.gz]|iso)$", file):
         icon = "archive.png"
-    elif re.match(r".+\.(png|jp[e]?g|gif|bpm|svg|ico|tiff)$", file):
+    elif re.match(r".+\.(png|jpe?g|gif|bpm|svg|ico|tiff)$", file):
         icon = "img.png"
     else:
         icon = "file.png"
@@ -165,15 +165,13 @@ class HomeView(View):
     @staticmethod
     def add_file_mark(objects: list):
         for post in objects:
-            if isinstance(post["tags"], str):
-                post["tags"] = [post["tags"]]
-            # Проверяем прикрепленные файлы
-            # Проверяем, существует ли каталог и есть ли в нем какие-либо файлы.
-            if os.path.exists(MEDIA_ROOT / f'{post["id"]}') and os.listdir(
-                MEDIA_ROOT / f'{post["id"]}'
-            ):
-                post["files"] = True
+            # Проверяем, существуют ли у записей прикрепленные файлы.
+            for file in (MEDIA_ROOT / f'{post["id"]}').glob("*"):
+                if file.is_file():
+                    post["files"] = True
+                    break  # Если нашли файл, прекращаем поиск
             else:
+                # Если не нашли файлы
                 post["files"] = False
 
     @staticmethod
@@ -214,10 +212,10 @@ def edit_post(request, note_id: str):
     # Прикрепленные файлы
     files = []
     # Если существует папка для данного post_id и в ней есть файлы
-    if os.path.exists(MEDIA_ROOT / note_id) and os.listdir(MEDIA_ROOT / note_id):
-        for f in os.listdir(MEDIA_ROOT / note_id):
+    for f in (MEDIA_ROOT / note_id).glob("*"):
+        if f.is_file():
             # Добавляем имя файла + иконку в список
-            files.append({"name": f, "icon": icon_path(f)})
+            files.append({"name": f.name, "icon": icon_path(f.name)})
 
     elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
     try:
@@ -226,7 +224,7 @@ def edit_post(request, note_id: str):
         if isinstance(res["tags"], str):
             res["tags"] = [res["tags"]]  # Переводим теги в список
     except elasticsearch.exceptions.NotFoundError:
-        print("ID not exist")  # Данный ID не существует
+        # Данный ID не существует
         raise Http404()
 
     res["post_id"] = note_id
@@ -255,16 +253,24 @@ def edit_post(request, note_id: str):
         if user_form.is_valid():  # Если данные были введены верно
 
             # Список тегов, которые будут обновлены.
-            # Состоят из тегов, которые были у записи, но недоступные для пользователя + те, что он указал явно
-            tags_to_save = [t for t in exists_tags if t not in available_tags] + dict(
-                request.POST
-            )["tags_checked"]
+            # Состоят из тегов, которые были у записи, но недоступные для пользователя
+            tags_to_save = [t for t in exists_tags if t not in available_tags]
+            # Плюс те, что он указал явно
+            tags_to_save += request.POST.getlist("tags_checked")
+
+            image_formatter = ReplaceImagesInHtml(user_form.cleaned_data["input"])
+            # Сохраняем закодированные изображения как файлы
+            # и заменяем у них атрибут src на ссылку файла.
+            image_formatter.save_images_and_update_src(
+                image_prefix="image",
+                folder=f"{note_id}/content_images",
+            )
 
             # Обновляем существующую в elasticsearch запись
             elastic_search.update_post(
                 "company",
                 {
-                    "content": user_form.cleaned_data["input"],
+                    "content": image_formatter.html,
                     "published_at": datetime.now(),
                     "tags": tags_to_save,
                     "title": user_form.cleaned_data["title"],
@@ -275,22 +281,23 @@ def edit_post(request, note_id: str):
             cache.delete("all_posts_count")
             cache.delete("last_updated_posts")
 
-            # Прикрепленные файлы
-            if os.path.exists(MEDIA_ROOT / note_id):
-                for f in os.listdir(MEDIA_ROOT / note_id):
-                    # Смотрим все, что есть
-                    if not request.POST.get(f"checkbox_{f}"):
-                        # Если пользователь отключил данный файл
-                        os.remove(MEDIA_ROOT / note_id / f)  # Удаляем
-            else:
-                # Создаем папку для файлов, если нет
-                os.makedirs(MEDIA_ROOT / note_id)
+            for f in (MEDIA_ROOT / note_id).glob("*"):
+                if f.is_dir():
+                    continue
+                # Смотрим все прикрепленные файлы
+                if not request.POST.get(f"checkbox_{f.name}"):
+                    # Если пользователь отключил данный файл
+                    f.unlink()  # Удаляем
+
+            # Создаем папку для файлов
+            (MEDIA_ROOT / note_id).mkdir(parents=True, exist_ok=True)
 
             if request.FILES.get("files"):  # Если пользователь добавил файлы
-                for file in dict(request.FILES)["files"]:  # Для каждого файла
-                    with open(MEDIA_ROOT / note_id / file.name, "wb+") as upload_file:
-                        for chunk_ in file.chunks():
-                            upload_file.write(chunk_)  # Записываем файл
+                for uploaded_file in request.FILES.getlist("files"):
+                    # Для каждого файла
+                    with open(MEDIA_ROOT / note_id / uploaded_file.name, "wb+") as file:
+                        for chunk_ in uploaded_file.chunks():
+                            file.write(chunk_)  # Записываем файл
 
             # Перенаправляем на обновленную запись
             return HttpResponseRedirect(
@@ -305,7 +312,7 @@ def edit_post(request, note_id: str):
                     {
                         "name": t,
                         "checked": False
-                        if t not in dict(request.POST).get("tags_checked", [])
+                        if t not in request.POST.getlist("tags_checked", [])
                         else True,
                     }
                     for t in available_tags
@@ -322,9 +329,12 @@ def edit_post(request, note_id: str):
 @login_required
 def download_file(request, note_id: str, file_name: str):
     # Отправляем пользователю файл
-    if os.path.exists(MEDIA_ROOT / note_id / file_name):
-        with open(MEDIA_ROOT / note_id / file_name, "rb") as fh:
-            response = HttpResponse(fh.read(), content_type="application/vnd.ms-excel")
+    file_path = MEDIA_ROOT / note_id / file_name
+    if file_path.exists():
+        with file_path.open("rb") as file:
+            response = HttpResponse(
+                file.read(), content_type="application/vnd.ms-excel"
+            )
         response["Content-Disposition"] = f"inline; filename={file_name}"
         return response
 
@@ -358,10 +368,11 @@ def show_post(request, note_id: str):
     res["page_name"] = "note-show"
 
     # Проверяем, существует ли каталог и есть ли в нем какие-либо файлы.
-    if os.path.exists(MEDIA_ROOT / note_id) and os.listdir(MEDIA_ROOT / note_id):
-        for file in os.listdir(MEDIA_ROOT / note_id):
-            # Добавление файлов в текущем каталоге в список файлов.
-            res["files"].append({"name": file, "icon": icon_path(file)})
+    for file in (MEDIA_ROOT / note_id).glob("*"):
+        if file.is_dir():
+            continue
+        # Добавление файлов в текущем каталоге в список файлов.
+        res["files"].append({"name": file.name, "icon": icon_path(file.name)})
 
     return render(request, "post.html", res)
 
@@ -401,29 +412,58 @@ class CreatePostView(View):
         )
 
         if user_form.is_valid():  # Проверяем форму
+
+            # Данные для сохранения
+            post_data = {
+                "content": user_form.cleaned_data["input"],
+                "published_at": datetime.now(),
+                "tags": request.POST.getlist("tags_checked"),
+                "title": user_form.cleaned_data["title"],
+            }
+
             # Подключение к серверу elasticsearch.
             elastic_search = ElasticsearchConnect()
-            # Создание записи в базе данных elasticsearch.
-            res = elastic_search.create_post(
-                "company",
-                {
-                    "content": user_form.cleaned_data["input"],
-                    "published_at": datetime.now(),
-                    "tags": dict(request.POST)["tags_checked"],
-                    "title": user_form.cleaned_data["title"],
-                },
-            )
+
+            # Ищем закодированные изображения (base64) в содержимом заметки.
+            image_formatter = ReplaceImagesInHtml(user_form.cleaned_data["input"])
+
+            # Если есть закодированные изображения
+            if image_formatter.has_base64_encoded_images:
+
+                # Создаем запись в базе данных elasticsearch без содержимого.
+                post_data["content"] = ""
+                # Его мы обновим далее, заменив base64 изображения на ссылки.
+                res = elastic_search.create_post("company", post_data)
+
+                # Сохраняем закодированные изображения как файлы
+                # и заменяем у них атрибут src на ссылку файла.
+                image_formatter.save_images_and_update_src(
+                    image_prefix="image",
+                    folder=f'{res["_id"]}/content_images',
+                )
+                # Обновляем содержимое с измененными изображениями
+                elastic_search.update_post(
+                    index_name="company",
+                    record={"content": image_formatter.html},
+                    id_=res["_id"],
+                )
+
+            else:
+                # У содержимого заметки нет изображений закодированных с помощью base64,
+                # то сохраняем как есть
+                res = elastic_search.create_post("company", post_data)
 
             if res.get("_id") and request.FILES.get("files"):
-                os.makedirs(MEDIA_ROOT / f"{res['_id']}")
+                (MEDIA_ROOT / f"{res['_id']}").mkdir(parents=True, exist_ok=True)
                 # Создаем папку для текущей заметки
-                for file in dict(request.FILES)["files"]:  # Для каждого файла
+                for uploaded_file in dict(request.FILES)["files"]:  # Для каждого файла
                     with open(
-                        MEDIA_ROOT / f'{res["_id"]}/{file.name}', "wb+"
-                    ) as upload_file:
-                        for chunk_ in file.chunks():
-                            upload_file.write(chunk_)  # Записываем файл
+                        MEDIA_ROOT / f'{res["_id"]}/{uploaded_file.name}', "wb+"
+                    ) as file:
+                        for chunk_ in uploaded_file.chunks():
+                            file.write(chunk_)  # Записываем файл
 
+            # Обнуляем кеш
             cache.delete("all_posts_count")
             cache.delete("last_updated_posts")
 
@@ -536,11 +576,9 @@ def delete_post(request, note_id):
     if set(post_tags).issubset(available_tags):
         # Если теги поста разрешены данному пользователю, то удаляем пост
         elastic_search.delete(index="company", id=note_id)
-        if os.path.exists(MEDIA_ROOT / note_id):
+        if (MEDIA_ROOT / note_id).exists():
             # Если есть прикрепленные файлы
-            for f in os.listdir(MEDIA_ROOT / note_id):
-                os.remove(MEDIA_ROOT / note_id / f)  # Удаляем файл
-            os.rmdir(MEDIA_ROOT / note_id)  # Удаляем папку
+            shutil.rmtree(MEDIA_ROOT / note_id)
 
         cache.delete("all_posts_count")
         cache.delete("last_updated_posts")

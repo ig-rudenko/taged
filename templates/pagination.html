@@ -16,26 +16,26 @@
     {% endif %}
 
     <li class="page-item {% if not p.has_previous %}disabled{% endif %}">
-      <a class="page-link" onclick="goToPage({{ p.page|add:"-1" }})">
+      <a class="page-link" onclick="goToPage({{ p.page|add:-1 }})">
           Назад</a>
     </li>
 
     {% if p.has_previous %}
-    <li class="page-item"><a class="page-link" onclick="goToPage({{ p.page|add:"-1" }})">
-        {{ p.page|add:"-1" }}</a></li>
+    <li class="page-item"><a class="page-link" onclick="goToPage({{ p.page|add:-1 }})">
+        {{ p.page|add:-1 }}</a></li>
     {% endif %}
 
     <li class="page-item active" aria-current="page">
-      <a class="page-link" href="#">{{ p.page }}</a>
+      <a class="page-link">{{ p.page }}</a>
     </li>
 
     {% if p.has_next %}
-    <li class="page-item"><a class="page-link" onclick="goToPage({{ p.page|add:"1" }})">
-        {{ p.page|add:"1" }}</a></li>
+    <li class="page-item"><a class="page-link" onclick="goToPage({{ p.page|add:1 }})">
+        {{ p.page|add:1 }}</a></li>
     {% endif %}
 
     <li class="page-item {% if not p.has_next %}disabled{% endif %}">
-      <a class="page-link" onclick="goToPage({{ p.page|add:"1" }})">
+      <a class="page-link" onclick="goToPage({{ p.page|add:1 }})">
           Вперёд</a>
     </li>
 

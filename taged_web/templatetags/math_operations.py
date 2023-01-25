@@ -2,9 +2,25 @@ from django import template
 register = template.Library()
 
 
-@register.simple_tag()
-def multiply(a, b, *args, **kwargs):
+@register.filter(is_safe=False)
+def sub(a, b):
+    try:
+        return a - b
+    except Exception:
+        return f"{a} - {b}"
+
+
+@register.filter(is_safe=False)
+def mul(a, b):
     try:
         return a * b
-    except (TypeError, ValueError):
-        return str(a)+str(b)
+    except Exception:
+        return f"{a} * {b}"
+
+
+@register.filter(is_safe=False)
+def pow_(a, b):
+    try:
+        return a ** b
+    except Exception:
+        return f"{a} ^ {b}"

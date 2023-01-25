@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static math_operations %}
+{% load static math_operations l10n %}
 
 {% block title %}Taged{% endblock %}
 
@@ -116,22 +116,27 @@
             <div class="post-item-wrap {% if post.score > 0.48 %} post-item-wrap-main {% endif %}">
 
                 <a class="post-link"
-                   {% if post.score <= 0.48 and post.score > 0.2 %}
-                       style="opacity: {% multiply post.score 2 %}"
+                   {% if post.score <= 0.4 and post.score > 0.2 %}
+                       style="opacity: {{ post.score | mul:2 | unlocalize }}"
                    {% elif post.score <= 0.2 %}
                        style="opacity: 0.2"
                    {% endif %}
                    id="{{ post.id }}"
                    href="{% url 'note-show' post.id %}">
-                    {% if post.files %}
-                        <img class="post-title-img" src="{% static "/images/icons/clip3.png" %}" alt="clip">
-                    {% endif %}
+
+                    {# Метка файлов #}
+                        {% if post.files %}
+                            <img class="post-title-img" src="{% static "/images/icons/clip3.png" %}" alt="clip">
+                        {% endif %}
+
+                    {# Заголовок #}
                         <h3 class="post-title">{{ post.title }}</h3>
+
+                    {# Теги #}
                         {% for tag in post.tags %}
                             <span class="badge bg-primary">{{ tag }}</span>
                         {% endfor %}
-                    <br><br>
-                    <span class="text-muted">{{ post.score }}</span>
+
                 </a>
             <div id="content-{{ post.id }}" class="pre_post_hidden" style="width: 426.66px"></div>
             </div>

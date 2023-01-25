@@ -95,7 +95,7 @@ class ReplaceImagesInHtml:
         # Создаем папки
         path.mkdir(parents=True, exist_ok=True)
 
-        for image in self.images:
+        for number, image in enumerate(self.images):
             if not image.get("src"):
                 continue
 
@@ -109,8 +109,10 @@ class ReplaceImagesInHtml:
                 # Вычисляем хеш изображения
                 hash_ = hashlib.md5(decoded_image.image_binary).hexdigest()[:10]
 
-                # Имя изображения "префикс-хеш.png"
-                image_name = f"{image_prefix + image.get('alt', '')}-{hash_}.png"
+                # Имя изображения "префикс-номер-хеш.png"
+                image_name = (
+                    f"{image_prefix + image.get('alt', '')}-{number}-{hash_}.png"
+                )
                 # Сохраняем изображение.
                 decoded_image.save(path / image_name)
 

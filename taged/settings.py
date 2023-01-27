@@ -34,13 +34,6 @@ ALLOWED_HOSTS = ["*"]
 if DEBUG:
     INTERNAL_IPS = ["127.0.0.1"]
 
-    def show_toolbar(request):
-        return True
-
-    DEBUG_TOOLBAR_CONFIG = {
-        "SHOW_TOOLBAR_CALLBACK": show_toolbar,
-    }
-
 
 # Application definition
 
@@ -51,7 +44,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # 'debug_toolbar',
     "django.contrib.humanize",
     "ckeditor",
     "taged_web",
@@ -66,7 +58,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = "taged.urls"
@@ -87,6 +78,7 @@ TEMPLATES = [
     },
 ]
 
+AUTH_USER_MODEL = "taged_web.User"
 WSGI_APPLICATION = "taged.wsgi.application"
 
 

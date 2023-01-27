@@ -38,13 +38,9 @@ urlpatterns = [
     re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
     # AJAX
     path("ajax/autocomplete/", views.autocomplete),
-    path("ajax/extend_post/<post_id>", views.pre_show_post),
+    path("ajax/extend_post/<post_id>", views.pre_show_note),
     path("ckeditor/", include("ckeditor_uploader.urls")),
 ]
 
 handler404 = "taged_web.errors_views.page404"
 handler500 = "taged_web.errors_views.page500"
-
-
-# if settings.DEBUG:
-#     urlpatterns += [path('__debug__/', include(debug_toolbar.urls))]

@@ -9,7 +9,6 @@ from django.http import (
     JsonResponse,
     HttpResponse,
     Http404,
-    HttpResponseNotAllowed,
 )
 from django.urls import reverse
 from django.views import View
@@ -85,7 +84,7 @@ def autocomplete(request):
 
 @method_decorator(login_required, name="dispatch")
 @method_decorator(elasticsearch_check_available, name="dispatch")
-class HomeView(View):
+class NotesListView(View):
     def get(self, request):
         elastic_search = ElasticsearchConnect()
 
@@ -93,16 +92,7 @@ class HomeView(View):
         tags_off = request.GET.getlist("tags-off", [])
         search_str = request.GET.get("search", "")
 
-        # Проверка, является ли пользователь суперпользователем или нет.
-        # Если пользователь является суперпользователем, он вернет все теги.
-        # Если пользователь не является суперпользователем, он вернет теги, связанные с пользователем.
-        user_tags = (
-            Tags.objects.all().values("tag_name")
-            if request.user.is_superuser
-            else Tags.objects.filter(user=request.user).values("tag_name")
-        )
-        # Создание списка тегов доступных тегов
-        available_tags = [t["tag_name"] for t in user_tags]
+        available_tags = request.user.get_tags()
         data = []
         posts_count = None
         query_limiter = None
@@ -198,7 +188,7 @@ class HomeView(View):
 
 @method_decorator(login_required, name="dispatch")
 @method_decorator(elasticsearch_check_available, name="dispatch")
-class EditPostView(View):
+class EditNoteView(View):
     """
     Редактирование существующей записи
     """
@@ -207,20 +197,6 @@ class EditPostView(View):
         super().__init__(*args, **kwargs)
         # Подключаемся к elasticsearch
         self.elasticsearch = ElasticsearchConnect()
-        self.available_tags = []
-
-    def set_available_tags(self):
-        """
-        ## Если пользователь является суперпользователем, то значение ```self.available_tags```
-         будет содержать все теги в базе данных, в противном случае - только доступные пользователю.
-        """
-
-        tags_qs = (
-            Tags.objects.all()
-            if self.request.user.is_superuser
-            else self.request.user.tags_set.all()
-        )
-        self.available_tags = [t.tag_name for t in tags_qs]
 
     def get_note(self, note_id: str) -> dict:
         """
@@ -238,7 +214,8 @@ class EditPostView(View):
         else:
             return res
 
-    def get_files(self, note_id: str) -> list:
+    @staticmethod
+    def get_files(note_id: str) -> list:
         """
         ## Возвращаем список файлов, которые прикреплены к заметке
 
@@ -256,7 +233,7 @@ class EditPostView(View):
     def get(self, request, note_id: str):
 
         res = self.get_note(note_id)
-        self.set_available_tags()
+        available_tags = request.user.get_tags()
 
         # Прикрепленные файлы
         res["files"] = self.get_files(note_id)
@@ -269,7 +246,7 @@ class EditPostView(View):
                 "name": tag,
                 "checked": tag in res["tags"],
             }
-            for tag in self.available_tags
+            for tag in available_tags
         ]
 
         # Форма для пользователя с начальными данными
@@ -285,7 +262,6 @@ class EditPostView(View):
     def post(self, request, note_id: str):
         user_form = PostForm(request.POST)
         files = self.get_files(note_id)
-        self.set_available_tags()
 
         if user_form.is_valid():  # Если данные были введены верно
 
@@ -295,7 +271,7 @@ class EditPostView(View):
 
             # Список тегов, которые будут обновлены.
             # Состоят из тегов, которые были у записи, но недоступные для пользователя
-            tags_to_save = [t for t in res["tags"] if t not in self.available_tags]
+            tags_to_save = [t for t in res["tags"] if t not in request.user.get_tags()]
             # Плюс те, что он указал явно
             tags_to_save += request.POST.getlist("tags_checked")
 
@@ -354,7 +330,7 @@ class EditPostView(View):
                         "name": tag,
                         "checked": tag in request.POST.getlist("tags_checked", []),
                     }
-                    for tag in self.available_tags
+                    for tag in request.user.get_tags()
                 ],
                 "error": "Необходимо указать хотя бы один тег, название заметки и её содержимое!",
                 "files": files,
@@ -366,7 +342,6 @@ class EditPostView(View):
 
 
 @login_required
-@elasticsearch_check_available
 def download_file(request, note_id: str, file_name: str):
     # Отправляем пользователю файл
     file_path = MEDIA_ROOT / note_id / file_name
@@ -381,7 +356,7 @@ def download_file(request, note_id: str, file_name: str):
 
 @login_required
 @elasticsearch_check_available
-def show_post(request, note_id: str):
+def show_note(request, note_id: str):
     """
     Выводим содержимое заметки
     :param request: запрос
@@ -420,7 +395,7 @@ def show_post(request, note_id: str):
 
 @login_required
 @elasticsearch_check_available
-def pre_show_post(request, post_id):
+def pre_show_note(request, post_id):
     """
     Выводим содержимое заметки
     :param request: запрос
@@ -439,7 +414,7 @@ def pre_show_post(request, post_id):
 
 @method_decorator(login_required, name="dispatch")
 @method_decorator(elasticsearch_check_available, name="dispatch")
-class CreatePostView(View):
+class CreateNoteView(View):
     """
     Создаем новую запись
     """
@@ -447,12 +422,6 @@ class CreatePostView(View):
     @staticmethod
     def post(request):
         user_form = PostForm(request.POST)  # Заполняем форму
-
-        available_tags = (
-            [t.tag_name for t in Tags.objects.all()]
-            if request.user.is_superuser
-            else [t.tag_name for t in Tags.objects.filter(user=request.user)]
-        )
 
         if user_form.is_valid():  # Проверяем форму
 
@@ -525,7 +494,7 @@ class CreatePostView(View):
                 {
                     "tags": [
                         {"name": t, "checked": True if t in tags_checked else False}
-                        for t in available_tags
+                        for t in request.user.get_tags()
                     ],
                     "page_name": "note-create",
                     "error": "Необходимо указать хотя бы один тег, название заметки и её содержимое!",
@@ -538,11 +507,7 @@ class CreatePostView(View):
 
         user_form = PostForm()  # Создаем форму
 
-        available_tags = (
-            [t.tag_name for t in Tags.objects.all()]
-            if request.user.is_superuser
-            else [t.tag_name for t in Tags.objects.filter(user=request.user)]
-        )
+        available_tags = request.user.get_tags()
 
         tags_ = sorted(
             [{"name": t, "cheched": False} for t in available_tags],
@@ -553,9 +518,11 @@ class CreatePostView(View):
         if request.GET.get("cl"):
             elastic_search = ElasticsearchConnect()
             try:
-                res = elastic_search.get(index="company", id=request.GET.get("cl"))[
-                    "_source"
-                ]  # Получаем запись по ID
+                # Получаем запись по ID
+                res = elastic_search.get(
+                    index="company",
+                    id=request.GET.get("cl"),
+                )["_source"]
                 # Если имеется всего один тег, то он имеет тип str, переводим его в list
                 if isinstance(res["tags"], str):
                     res["tags"] = [res["tags"]]
@@ -569,8 +536,7 @@ class CreatePostView(View):
                 user_form = PostForm(res)
 
                 tags_ = [
-                    {"name": t, "checked": True if t in res["tags"] else False}
-                    for t in available_tags
+                    {"name": t, "checked": t in res["tags"]} for t in available_tags
                 ]
             except es_exceptions.NotFoundError:
                 pass
@@ -587,52 +553,46 @@ class CreatePostView(View):
         )
 
 
-@login_required
-@elasticsearch_check_available
-def delete_post(request, note_id):
-    if request.method != "POST":
-        return HttpResponseNotAllowed(["post"])
+@method_decorator(login_required, name="dispatch")
+@method_decorator(elasticsearch_check_available, name="dispatch")
+class DeleteNoteView(View):
 
-    # Смотрим разрешенные теги для данного пользователя
-    available_tags = (
-        [t.tag_name for t in Tags.objects.all()]
-        if request.user.is_superuser
-        else [
-            t.tag_name
-            for t in Tags.objects.filter(user__username=request.user.username)
-        ]
-    )
+    def post(self, request, note_id: str):
+        # Смотрим разрешенные теги для данного пользователя
+        available_tags = request.user.get_tags()
 
-    # Подключаемся к Elasticsearch
-    elastic_search = ElasticsearchConnect()
+        # Подключаемся к Elasticsearch
+        elastic_search = ElasticsearchConnect()
 
-    # Ищем пост по его ID
-    post = elastic_search.search(
-        index="company",
-        _source=["_id", "tags"],
-        query={
-            "simple_query_string": {
-                "query": note_id,
-                "fields": ["_id"],
-            }
-        },
-    )
-    if post["_shards"]["successful"]:  # Если нашли
+        # Ищем пост по его ID
+        try:
+            post = elastic_search.search(
+                index="company",
+                _source=["_id", "tags"],
+                query={
+                    "simple_query_string": {
+                        "query": note_id,
+                        "fields": ["_id"],
+                    }
+                },
+            )
+        except es_exceptions.NotFoundError:
+            raise Http404()
+
         post_tags = post["hits"]["hits"][0]["_source"]["tags"]  # Смотрим его теги
-    else:
-        raise Http404()
+        post_tags = [post_tags] if isinstance(post_tags, str) else post_tags
 
-    if set(post_tags).issubset(available_tags):
-        # Если теги поста разрешены данному пользователю, то удаляем пост
-        elastic_search.delete(index="company", id=note_id)
-        if (MEDIA_ROOT / note_id).exists():
-            # Если есть прикрепленные файлы
-            shutil.rmtree(MEDIA_ROOT / note_id)
+        if set(post_tags).issubset(available_tags):
+            # Если теги поста разрешены данному пользователю, то удаляем пост
+            elastic_search.delete(index="company", id=note_id)
+            if (MEDIA_ROOT / note_id).exists():
+                # Если есть прикрепленные файлы
+                shutil.rmtree(MEDIA_ROOT / note_id)
 
-        cache.delete("all_posts_count")
-        cache.delete("last_updated_posts")
+            cache.delete("all_posts_count")
+            cache.delete("last_updated_posts")
 
-    return HttpResponseRedirect("/")
+        return HttpResponseRedirect("/")
 
 
 @method_decorator(login_required, name="dispatch")

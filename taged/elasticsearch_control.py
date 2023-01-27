@@ -1,9 +1,26 @@
 import math
+from functools import wraps
+
 import requests
 from django.conf import settings
 from pprint import pprint
+
+from django.shortcuts import render
 from elasticsearch import Elasticsearch
+from elasticsearch.exceptions import TransportError
 from elasticsearch.client.indices import IndicesClient
+
+
+def elasticsearch_check_available(func):
+
+    @wraps(func)
+    def wrapper(request, *args, **kwargs):
+        try:
+            return func(request, *args, **kwargs)
+        except TransportError:
+            return render(request, "errors/elastic_unavailable.html", status=500)
+
+    return wrapper
 
 
 class QueryLimit:
@@ -84,8 +101,6 @@ class ElasticsearchConnect(Elasticsearch):
         :return: Создан ```True``` или нет ```False```
         """
         created = False
-        # index settings
-        print("create index", index_name)
         try:
             # Проверяет, НЕ существует ли индекс с именем index_name.
             if not IndicesClient(client=self).exists(index=index_name):
@@ -95,8 +110,8 @@ class ElasticsearchConnect(Elasticsearch):
                     headers={"Content-Type": "application/json"},
                     json=settings_,
                 )
+                print("Created new index:", index_name)
                 pprint(resp.json())
-                print("Created Index")
             created = True
         # Перехват любого исключения и его печать.
         except Exception as ex:
@@ -120,8 +135,7 @@ class ElasticsearchConnect(Elasticsearch):
                 request_timeout=settings.ELASTICSEARCH_TIMEOUT,
             )
         except Exception as ex:
-            print("Error in indexing data")
-            print(str(ex))
+            print("Error in indexing data", ex)
         finally:
             return result
 

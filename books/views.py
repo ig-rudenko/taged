@@ -14,12 +14,16 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 
-from taged_web.elasticsearch_control import ElasticsearchConnect
+from taged.elasticsearch_control import (
+    ElasticsearchConnect,
+    elasticsearch_check_available,
+)
 from books.forms import BookCreateFrom, SearchForm
 
 
 @method_decorator(login_required, name="dispatch")
 @method_decorator(user_passes_test(lambda u: u.is_superuser), name="dispatch")
+@method_decorator(elasticsearch_check_available, name="dispatch")
 class CreateBookView(View):
     """
     Создаем новую книгу
@@ -105,6 +109,7 @@ class CreateBookView(View):
 
 @method_decorator(login_required, name="dispatch")
 @method_decorator(user_passes_test(lambda u: u.is_superuser), name="dispatch")
+@method_decorator(elasticsearch_check_available, name="dispatch")
 class UpdateBookView(View):
     """
     Обновляет книгу с заданным book_id данными из запроса.
@@ -170,6 +175,7 @@ class UpdateBookView(View):
 
 @method_decorator(login_required, name="dispatch")
 @method_decorator(user_passes_test(lambda u: u.is_superuser), name="dispatch")
+@method_decorator(elasticsearch_check_available, name="dispatch")
 class DeleteBookView(View):
     """
     Удаляет книгу с идентификатором book_id.
@@ -199,6 +205,7 @@ class DeleteBookView(View):
 
 
 @login_required
+@elasticsearch_check_available
 def show(request, book_id):
     """
     Он принимает запрос и book_id и возвращает ответ.
@@ -226,6 +233,7 @@ def show(request, book_id):
 
 
 @login_required
+@elasticsearch_check_available
 def about_book(request, book_id):
     """
     Он принимает запрос и book_id и возвращает ответ.
@@ -260,6 +268,7 @@ def about_book(request, book_id):
 
 
 @login_required
+@elasticsearch_check_available
 def all_books(request):
     # Создание нового экземпляра класса SearchForm и передача данных request.GET.
     search_form = SearchForm(request.GET)

@@ -2,7 +2,6 @@ import re
 import random
 import shutil
 
-import elasticsearch
 from datetime import datetime
 
 from django.http import (
@@ -16,11 +15,15 @@ from django.urls import reverse
 from django.views import View
 from django.shortcuts import render
 from django.core.cache import cache
-from django.contrib.auth.models import User
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required, user_passes_test
 
-from taged_web.elasticsearch_control import ElasticsearchConnect
+from elasticsearch import exceptions as es_exceptions
+
+from taged.elasticsearch_control import (
+    ElasticsearchConnect,
+    elasticsearch_check_available,
+)
 from taged_web.models import Tags
 from taged.settings import MEDIA_ROOT
 from .image_decoder import ReplaceImagesInHtml
@@ -72,12 +75,16 @@ def autocomplete(request):
 
     # Подключение к серверу elasticsearch.
     elastic_search = ElasticsearchConnect()
-    titles = elastic_search.get_titles(string=request.GET.get("term"))
+    try:
+        titles = elastic_search.get_titles(string=request.GET.get("term"))
+    except es_exceptions.ConnectionError:
+        return JsonResponse({"data": None}, status=500)
 
     return JsonResponse({"data": titles})
 
 
 @method_decorator(login_required, name="dispatch")
+@method_decorator(elasticsearch_check_available, name="dispatch")
 class HomeView(View):
     def get(self, request):
         elastic_search = ElasticsearchConnect()
@@ -190,6 +197,7 @@ class HomeView(View):
 
 
 @method_decorator(login_required, name="dispatch")
+@method_decorator(elasticsearch_check_available, name="dispatch")
 class EditPostView(View):
     """
     Редактирование существующей записи
@@ -224,7 +232,7 @@ class EditPostView(View):
             res = self.elasticsearch.get(index="company", id=note_id)["_source"]
             if isinstance(res["tags"], str):
                 res["tags"] = [res["tags"]]  # Переводим теги в список
-        except elasticsearch.exceptions.NotFoundError:
+        except es_exceptions.NotFoundError:
             # Данный ID не существует
             raise Http404()
         else:
@@ -358,6 +366,7 @@ class EditPostView(View):
 
 
 @login_required
+@elasticsearch_check_available
 def download_file(request, note_id: str, file_name: str):
     # Отправляем пользователю файл
     file_path = MEDIA_ROOT / note_id / file_name
@@ -371,6 +380,7 @@ def download_file(request, note_id: str, file_name: str):
 
 
 @login_required
+@elasticsearch_check_available
 def show_post(request, note_id: str):
     """
     Выводим содержимое заметки
@@ -385,7 +395,7 @@ def show_post(request, note_id: str):
         # Если имеется всего один тег, то он имеет тип str, переводим его в list
         if isinstance(res["tags"], str):
             res["tags"] = [res["tags"]]
-    except elasticsearch.exceptions.NotFoundError:
+    except es_exceptions.NotFoundError:
         raise Http404()
 
     res["post_id"] = note_id
@@ -409,6 +419,7 @@ def show_post(request, note_id: str):
 
 
 @login_required
+@elasticsearch_check_available
 def pre_show_post(request, post_id):
     """
     Выводим содержимое заметки
@@ -422,11 +433,12 @@ def pre_show_post(request, post_id):
         res = elastic_search.get(index="company", id=post_id)["_source"]
         return JsonResponse({"post": res["content"]})
 
-    except elasticsearch.exceptions.NotFoundError:
+    except es_exceptions.NotFoundError:
         return JsonResponse({"error": "not found"})
 
 
 @method_decorator(login_required, name="dispatch")
+@method_decorator(elasticsearch_check_available, name="dispatch")
 class CreatePostView(View):
     """
     Создаем новую запись
@@ -560,7 +572,7 @@ class CreatePostView(View):
                     {"name": t, "checked": True if t in res["tags"] else False}
                     for t in available_tags
                 ]
-            except elasticsearch.exceptions.NotFoundError:
+            except es_exceptions.NotFoundError:
                 pass
 
         return render(
@@ -576,6 +588,7 @@ class CreatePostView(View):
 
 
 @login_required
+@elasticsearch_check_available
 def delete_post(request, note_id):
     if request.method != "POST":
         return HttpResponseNotAllowed(["post"])
@@ -662,56 +675,6 @@ class DeleteTagsView(View):
     def post(request, tag_id):
         Tags.objects.filter(id=tag_id).delete()
         return HttpResponseRedirect("/tags")
-
-
-@method_decorator(login_required, name="dispatch")
-@method_decorator(user_passes_test(lambda u: u.is_superuser), name="dispatch")
-class UsersView(View):
-    @staticmethod
-    def get(request):
-        return render(request, "user_control/users.html", {"users": User.objects.all()})
-
-
-@method_decorator(login_required, name="dispatch")
-@method_decorator(user_passes_test(lambda u: u.is_superuser), name="dispatch")
-class UserTagControlView(View):
-    @staticmethod
-    def get(request, username):
-        if not username:
-            return HttpResponseRedirect("/users")
-
-        data = {}
-
-        for tag in Tags.objects.all():
-            try:
-                is_enable = Tags.objects.get(id=tag.id, user__username=username)
-            except Tags.DoesNotExist:
-                is_enable = 0
-
-            data[tag.id] = {
-                "name": tag.tag_name,
-                "checked": is_enable,
-            }
-
-        return render(
-            request,
-            "user_control/user_access_group.html",
-            {
-                "username": username,
-                "data": data,
-            },
-        )
-
-    @staticmethod
-    def post(request, username):
-        user = User.objects.get(username=username)  # Пользователь
-        for tag in Tags.objects.all():
-            if request.POST.get(f"tag_id_{tag.id}"):  # Если данная группа была выбрана
-                user.tags_set.add(tag)  # Добавляем пользователя в группу
-            else:
-                user.tags_set.remove(tag)  # Удаляем
-
-        return HttpResponseRedirect("/users")
 
 
 @login_required

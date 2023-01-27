@@ -7,7 +7,7 @@ from datetime import datetime
 
 import elasticsearch
 
-from django.http import HttpResponseNotFound
+from django.http import Http404
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.urls import reverse
@@ -123,7 +123,7 @@ class UpdateBookView(View):
             ]  # Получаем запись по ID
         except elasticsearch.exceptions.NotFoundError:
             print("ID not exist")
-            return HttpResponseNotFound()
+            raise Http404()
         data = {
             "title": res["title"],
             "author": res["author"],
@@ -153,14 +153,14 @@ class UpdateBookView(View):
                 {
                     "title": book_form.cleaned_data["title"],
                     "author": book_form.cleaned_data["author"],
-                    "year": str(book_form.cleaned_data["year"] or ""),
+                    "year": str(book_form.cleaned_data["year"]),
                     "about": book_form.cleaned_data["about"],
                     "published_at": datetime.now(),
                 },
                 id_=book_id,
             )
 
-            return redirect(reverse("book-show", args=[res.get("_id", "")]))
+            return redirect(reverse("book-show", args=[res.get("_id")]))
 
         return render(
             request,
@@ -185,23 +185,19 @@ class DeleteBookView(View):
         # Подключаемся к Elasticsearch
         elastic_search = ElasticsearchConnect()
 
-        # Поиск книги с заданным book_id.
-        post = elastic_search.search(
-            index="books",
-            _source=["_id"],
-            query={"simple_query_string": {"query": book_id, "fields": ["_id"]}},
-        )
-        if post["_shards"]["successful"]:  # Если нашли
-            # Проверяем, существует ли путь к книге. Если да, то удаляет папку с книгой.
-            shutil.rmtree(f"{sys.path[0]}/media/books/{book_id}", ignore_errors=True)
+        try:
+            # Поиск книги с заданным book_id.
+            elastic_search.get(index="books", id=book_id)
+        except elasticsearch.exceptions.NotFoundError:
+            raise Http404()
 
-            # Удаление книги с указанным book_id.
-            elastic_search.delete(index="books", id=book_id)
-            return redirect("books-list")
+        # Удаляет папку с книгой.
+        shutil.rmtree(f"{sys.path[0]}/media/books/{book_id}", ignore_errors=True)
 
-        else:
-            # Возвращает страницу ошибки 404.
-            return render(request, "errors/404.html", status=404)
+        # Удаление книги с указанным book_id.
+        elastic_search.delete(index="books", id=book_id)
+
+        return redirect("books-list")
 
 
 @login_required
@@ -215,9 +211,8 @@ def show(request, book_id):
     """
     elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
     try:
-        res = elastic_search.get(index="books", id=book_id)[
-            "_source"
-        ]  # Получаем запись по ID
+        # Получаем запись по ID
+        res = elastic_search.get(index="books", id=book_id)["_source"]
         if res:  # Проверяет, существует ли файл книги. Если да, то возвращает его.
             file_name = os.listdir(f"{sys.path[0]}/media/books/{book_id}")
             file_name = [f for f in file_name if f != "preview.png"]
@@ -229,7 +224,7 @@ def show(request, book_id):
     except IndexError:
         print("Book not exist")
     # Возвращаем ошибку 404.
-    return HttpResponseNotFound()
+    raise Http404()
 
 
 @login_required
@@ -244,9 +239,8 @@ def about_book(request, book_id):
     """
     elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
     try:
-        res = elastic_search.get(index="books", id=book_id)[
-            "_source"
-        ]  # Получаем запись по ID
+        # Получаем запись по ID
+        res = elastic_search.get(index="books", id=book_id)["_source"]
         # Преобразование формата даты
         res["published_at"] = datetime.strptime(
             res["published_at"], "%Y-%m-%dT%H:%M:%S.%f"
@@ -257,14 +251,12 @@ def about_book(request, book_id):
             "books/about_book.html",
             {
                 "book": res,
-                "user": request.user,
                 "page_name": "book-about",
             },
         )
     # Перехват исключения, которое выдается, когда книга не найдена.
     except elasticsearch.exceptions.NotFoundError:
-        print("ID not exist")
-    return HttpResponseNotFound()
+        raise Http404()
 
 
 @login_required
@@ -272,28 +264,17 @@ def about_book(request, book_id):
 def all_books(request):
     # Создание нового экземпляра класса SearchForm и передача данных request.GET.
     search_form = SearchForm(request.GET)
-    search_text = request.GET.get("search_text")
-    search_year = request.GET.get("search_year")
     # Подключение к серверу elasticsearch.
     elastic_search = ElasticsearchConnect()
-    res_books = []
-    query_limiter = None
 
     # Проверка корректности запроса и корректности формы поиска.
     search_form.is_valid()
     # Ищем по полям, переданным в запросе
     query_limiter = elastic_search.find_books(
-        search_text,
-        search_year,
+        request.GET.get("search_text"),
+        request.GET.get("search_year"),
     )
     res_books = query_limiter.get_page(request.GET.get("page"))
-
-    # if not search_text and not search_year:
-    #     # Резервный вариант, когда запрос недействителен.
-    #     search_form.is_valid()
-    #     res_books = elastic_search.get_last_published(index="books", limit=10)
-
-    print(query_limiter.page, query_limiter.count, query_limiter.max_pages)
 
     return render(
         request,
@@ -302,7 +283,6 @@ def all_books(request):
             "paginator": query_limiter,
             "books": res_books,
             "page_name": "books-list",
-            "user": request.user,
             "form": search_form.cleaned_data,
         },
     )

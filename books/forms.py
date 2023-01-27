@@ -6,19 +6,16 @@ class BookCreateFrom(forms.Form):
     title = forms.CharField(
         max_length=100,
         required=True,
-        label="",
         widget=forms.TextInput({"placeholder": "Название"}),
     )
     author = forms.CharField(
         max_length=100,
-        label="",
         widget=forms.TextInput({"placeholder": "Автор"}),
-        required=False,
+        required=True,
     )
     year = forms.DecimalField(
         max_digits=4,
         localize=True,
-        label="",
         required=False,
         widget=forms.TextInput({"placeholder": "Год"}),
     )

@@ -5,96 +5,98 @@
 {% endblock title %}
 
 {% block content %}
-<form name="book_form" method="post" enctype="multipart/form-data">
-{% csrf_token %}
+<form novalidate class="needs-validation" name="book_form" method="post" enctype="multipart/form-data">
 
-{% if type == 'create' %}
-<div class="custom-file">
-  <input name="book_file" type="file" class="form-control" id="customFile" required>
-</div>
-    <br><br>
-{% endif %}
+    {% csrf_token %}
+
+    {% if type == 'create' %}
+        <input required name="book_file" type="file" class="form-control" id="book-file">
+        <br>
+    {% endif %}
 
 
-<div class="card" style="border: none">
-  <img src="/static/images/books/img.png" class="card-img" alt="...">
-  <div class="card-img-overlay">
-    <br><br>
+    <div class="card" style="border: none">
+      <img src="/static/images/books/img.png" class="card-img" alt="...">
+      <div class="card-img-overlay">
+        <br><br><br><br>
 
-{#    Название книги   #}
-    <div class="row">
-        <div class="col-md-1 mb"></div>
-        <div class="col-md-5 mb-3">
-            <label for="validationServer01" style="color: #1b1b1b">Название книги</label>
-            <input name="title" type="text"
-                 class="form-control {% if form.title.errors %}is-invalid{% else %}is-valid{% endif %}"
-                 id="validationServer01"
-                 value="{% if form.title.value %}{{ form.title.value }}{% endif %}"
-                 required>
+    {#    Название книги   #}
+        <div class="row">
+            <div class="col-md-1"></div>
+            <div class="col-md-5">
+                <label for="book-name" class="form-label">Название книги</label>
+                <input required name="title" type="text" id="book-name" class="form-control" value="{{ form.title.value |default_if_none:"" }}">
 
-            {% if form.title.errors %}
-                <div class="invalid-feedback">{{ form.title.errors }}</div>
-            {% endif %}
+                    {% if form.title.errors %}
+                        <div class="invalid-feedback">{{ form.title.errors }}</div>
+                    {% endif %}
+            </div>
         </div>
-    </div>
 
-{#    Автор книги   #}
-    <div class="row">
-        <div class="col-md-1 mb"></div>
-        <div class="col-md-5 mb-3">
-            <label for="validationServer02" style="color: #1b1b1b">Автор</label>
-            <input name="author" type="text"
-                 class="form-control {% if form.author.errors %}is-invalid{% else %}is-valid{% endif %}"
-                 id="validationServer02"
-                 value="{% if form.author.value %}{{ form.author.value }}{% endif %}">
+    {#    Автор книги   #}
+        <div class="row">
+            <div class="col-md-1 mb"></div>
+            <div class="col-md-3 mb-3">
+                <label for="book-author" class="form-label">Автор</label>
+                <input required name="author" type="text" class="form-control" id="book-author" value="{{ form.author.value |default_if_none:""}}">
 
-            {% if form.author.errors %}
-                <div class="invalid-feedback">{{ form.author.errors }}</div>
-            {% endif %}
+                    {% if form.author.errors %}
+                        <div class="invalid-feedback">{{ form.author.errors }}</div>
+                    {% endif %}
+            </div>
+
+
+    {#    Год   #}
+            <div class="col-md-2 mb-3">
+                <label for="book-published-year" class="form-label">Год</label>
+                <input required name="year" type="text" class="form-control" id="book-published-year" value="{{ form.year.value |default_if_none:""}}">
+
+                    {% if form.year.errors %}
+                        <div class="invalid-feedback">{{ form.year.errors }}</div>
+                    {% endif %}
+            </div>
         </div>
-    </div>
 
-{#    Год   #}
-    <div class="row">
-        <div class="col-md-1 mb"></div>
-        <div class="col-md-2 mb-3">
-            <label for="validationServer02" style="color: #1b1b1b">Год</label>
-            <input name="year" type="text"
-                 class="form-control {% if form.year.errors %}is-invalid{% else %}is-valid{% endif %}"
-                 id="validationServer02"
-                 value="{% if form.year.value %}{{ form.year.value }}{% endif %}">
+    {#    Описание   #}
+        <div class="row">
+            <div class="col-md-1 mb"></div>
+            <div class="col-md-10 mb-3">
+                <label for="book-about" class="form-label">Описание</label>
+                <textarea required name="about" cols="100" rows="16" class="form-control" id="book-about">{{ form.about.value |default_if_none:""}}</textarea>
 
-            {% if form.year.errors %}
-                <div class="invalid-feedback">{{ form.year.errors }}</div>
-            {% endif %}
+                    {% if form.about.errors %}
+                        <div class="invalid-feedback">{{ form.about.errors }}</div>
+                    {% endif %}
+            </div>
         </div>
-    </div>
 
-{#    Описание   #}
-    <div class="row">
-        <div class="col-md-1 mb"></div>
-        <div class="col-md-10 mb-3">
-            <label for="validationServer03" style="color: #1b1b1b">Описание</label>
-            <textarea name="about" cols="100" rows="18" required
-                 class="form-control {% if form.about.errors %}is-invalid{% else %}is-valid{% endif %}"
-                 id="validationServer03">{% if form.about.value %}{{ form.about.value }}{% endif %}</textarea>
-
-            {% if form.about.errors %}
-                <div class="invalid-feedback">{{ form.about.errors }}</div>
-            {% endif %}
-        </div>
-    </div>
-
-{#  Кнопка  #}
-  <div class="row">
-      <div class="col-md-5 mb"></div>
-      <div class="col-md-2 mb-3">
+    {#  Кнопка  #}
+      <div class="text-center">
           <button class="btn btn-primary" type="submit">{% if type == 'create' %}Загрузить книгу{% else %}Обновить книгу{% endif %}</button>
       </div>
-  </div>
 
-  </div>
-</div>
+      </div>
+    </div>
 
 </form>
+<script>
+(() => {
+  'use strict'
+
+  // Fetch all the forms we want to apply custom Bootstrap validation styles to
+  const forms = document.querySelectorAll('.needs-validation')
+
+  // Loop over them and prevent submission
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!form.checkValidity()) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+
+      form.classList.add('was-validated')
+    }, false)
+  })
+})()
+</script>
 {% endblock %}

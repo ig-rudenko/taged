@@ -16,7 +16,7 @@
         <ul class="list-group ">
 
             {# Кнопки изменить и удалить #}
-            {% if user.is_superuser %}
+            {% if request.user.is_superuser %}
               <li class="list-group-item" style="text-align: right">
                   <a href="{% url 'book-edit' book.id %}"
                      class="badge bg-primary text-decoration-none text-light"
@@ -50,7 +50,7 @@
 </div>
 
 {#    Окно удаления    #}
-{% if user.is_superuser %}
+{% if request.user.is_superuser %}
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">

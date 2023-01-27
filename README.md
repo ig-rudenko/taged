@@ -4,7 +4,7 @@
 [![Code style: black](https://img.shields.io/badge/code_style-black-black.svg)](https://github.com/psf/black)
 
 
-### Сервис заметок с тегами + библиотека
+### Сервис заметок с тегами + библиотека книг
 
 <div>
 В качестве хранилища и поисковика используется
@@ -43,15 +43,6 @@
 
 ![](static/images/img_3.png)
 
-### Поиск по части названия заметки
-
-![img.png](static/images/img_4.png)
-
-### Создание новой заметки
-
-Можно добавлять файлы к заметкам
-
-![](static/images/img.png)
 
 ### Просмотр заметки
 ![](static/images/img_2.png)

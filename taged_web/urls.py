@@ -5,7 +5,7 @@ from . import views
 
 urlpatterns = [
     path("", views.HomeView.as_view(), name="notes-list"),
-    path("<str:note_id>/edit/", views.edit_post, name="note-edit"),
+    path("<str:note_id>/edit/", views.EditPostView.as_view(), name="note-edit"),
     path("<str:note_id>", views.show_post, name="note-show"),
     path("<str:note_id>/delete/", views.delete_post, name="note-delete"),
     path("create/", views.CreatePostView.as_view(), name="note-create"),

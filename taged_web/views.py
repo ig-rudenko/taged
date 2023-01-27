@@ -92,7 +92,7 @@ class HomeView(View):
         user_tags = (
             Tags.objects.all().values("tag_name")
             if request.user.is_superuser
-            else Tags.objects.filter(user=request.user)
+            else Tags.objects.filter(user=request.user).values("tag_name")
         )
         # Создание списка тегов доступных тегов
         available_tags = [t["tag_name"] for t in user_tags]
@@ -182,79 +182,112 @@ class HomeView(View):
             tags_ = [
                 {
                     "name": tag,
-                    "checked": True if tag in selected_tags else False,
+                    "checked": tag in selected_tags,
                 }
                 for tag in available_tags
             ]
         return sorted(tags_, key=lambda x: x["name"].lower())  # Сортируем по алфавиту
 
 
-@login_required
-def edit_post(request, note_id: str):
+@method_decorator(login_required, name="dispatch")
+class EditPostView(View):
     """
     Редактирование существующей записи
-    :param request: запрос
-    :param note_id: ID записи в elasticsearch
     """
 
-    # Проверка, является ли пользователь суперпользователем или нет. Если пользователь является суперпользователем, он
-    # вернет все теги в базе данных. Если пользователь не является суперпользователем, он вернет все теги, доступные
-    # пользователю.
-    available_tags = (
-        [t.tag_name for t in Tags.objects.all()]
-        if request.user.is_superuser
-        else [
-            t.tag_name
-            for t in Tags.objects.filter(user__username=request.user.username)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Подключаемся к elasticsearch
+        self.elasticsearch = ElasticsearchConnect()
+        self.available_tags = []
+
+    def set_available_tags(self):
+        """
+        ## Если пользователь является суперпользователем, то значение ```self.available_tags```
+         будет содержать все теги в базе данных, в противном случае - только доступные пользователю.
+        """
+
+        tags_qs = (
+            Tags.objects.all()
+            if self.request.user.is_superuser
+            else self.request.user.tags_set.all()
+        )
+        self.available_tags = [t.tag_name for t in tags_qs]
+
+    def get_note(self, note_id: str) -> dict:
+        """
+        ## Возвращаем заметку по её ```note_id``` или вызываем исключение Http404.
+        """
+
+        try:
+            # Получаем запись по ID
+            res = self.elasticsearch.get(index="company", id=note_id)["_source"]
+            if isinstance(res["tags"], str):
+                res["tags"] = [res["tags"]]  # Переводим теги в список
+        except elasticsearch.exceptions.NotFoundError:
+            # Данный ID не существует
+            raise Http404()
+        else:
+            return res
+
+    def get_files(self, note_id: str) -> list:
+        """
+        ## Возвращаем список файлов, которые прикреплены к заметке
+
+        :return: [{ "name": file_name, "icon": icon_path }, ...]
+        """
+
+        files = []
+        # Если существует папка для данного post_id и в ней есть файлы
+        for f in (MEDIA_ROOT / note_id).glob("*"):
+            if f.is_file():
+                # Добавляем имя файла + иконку в список
+                files.append({"name": f.name, "icon": icon_path(f.name)})
+        return files
+
+    def get(self, request, note_id: str):
+
+        res = self.get_note(note_id)
+        self.set_available_tags()
+
+        # Прикрепленные файлы
+        res["files"] = self.get_files(note_id)
+        res["post_id"] = note_id
+        res["page_name"] = "note-edit"
+
+        # Определяем, какие теги существуют в посте из разрешенных для пользователя и отмечаем их как checked
+        res["tags"] = [
+            {
+                "name": tag,
+                "checked": tag in res["tags"],
+            }
+            for tag in self.available_tags
         ]
-    )
 
-    # Прикрепленные файлы
-    files = []
-    # Если существует папка для данного post_id и в ней есть файлы
-    for f in (MEDIA_ROOT / note_id).glob("*"):
-        if f.is_file():
-            # Добавляем имя файла + иконку в список
-            files.append({"name": f.name, "icon": icon_path(f.name)})
+        # Форма для пользователя с начальными данными
+        res["form"] = PostForm(
+            {
+                "title": res["title"],
+                "input": res["content"],
+                "tags_checked": res["tags"],
+            }
+        )
+        return render(request, "edit_post.html", res)
 
-    elastic_search = ElasticsearchConnect()  # Подключаемся к elasticsearch
-    try:
-        # Получаем запись по ID
-        res = elastic_search.get(index="company", id=note_id)["_source"]
-        if isinstance(res["tags"], str):
-            res["tags"] = [res["tags"]]  # Переводим теги в список
-    except elasticsearch.exceptions.NotFoundError:
-        # Данный ID не существует
-        raise Http404()
-
-    res["post_id"] = note_id
-    res["page_name"] = "note-edit"
-
-    # сохраняем все теги, которые уже существуют у данного поста
-    exists_tags = res["tags"]
-
-    # Определяем, какие теги существуют в посте из разрешенных для пользователя и отмечаем их как checked
-    res["tags"] = [
-        {"name": t, "checked": False if t not in res["tags"] else True}
-        for t in available_tags
-    ]
-
-    # Прикрепленные файлы
-    res["files"] = files
-
-    # Форма для пользователя с начальными данными
-    res["form"] = PostForm(
-        {"title": res["title"], "input": res["content"], "tags_checked": res["tags"]}
-    )
-
-    if request.method == "POST":
+    def post(self, request, note_id: str):
         user_form = PostForm(request.POST)
+        files = self.get_files(note_id)
+        self.set_available_tags()
 
         if user_form.is_valid():  # Если данные были введены верно
 
+            res = self.get_note(note_id)
+            res["post_id"] = note_id
+            res["page_name"] = "note-edit"
+
             # Список тегов, которые будут обновлены.
             # Состоят из тегов, которые были у записи, но недоступные для пользователя
-            tags_to_save = [t for t in exists_tags if t not in available_tags]
+            tags_to_save = [t for t in res["tags"] if t not in self.available_tags]
             # Плюс те, что он указал явно
             tags_to_save += request.POST.getlist("tags_checked")
 
@@ -267,7 +300,7 @@ def edit_post(request, note_id: str):
             )
 
             # Обновляем существующую в elasticsearch запись
-            elastic_search.update_post(
+            self.elasticsearch.update_post(
                 "company",
                 {
                     "content": image_formatter.html,
@@ -310,12 +343,10 @@ def edit_post(request, note_id: str):
             res = {
                 "tags": [
                     {
-                        "name": t,
-                        "checked": False
-                        if t not in request.POST.getlist("tags_checked", [])
-                        else True,
+                        "name": tag,
+                        "checked": tag in request.POST.getlist("tags_checked", []),
                     }
-                    for t in available_tags
+                    for tag in self.available_tags
                 ],
                 "error": "Необходимо указать хотя бы один тег, название заметки и её содержимое!",
                 "files": files,
@@ -323,7 +354,7 @@ def edit_post(request, note_id: str):
                 "page_name": "note-edit",
             }
 
-    return render(request, "edit_post.html", res)
+        return render(request, "edit_post.html", res)
 
 
 @login_required
@@ -363,10 +394,10 @@ def show_post(request, note_id: str):
     res["published_at"] = datetime.strptime(
         res["published_at"][:19], "%Y-%m-%dT%H:%M:%S"
     )
-    # Если имеются файлы у записи
-    res["files"] = []
+
     res["page_name"] = "note-show"
 
+    res["files"] = []
     # Проверяем, существует ли каталог и есть ли в нем какие-либо файлы.
     for file in (MEDIA_ROOT / note_id).glob("*"):
         if file.is_dir():
@@ -566,7 +597,12 @@ def delete_post(request, note_id):
     post = elastic_search.search(
         index="company",
         _source=["_id", "tags"],
-        query={"simple_query_string": {"query": note_id, "fields": ["_id"]}},
+        query={
+            "simple_query_string": {
+                "query": note_id,
+                "fields": ["_id"],
+            }
+        },
     )
     if post["_shards"]["successful"]:  # Если нашли
         post_tags = post["hits"]["hits"][0]["_source"]["tags"]  # Смотрим его теги

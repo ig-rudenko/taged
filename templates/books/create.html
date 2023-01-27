@@ -24,7 +24,7 @@
         <div class="row">
             <div class="col-md-1"></div>
             <div class="col-md-5">
-                <label for="book-name" class="form-label">Название книги</label>
+                <label for="book-name" class="form-label" style="color: black">Название книги</label>
                 <input required name="title" type="text" id="book-name" class="form-control" value="{{ form.title.value |default_if_none:"" }}">
 
                     {% if form.title.errors %}
@@ -37,7 +37,7 @@
         <div class="row">
             <div class="col-md-1 mb"></div>
             <div class="col-md-3 mb-3">
-                <label for="book-author" class="form-label">Автор</label>
+                <label for="book-author" class="form-label" style="color: black">Автор</label>
                 <input required name="author" type="text" class="form-control" id="book-author" value="{{ form.author.value |default_if_none:""}}">
 
                     {% if form.author.errors %}
@@ -48,7 +48,7 @@
 
     {#    Год   #}
             <div class="col-md-2 mb-3">
-                <label for="book-published-year" class="form-label">Год</label>
+                <label for="book-published-year" class="form-label" style="color: black">Год</label>
                 <input required name="year" type="text" class="form-control" id="book-published-year" value="{{ form.year.value |default_if_none:""}}">
 
                     {% if form.year.errors %}
@@ -61,7 +61,7 @@
         <div class="row">
             <div class="col-md-1 mb"></div>
             <div class="col-md-10 mb-3">
-                <label for="book-about" class="form-label">Описание</label>
+                <label for="book-about" class="form-label" style="color: black">Описание</label>
                 <textarea required name="about" cols="100" rows="16" class="form-control" id="book-about">{{ form.about.value |default_if_none:""}}</textarea>
 
                     {% if form.about.errors %}

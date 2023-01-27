@@ -12,8 +12,7 @@
             <form method="post" style="padding-bottom: 30px">
                 {% csrf_token %}
                 <label>
-                    Имя нового тега
-                    <input type="text" name="new_tag">
+                    <input class="bg-body text-body" autofocus placeholder="Имя нового тега" type="text" name="new_tag">
                 </label>
                 <input class="atuin-btn" type="submit" value="Создать">
             </form>

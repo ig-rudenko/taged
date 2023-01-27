@@ -6,12 +6,10 @@
     padding: 0 50px;
 }
 #post-content {
-    color: black;
     font-family: 'Teams', sans-serif;
     padding-bottom: 40px
 }
 .post h1 {
-    color: #222;
     font-weight: 600;
     margin-bottom: 30px;
 }
@@ -29,7 +27,6 @@ time:after, .tags:after {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #666;
     position: absolute;
     top: 50%;
     right: 10px;

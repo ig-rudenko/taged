@@ -7,8 +7,6 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/buttons.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/upload_file.css' %}" />
 
-    <script src="{% static 'js/jquery.min.js' %}"></script>
-
     <script type="text/javascript" src="{% static "ckeditor/ckeditor-init.js" %}"></script>
     <script type="text/javascript" src="{% static "ckeditor/ckeditor/ckeditor.js" %}"></script>
 {% endblock %}
@@ -84,10 +82,14 @@
         <input type="text" name="post_id" value="{{ post_id }}" hidden readonly>
 
         {# TITLE #}
-        {{ form.title }}
+        <div class="bg-body text-body">
+            {{ form.title }}
+        </div>
 
         {# CONTENT #}
+        <div class="bg-body text-body">
         {{ form.input }}
+        </div>
 
     </form>
 

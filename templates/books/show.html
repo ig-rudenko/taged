@@ -28,7 +28,9 @@
     </div>
 </form>
 
+
 {% include "pagination.html" with p=paginator %}
+
 
 {#    КНИГИ    #}
 {% if books %}
@@ -62,4 +64,8 @@
 {% endif %}
 
 </div>
+
+
+{% include "pagination.html" with p=paginator %}
+
 {% endblock %}

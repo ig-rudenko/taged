@@ -105,11 +105,10 @@
     </div>
 
 
-    {% include "pagination.html" with p=pagination %}
+{% include "pagination.html" with p=pagination %}
 
 
 <div class="post-wrap">
-
     {% for post in data %}
         <div class="post-item">
             <div class="bg-body post-item-wrap {% if post.score > 0.48 %} post-item-wrap-main {% endif %}">
@@ -141,8 +140,9 @@
             </div>
         </div>
     {% endfor %}
-
 </div>
+
+{% include "pagination.html" with p=paginator %}
 
 </div>
 <script src="{% static 'js/preview_post.js' %}"></script>

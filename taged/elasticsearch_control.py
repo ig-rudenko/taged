@@ -1,18 +1,14 @@
 import math
 from functools import wraps
 
-import requests
 from django.conf import settings
-from pprint import pprint
 
 from django.shortcuts import render
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import TransportError
-from elasticsearch.client.indices import IndicesClient
 
 
 def elasticsearch_check_available(func):
-
     @wraps(func)
     def wrapper(request, *args, **kwargs):
         try:
@@ -83,7 +79,7 @@ class QueryLimit:
 
 class ElasticsearchConnect(Elasticsearch):
     def __init__(self):
-        super().__init__([{"host": settings.ELASTICSEARCH_HOST, "port": 9200}])
+        super().__init__(settings.ELASTICSEARCH_HOSTS)
 
     def available(self) -> bool:
         if self.ping():
@@ -91,33 +87,6 @@ class ElasticsearchConnect(Elasticsearch):
         else:
             print("No ping")
             return False
-
-    def create_index(self, settings_: dict, index_name) -> bool:
-        """
-        ## Создает индекс под названием **index_name** с настройками, указанными в словаре **settings**
-
-        :param settings_: словарь с настройками для индекса
-        :param index_name: Имя индекса, который вы хотите создать
-        :return: Создан ```True``` или нет ```False```
-        """
-        created = False
-        try:
-            # Проверяет, НЕ существует ли индекс с именем index_name.
-            if not IndicesClient(client=self).exists(index=index_name):
-                # Создание индекса с именем `index_name` и настройками `settings`
-                resp = requests.put(
-                    url=f"http://{settings.ELASTICSEARCH_HOST}:9200/{index_name}?pretty",
-                    headers={"Content-Type": "application/json"},
-                    json=settings_,
-                )
-                print("Created new index:", index_name)
-                pprint(resp.json())
-            created = True
-        # Перехват любого исключения и его печать.
-        except Exception as ex:
-            print(str(ex))
-        finally:
-            return created
 
     def create_post(self, index_name: str, record: dict) -> dict:
         """

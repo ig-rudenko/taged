@@ -1,13 +1,12 @@
 version: '2'
 
 services:
-  taged_elasticsearch:
+  elasticsearch:
     container_name: taged_elasticsearch
     image: elasticsearch:7.14.1
     restart: always
     ports:
-      - "9200:9200"
-      - "9300:9300"
+      - "127.0.0.1:9200:9200"
     volumes:
       - ./esdata:/usr/share/elasticsearch/data
       - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
@@ -19,12 +18,12 @@ services:
 
   taged:
     container_name: taged_container
-    image: taged:0.5.7
+    image: taged:0.6.5
+    build: .
     restart: always
     command: /bin/bash /app/run.sh
     environment:
-      ELASTICSEARCH_HOST: 'taged_elasticsearch'
-      ELASTICSEARCH_request_timeout: 90
+      ELASTICSEARCH_HOSTS: 'elasticsearch:9200'
     ports:
       - '80:8000'
     mem_limit: 300m
@@ -39,7 +38,7 @@ services:
       - ./run.sh:/app/run.sh
       - ./books:/app/books
     depends_on:
-      - taged_elasticsearch
+      - elasticsearch
       - redis
     networks:
       - taged-network

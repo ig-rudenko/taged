@@ -147,9 +147,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
-ELASTICSEARCH_HOST = os.getenv("ELASTICSEARCH_HOST", "localhost")
-ELASTICSEARCH_TIMEOUT = int(os.getenv("ELASTICSEARCH_request_timeout", 10))
-
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 100_000_000  # 100МБ
 
@@ -282,6 +279,17 @@ CKEDITOR_CONFIGS = {
 }
 
 
+# В формате `es01:9200,es02:9201,es03:9202`
+ELASTICSEARCH_HOSTS_raw_str = os.getenv("ELASTICSEARCH_HOSTS", "localhost:9200")
+ELASTICSEARCH_HOSTS = [
+    {"host": host.split(":")[0], "port": int(host.split(":")[1])}
+    for host in ELASTICSEARCH_HOSTS_raw_str.split(",")
+]
+
+print("ELASTICSEARCH_HOSTS:", ELASTICSEARCH_HOSTS)
+
+ELASTICSEARCH_TIMEOUT = 10
+
 settings_company = {
     "settings": {
         "analysis": {
@@ -344,12 +352,11 @@ while True:
         # Если он запущен, он подключится к elasticsearch.
         es = ElasticsearchConnect()
         if es and es.available():
-            # Создаем индекс с именем company в Elasticsearch.
-            es.create_index(settings_company, "company")
-            # Создаем индекс с именем books в Elasticsearch.
-            es.create_index(settings_books, "books")
+            # Создаем индексы
+            es.indices.create(index="company", body=settings_company, ignore=400)
+            es.indices.create(index="books", body=settings_books, ignore=400)
             break
-        print("Wait for elastic search")
+        print("Wait for elasticsearch")
         time.sleep(10)
     except ElasticConnectionError as e:
         print(e)

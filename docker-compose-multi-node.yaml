@@ -1,0 +1,117 @@
+version: '2.2'
+
+networks:
+  elastic:
+    driver: bridge
+
+
+services:
+
+  taged:
+    container_name: taged_container
+    image: taged:0.6.4
+    build: ./Dockerfile
+    restart: always
+    command: /bin/bash /app/run.sh
+    environment:
+      ELASTICSEARCH_HOSTS: 'es02:9201,es01:9200,es03:9202'
+      ELASTICSEARCH_request_timeout: 90
+    ports:
+      - '8080:8000'
+    mem_limit: 400m
+    volumes:
+      - ./static:/app/static
+      - ./taged:/app/taged
+      - ./taged_web:/app/taged_web
+      - ./templates:/app/templates
+      - ./db.sqlite3:/app/db.sqlite3
+      - ./media:/app/media
+      - ./test.py:/app/test.py
+      - ./run.sh:/app/run.sh
+      - ./books:/app/books
+      - ./restore_elasticsearch.sh:/app/restore_elasticsearch.sh
+    depends_on:
+      - es01
+      - es02
+      - es03
+      - redis
+    networks:
+      - elastic
+
+  redis:
+    image: redis
+    restart: always
+
+    networks:
+      - elastic
+
+
+
+  es01:
+    image: elasticsearch:7.14.1
+    container_name: es01
+    environment:
+      - node.name=es01
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es02,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+#      - bootstrap.memory_lock=true
+#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    mem_limit: 3g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./esdata:/usr/share/elasticsearch/data
+      - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    ports:
+      - 9200:9200
+    networks:
+      - elastic
+
+  es02:
+    image: elasticsearch:7.14.1
+    container_name: es02
+    environment:
+      - node.name=es02
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es01,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+#      - bootstrap.memory_lock=true
+#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    mem_limit: 3g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./esdata02:/usr/share/elasticsearch/data
+      - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    ports:
+      - 9201:9200
+    networks:
+      - elastic
+
+  es03:
+    image: elasticsearch:7.14.1
+    container_name: es03
+    environment:
+      - node.name=es03
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es01,es02
+      - cluster.initial_master_nodes=es01,es02,es03
+#      - bootstrap.memory_lock=true
+#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    mem_limit: 3g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./esdata03:/usr/share/elasticsearch/data
+      - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    ports:
+      - 9202:9200
+    networks:
+      - elastic

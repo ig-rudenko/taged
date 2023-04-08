@@ -2,7 +2,6 @@ venv
 esdata
 media
 test*
-*/migrations/
 logs
 db.sqlite3
 .gitignore

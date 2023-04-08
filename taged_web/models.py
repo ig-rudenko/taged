@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 
 class Tags(models.Model):
     tag_name = models.CharField(max_length=254, null=False)
-    user = models.ManyToManyField("User")
+    user = models.ManyToManyField("taged_web.User")
 
     def __str__(self):
         return self.tag_name

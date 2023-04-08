@@ -1,4 +1,4 @@
-version: '2'
+version: '3.9'
 
 services:
   elasticsearch:
@@ -12,21 +12,39 @@ services:
       - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
     environment:
       discovery.type: 'single-node'
-    mem_limit: 3g
+    deploy:
+      resources:
+        limits:
+          memory: "3G"
+        reservations:
+          memory: "2G"
+    healthcheck:
+      test: "curl -s localhost:9200 > /dev/null || exit 1"
+      start_period: 20s
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       - taged-network
 
   taged:
+    build: .
     container_name: taged_container
     image: taged:0.6.5
-    build: .
     restart: always
     command: /bin/bash /app/run.sh
     environment:
       ELASTICSEARCH_HOSTS: 'elasticsearch:9200'
     ports:
       - '80:8000'
-    mem_limit: 300m
+
+    deploy:
+      resources:
+        limits:
+          memory: "300M"
+        reservations:
+          memory: "200M"
+
     volumes:
       - ./static:/app/static
       - ./taged:/app/taged
@@ -38,8 +56,10 @@ services:
       - ./run.sh:/app/run.sh
       - ./books:/app/books
     depends_on:
-      - elasticsearch
-      - redis
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - taged-network
 
@@ -48,7 +68,12 @@ services:
     restart: always
     networks:
       - taged-network
-
+    deploy:
+      resources:
+        limits:
+          memory: "100M"
+        reservations:
+          memory: "50M"
 
 networks:
   taged-network:

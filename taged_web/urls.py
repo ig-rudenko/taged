@@ -16,5 +16,5 @@ urlpatterns = [
     ),
     # TAGS
     path("tags/", views.TagsView.as_view(), name="notes-tags"),
-    path("tags/<str:tag_id>/delete", views.DeleteTagsView.as_view(), name="delete-tag"),
+    path("tag/<str:tag_id>/delete", views.DeleteTagsView.as_view(), name="delete-tag"),
 ]

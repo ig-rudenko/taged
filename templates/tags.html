@@ -27,9 +27,18 @@
     </div>
 
 <script>
+const CSRF_TOKEN = document.querySelector("input[name='csrfmiddlewaretoken']").value
+
 function delete_tag(id, name) {
     if (confirm("Вы согласны удалить тег \"" + name + "\" ?")) {
-        window.location.href = "/notes/tag/delete/" + id
+        fetch(
+            "/notes/tag/" + id + "/delete",
+            {
+                method: "post",
+                credentials: "include",
+                headers: {"X-CSRFToken": CSRF_TOKEN}
+            }
+        ).then(resp => {window.location.reload();})
     }
 }
 </script>

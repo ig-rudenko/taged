@@ -18,7 +18,7 @@ $(document).ready(
                     // Скрываем все открытые элементы
                     $('.pre_post_visible').removeClass('pre_post_visible').addClass('pre_post_hidden')
                     // Затем показываем
-                    content_post.html(data.post).removeClass('pre_post_hidden').addClass('pre_post_visible');
+                    content_post.html(data.content).removeClass('pre_post_hidden').addClass('pre_post_visible');
                 }
               } );
           }

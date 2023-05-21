@@ -9,3 +9,4 @@ static/debug_toolbar
 static/ckeditor
 static/admin
 .idea
+.obsidian

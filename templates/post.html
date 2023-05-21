@@ -17,17 +17,17 @@
 
         {# ЗАГОЛОВОК #}
         <div class="post-header" style="font-family: 'Montserrat', sans-serif;">
-            <h1>{{ title }}</h1>
+            <h1>{{ post.title }}</h1>
             <div class="post-meta">
-                <time>{{ published_at | naturaltime }}</time>
+                <time>{{ post.published_at | naturaltime }}</time>
                 <br>
 
 {#                    Редактировать  #}
-            <a href="{% url 'note-edit' post_id %}" style="color: #03a2ff">редактировать</a>
+            <a href="{% url 'note-edit' post.id %}" style="color: #03a2ff">редактировать</a>
                 <time></time>
 
 {#                    Клонировать    #}
-            <a href="{% url 'note-create' %}?cl={{ post_id }}" style="color: #48af70">клонировать</a>
+            <a href="{% url 'note-create' %}?cl={{ post.id }}" style="color: #48af70">клонировать</a>
                 <time></time>
 
 {#                      УДАЛИТЬ #}
@@ -46,7 +46,7 @@
 
                   <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Не удалять</button>
-                    <form name="delete_form" method="post" action="{% url 'note-delete' post_id %}">
+                    <form name="delete_form" method="post" action="{% url 'note-delete' post.id %}">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger">Удалить</button>
                     </form>
@@ -60,7 +60,7 @@
 
         {# ТЕГИ #}
         <div style="padding-bottom: 8px">
-            {% for tag in tags %}
+            {% for tag in post.tags_list %}
                 <a href="{% url 'notes-list' %}?tags-in={{ tag }}"
                    class="tag-in text-decoration-none" style="cursor: pointer">
                     {{ tag }}
@@ -71,7 +71,7 @@
         {# ФАЙЛЫ #}
         <div class="post-file">
         {% for f in files %}
-            <a href="{% url 'download-file' post_id f.name %}">
+            <a href="{% url 'download-file' post.id f.name %}">
                 <img src="{% static f.icon %}" alt="">
                 {{ f.name }}
             </a>
@@ -90,10 +90,10 @@
 
 <script>
 $.ajax({
-    url: "/ajax/extend_post/{{ post_id }}",
+    url: "/ajax/extend_post/{{ post.id }}",
     success: function( data ) {
-        if (data.post.length) {
-            $('#post-content').html(data.post)
+        if (data.content.length) {
+            $('#post-content').html(data.content)
         } else {
             $('#post-content').html('<h1>Не удалось загрузить содержимое</h1>')
         }

@@ -114,10 +114,12 @@
             <div class="bg-body post-item-wrap {% if post.score > 0.48 %} post-item-wrap-main {% endif %}">
 
                 <a class="post-link text-body"
-                   {% if post.score <= 0.4 and post.score > 0.2 %}
-                       style="opacity: {{ post.score | mul:2 | unlocalize }}"
-                   {% elif post.score <= 0.2 %}
-                       style="opacity: 0.2"
+                   {% if has_search %}
+                       {% if post.score <= 0.4 and post.score > 0.2 %}
+                           style="opacity: {{ post.score | mul:2 | unlocalize }}"
+                       {% elif post.score <= 0.2 %}
+                           style="opacity: 0.2"
+                       {% endif %}
                    {% endif %}
                    id="{{ post.id }}"
                    href="{% url 'note-show' post.id %}">

@@ -13,8 +13,14 @@ import logging
 import os
 import time
 from pathlib import Path
+
+from elasticsearch import Elasticsearch
 from requests.exceptions import ConnectionError as ElasticConnectionError
-from taged.elasticsearch_control import ElasticsearchConnect
+
+from books.es_index import BookIndex
+from elasticsearch_control import IndexRegister
+from elasticsearch_control.transport import elasticsearch_connector
+from taged_web.es_index import PostIndex
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -278,6 +284,7 @@ CKEDITOR_CONFIGS = {
     }
 }
 
+logging.basicConfig(filename="logs", level=logging.INFO)
 
 # В формате `es01:9200,es02:9201,es03:9202`
 ELASTICSEARCH_HOSTS_raw_str = os.getenv("ELASTICSEARCH_HOSTS", "localhost:9200")
@@ -285,79 +292,28 @@ ELASTICSEARCH_HOSTS = [
     {"host": host.split(":")[0], "port": int(host.split(":")[1])}
     for host in ELASTICSEARCH_HOSTS_raw_str.split(",")
 ]
+ELASTICSEARCH_TIMEOUT = 10
 
 print("ELASTICSEARCH_HOSTS:", ELASTICSEARCH_HOSTS)
 
-ELASTICSEARCH_TIMEOUT = 10
+# Инициализируем подключение к Elasticsearch
+elasticsearch_connector.init(
+    es=Elasticsearch(ELASTICSEARCH_HOSTS),
+    timeout=ELASTICSEARCH_TIMEOUT
+)
 
-settings_company = {
-    "settings": {
-        "analysis": {
-            "filter": {
-                "ru_stop": {"type": "stop", "stopwords": "_russian_"},
-                "ru_stemmer": {"type": "stemmer", "language": "russian"},
-            },
-            "analyzer": {
-                "default": {
-                    "char_filter": ["html_strip"],
-                    "tokenizer": "standard",
-                    "filter": ["lowercase", "ru_stop", "ru_stemmer"],
-                }
-            },
-        }
-    },
-    "mappings": {
-        "dynamic": "strict",
-        "properties": {
-            "title": {"type": "text"},
-            "content": {"type": "text"},
-            "tags": {"type": "text"},
-            "published_at": {"type": "date"},
-        },
-    },
-}
-settings_books = {
-    "settings": {
-        "analysis": {
-            "filter": {
-                "ru_stop": {"type": "stop", "stopwords": "_russian_"},
-                "ru_stemmer": {"type": "stemmer", "language": "russian"},
-            },
-            "analyzer": {
-                "default": {
-                    "char_filter": ["html_strip"],
-                    "tokenizer": "standard",
-                    "filter": ["lowercase", "ru_stop", "ru_stemmer"],
-                }
-            },
-        }
-    },
-    "mappings": {
-        "dynamic": "strict",
-        "properties": {
-            "title": {"type": "text"},
-            "author": {"type": "text"},
-            "about": {"type": "text"},
-            "year": {"type": "text"},
-            "published_at": {"type": "date"},
-        },
-    },
-}
-
-logging.basicConfig(filename="logs", level=logging.INFO)
+# Регистратор индексов в Elasticsearch
+es_index_register = IndexRegister()
 
 while True:
     try:
-        # Проверяем, работает ли elasticsearch или нет.
-        # Если он запущен, он подключится к elasticsearch.
-        es = ElasticsearchConnect()
-        if es and es.available():
-            # Создаем индексы
-            es.indices.create(index="company", body=settings_company, ignore=400)
-            es.indices.create(index="books", body=settings_books, ignore=400)
-            break
-        print("Wait for elasticsearch")
-        time.sleep(10)
-    except ElasticConnectionError as e:
-        print(e)
+        # Создаем индексы
+        es_index_register.register_index(PostIndex)
+        print("Registered PostIndex")
+        es_index_register.register_index(BookIndex)
+        print("Registered BookIndex")
+        break
+    except ElasticConnectionError as error:
+        print(error)
+        # Если Elasticsearch недоступен, то пытаемся еще раз
         time.sleep(10)

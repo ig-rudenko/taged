@@ -27,3 +27,4 @@ class SearchForm(forms.Form):
     search_year = forms.DecimalField(
         max_digits=4, localize=True, widget=forms.TextInput, required=False
     )
+    page = forms.IntegerField(min_value=1, required=False)

@@ -1,6 +1,19 @@
 from django import forms
 from ckeditor.widgets import CKEditorWidget
 
+from .models import Tags
+
+
+class TagsField(forms.CharField):
+    def to_python(self, value: str):
+        """
+        value == 'python, mysql, django'
+
+        :return: ['python', 'mysql', 'django']
+        """
+        print(value)
+        return value
+
 
 class PostForm(forms.Form):
     title = forms.CharField(
@@ -13,5 +26,5 @@ class PostForm(forms.Form):
             }
         ),
     )
-    tags_checked = forms.CharField(max_length=255, required=True)
+    tags_checked = forms.ModelMultipleChoiceField(queryset=Tags.objects.all(), to_field_name="tag_name")
     input = forms.CharField(widget=CKEditorWidget(), required=True)

@@ -293,11 +293,8 @@ class PostIndex(AbstractIndex):
 
     @classmethod
     def tags_count(cls, tag_name: str):
-        return cls.Meta.connector.es.query_count(
-            index="company",
-            query={
-                "match": {
-                    "tags": tag_name,
-                }
-            },
-        )
+        return cls.Meta.connector.es.count(
+            index=cls.Meta.index_name,
+            body={"query": {"match": {"tags": tag_name}}},
+            request_timeout=settings.ELASTICSEARCH_TIMEOUT,
+        )["count"]

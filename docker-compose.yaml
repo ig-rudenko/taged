@@ -1,4 +1,4 @@
-version: '3.9'
+version: '3'
 
 services:
   elasticsearch:
@@ -20,7 +20,6 @@ services:
           memory: "2G"
     healthcheck:
       test: "curl -s localhost:9200 > /dev/null || exit 1"
-      start_period: 20s
       interval: 10s
       timeout: 5s
       retries: 10
@@ -30,7 +29,7 @@ services:
   taged:
     build: .
     container_name: taged_container
-    image: taged:0.6.5
+    image: taged:0.7.1
     restart: always
     command: /bin/bash /app/run.sh
     environment:
@@ -46,20 +45,19 @@ services:
           memory: "200M"
 
     volumes:
+      - ./run.sh:/app/run.sh
       - ./static:/app/static
+      - ./media:/app/media
+      - ./db.sqlite3:/app/db.sqlite3
       - ./taged:/app/taged
       - ./taged_web:/app/taged_web
       - ./templates:/app/templates
-      - ./db.sqlite3:/app/db.sqlite3
-      - ./media:/app/media
       - ./test.py:/app/test.py
-      - ./run.sh:/app/run.sh
       - ./books:/app/books
+      - ./elasticsearch_control:/app/elasticsearch_control
     depends_on:
-      elasticsearch:
-        condition: service_healthy
-      redis:
-        condition: service_started
+      - elasticsearch
+      - redis
     networks:
       - taged-network
 

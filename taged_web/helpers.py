@@ -25,6 +25,8 @@ def icon_path(file: str):
         icon = "visio.png"
     elif re.match(r".+\.(rar|7z|zip|tar[.gz]|iso)$", file):
         icon = "archive.png"
+    elif re.match(r".+\.(py|pyc)", file):
+        icon = "python.jpg"
     elif re.match(r".+\.(png|jpe?g|gif|bpm|svg|ico|tiff)$", file):
         icon = "img.png"
     else:

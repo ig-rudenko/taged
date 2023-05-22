@@ -16,6 +16,7 @@ class Tags(models.Model):
         verbose_name = "Tag"
         verbose_name_plural = "Tags"
 
+
 class User(AbstractUser):
     def get_tags(self) -> List[str]:
         # Проверка, является ли пользователь суперпользователем или нет.

@@ -8,3 +8,4 @@
 !requirements.txt
 !db.sqlite3
 !run.sh
+!elasticsearch_control

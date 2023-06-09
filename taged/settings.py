@@ -31,6 +31,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-o$84xxrt-ip(b7&)wy)ka(@s@7tq()0vs0u(hu*mo7-^uvc_54"
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -168,7 +169,6 @@ CKEDITOR_UPLOAD_PATH = "notes/"
 CKEDITOR_CONFIGS = {
     "default": {
         "skin": "moono-lisa",
-        # 'skin': 'office2013',
         "toolbar_Basic": [["Source", "-", "Bold", "Italic"]],
         "toolbar_YourCustomToolbarConfig": [
             {
@@ -184,11 +184,6 @@ CKEDITOR_CONFIGS = {
                     "Templates",
                 ],
             },
-            # {'name': 'clipboard', 'items': ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo']},
-            # {'name': 'editing', 'items': ['Find', 'Replace', '-', 'SelectAll']},
-            # {'name': 'forms',
-            #  'items': ['Form', 'Checkbox', 'Radio', 'TextField', 'Textarea', 'Select', 'Button', 'ImageButton',
-            #            'HiddenField']},
             "/",
             {
                 "name": "basicstyles",
@@ -258,10 +253,6 @@ CKEDITOR_CONFIGS = {
         # 'toolbarGroups': [{ 'name': 'document', 'groups': [ 'mode', 'document', 'doctools' ] }],
         "height": "400px",
         "width": "100%",
-        # 'filebrowserWindowHeight': 725,
-        # 'filebrowserWindowWidth': 940,
-        # 'toolbarCanCollapse': True,
-        # 'mathJaxLib': '//cdn.mathjax.org/mathjax/2.2-latest/MathJax.js?config=TeX-AMS_HTML',
         "tabSpaces": 4,
         "extraPlugins": ",".join(
             [
@@ -272,7 +263,6 @@ CKEDITOR_CONFIGS = {
                 "autoembed",
                 "embedsemantic",
                 "autogrow",
-                # 'devtools',
                 "widget",
                 "lineutils",
                 "clipboard",

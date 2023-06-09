@@ -17,18 +17,30 @@
 </div>
 
 
+## Настройка SSL
 
-## Установка
+Переходим в папку `seettings/nginx`, запускаем скрипт для создания 
+сертификата:
 
-**Для запуска требуется более 2Гб свободной оперативной памяти**
+```shell
+cd settings/nginx
+bash create_cert.sh
+```
 
-Скачиваем репозиторий и переходим в папку
+После этого будут созданы три файла:
 
-Запускаем контейнеры
+Ключ RSA на 2048 бит - `settings/nginx/private/nginx-selfsigned.key`
+
+Сертификат - `settings/nginx/certs/nginx-selfsigned.crt`
+
+Ключи Диффи-Хеллмана - `settings/nginx/certs/dhparam.pem`
+
+
+## Запуск
+
+Запускаем контейнеры:
 
     docker-compose up -d
-
-Порт для подключения по http - 8001
 
 Логин: root
 

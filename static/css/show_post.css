@@ -48,6 +48,10 @@ time:after, .tags:after {
         margin-left: -30px;
     }
 
+    .post {
+        padding: 0;
+    }
+
     img {
         max-width: 100%;
         max-height: 100%;

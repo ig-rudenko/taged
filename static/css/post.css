@@ -11,6 +11,8 @@
 }
 .post-item {
    padding: 10px;
+   width: 100%;
+   margin: 7px;
 }
 .post-item-wrap {
    position: relative;
@@ -115,19 +117,25 @@
    width: 40px;
    z-index: 20;
    position: absolute;
-   left: 320px;
+   right: 0;
    top: -20px;
 }
 
-
-@media (min-width: 768px) {
-   .post-item {
-      flex-basis: 50%;
-      flex-shrink: 0;
-   }
+@media only screen and (min-width: 400px) {
+   /*.post-wrap {*/
+   /*   margin: 0 auto;*/
+   /*   display: block;*/
+   /*}*/
 }
+
+/*@media (min-width: 768px) {*/
+/*   .post-item {*/
+/*      flex-basis: 50%;*/
+/*      flex-shrink: 0;*/
+/*   }*/
+/*}*/
 @media (min-width: 960px) {
    .post-item {
-      flex-basis: 33.333333333%;
+      flex-basis: 31%;
    }
 }

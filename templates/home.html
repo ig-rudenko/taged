@@ -99,9 +99,15 @@
 </div>
 </form>
 
-    <div class="last-post-text">
-        Всего записей: {{ posts_count }}
-    </div>
+{#  Отображение выбранных тегов  #}
+<div class="d-flex justify-content-between py-2">
+    <div id="tags-in-output" class="d-flex"></div>
+    <div id="tags-off-output" class="d-flex"></div>
+</div>
+
+<div class="last-post-text">
+    Всего записей: {{ posts_count }}
+</div>
 
 
 {% include "pagination.html" with p=pagination %}
@@ -147,4 +153,8 @@
 
 </div>
 <script src="{% static 'js/preview_post.js' %}"></script>
+<script src="{% static 'js/show-checked-tags.js' %}"></script>
+<script>
+
+</script>
 {% endblock %}

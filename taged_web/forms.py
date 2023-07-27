@@ -26,5 +26,5 @@ class PostForm(forms.Form):
             }
         ),
     )
-    tags_checked = forms.ModelMultipleChoiceField(queryset=Tags.objects.all(), to_field_name="tag_name")
+    tags_in = forms.ModelMultipleChoiceField(queryset=Tags.objects.all(), to_field_name="tag_name")
     input = forms.CharField(widget=CKEditorWidget(), required=True)

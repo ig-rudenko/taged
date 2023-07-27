@@ -18,7 +18,7 @@
 
         {# КНОПКА ОПУБЛИКОВАТЬ #}
         <div class="button-wrapper">
-            <a class="arrow-btn" onclick="document.theForm.submit()">Опубликовать<span></span></a>
+            <button class="arrow-btn" style="background: none" type="submit">Опубликовать<span></span></button>
         </div>
         <h4 style="color: darkred; text-align: center">{{ error }}</h4>
 
@@ -44,11 +44,11 @@
                 {% for t in tags %}
                 <div class="py-1">
                     <input type="checkbox"
-                           name="tags_checked" class="btn-check"
+                           name="tags_in" class="btn-check"
                            value="{{ t.name }}"
                            {% if t.checked %}checked{% endif %}
-                           id="tag-in-{{ t.name }}" autocomplete="off">
-                    <label class="btn btn-outline-success hstack" for="tag-in-{{ t.name }}">{{ t.name }}</label>
+                           id="tag_in-{{ t.name }}" autocomplete="off">
+                    <label class="btn btn-outline-success hstack" for="tag_in-{{ t.name }}">{{ t.name }}</label>
                 </div>
                 {% endfor %}
           </div>
@@ -62,7 +62,7 @@
             <label>
                 <input id="files" name="files" type="file" class="main_input_file" multiple />
                 <img src="{% static "/images/icons/clip.png" %}" alt="clip">
-                <div>Прикрепить</div>
+                <span>Прикрепить</span>
             </label>
         </div>
         {# СУЩЕСТВУЮЩИЕ ФАЙЛЫ #}
@@ -81,6 +81,11 @@
         {# ХРАНЕНИЕ ID ЗАПИСИ #}
         <input type="text" name="post_id" value="{{ post.id }}" hidden readonly>
 
+    {#  Отображение выбранных тегов  #}
+    <div class="d-flex justify-content-between py-2">
+        <div id="tags-in-output" class="d-flex"></div>
+    </div>
+
         {# TITLE #}
         <div class="bg-body text-body">
             {{ form.title }}
@@ -97,6 +102,7 @@
 <script src="{% static 'js/tags_control.js' %}"></script>
 <script src="{% static 'js/file_format.js' %}"></script>
 <script src="{% static 'js/input_files_control.js' %}"></script>
+<script src="{% static 'js/show-checked-tags.js' %}"></script>
 <script>
 $(document).ready ( function(){
     $(".django-ckeditor-widget").css({"width" : "100%"});

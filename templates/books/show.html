@@ -38,7 +38,15 @@
 <div class="align-items-stretch row row-cols-1 row-cols-lg-4">
 {% for book in books %}
     <div class="col py-3">
-        <div class="card card-cover h-100 overflow-hidden rounded-4 shadow-lg">
+        <div class="card card-cover h-100 overflow-hidden rounded-4 shadow-lg"
+            {% if book.read_mark %}style="border: 2px solid blueviolet;"{% endif %}>
+
+            {% if book.read_mark %}
+                <span style="position: absolute;right: 10px;top: 10px;background-color: blueviolet;cursor: default;"
+                      class="badge">
+                Прочитано
+                </span>
+            {% endif %}
 
             <a href="{% url 'book-about' book.id %}">
                 <img style="object-fit: cover; object-position: right; min-height: 430px" height="100%"

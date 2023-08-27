@@ -1,5 +1,7 @@
 from django import forms
 
+from books.models import Comment
+
 
 # Форма, для создания новой книги
 class BookCreateFrom(forms.Form):
@@ -28,3 +30,11 @@ class SearchForm(forms.Form):
         max_digits=4, localize=True, widget=forms.TextInput, required=False
     )
     page = forms.IntegerField(min_value=1, required=False)
+
+
+class CommentForm(forms.ModelForm):
+    text = forms.CharField(min_length=10)
+
+    class Meta:
+        model = Comment
+        fields = ["text", "rating"]

@@ -10,4 +10,6 @@ urlpatterns = [
     path("<book_id>", views.show, name="book-show"),
     path("about/<book_id>", views.about_book, name="book-about"),
     path("delete/<book_id>", views.DeleteBookView.as_view(), name="book-delete"),
+    path("<book_id>/add-comment", views.add_comment, name="add-comment"),
+    path("<book_id>/mark-as-read", views.mark_as_read, name="mark-as-read"),
 ]

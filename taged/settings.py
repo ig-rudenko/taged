@@ -31,10 +31,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-o$84xxrt-ip(b7&)wy)ka(@s@7tq()0vs0u(hu*mo7-^uvc_54"
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -288,8 +288,7 @@ print("ELASTICSEARCH_HOSTS:", ELASTICSEARCH_HOSTS)
 
 # Инициализируем подключение к Elasticsearch
 elasticsearch_connector.init(
-    es=Elasticsearch(ELASTICSEARCH_HOSTS),
-    timeout=ELASTICSEARCH_TIMEOUT
+    es=Elasticsearch(ELASTICSEARCH_HOSTS), timeout=ELASTICSEARCH_TIMEOUT
 )
 
 # Регистратор индексов в Elasticsearch

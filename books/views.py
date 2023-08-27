@@ -1,16 +1,17 @@
 from datetime import datetime
 
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.files import File
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required, user_passes_test
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 from elasticsearch import exceptions as es_exceptions
 
 from books.es_index import BookIndex
-from books.forms import BookCreateFrom, SearchForm
+from books.forms import BookCreateFrom, SearchForm, CommentForm
+from books.models import Comment, BookStatistic
 from elasticsearch_control.decorators import elasticsearch_check_available
 
 
@@ -38,7 +39,6 @@ class CreateBookView(View):
         book_form = BookCreateFrom(request.POST)
         # Проверяем, действительна ли форма и загружен ли файл.
         if book_form.is_valid() and request.FILES.get("book_file"):
-
             book = BookIndex.create(
                 title=book_form.cleaned_data["title"],
                 author=book_form.cleaned_data["author"],
@@ -91,7 +91,6 @@ class UpdateBookView(View):
         book_form = BookCreateFrom(request.POST)
         # Проверка правильности формы.
         if book_form.is_valid():
-
             book = BookIndex.get(book_id, values=["title"])
             if book is None:
                 raise Http404()
@@ -157,7 +156,22 @@ def about_book(request, book_id):
     try:
         # Получаем запись по ID
         book = BookIndex.get(id_=book_id)
-        return render(request, "books/about_book.html", {"book": book})
+        comments = Comment.objects.filter(book_id=book_id).select_related("user")
+        statistic = BookStatistic.objects.filter(book_id=book_id, user=request.user)
+        if statistic.exists():
+            read_mark = statistic.first().read
+        else:
+            read_mark = False
+
+        return render(
+            request,
+            "books/about_book.html",
+            {
+                "book": book,
+                "read_mark": read_mark,
+                "comments": comments,
+            },
+        )
     # Перехват исключения, которое выдается, когда книга не найдена.
     except es_exceptions.NotFoundError:
         raise Http404()
@@ -186,13 +200,67 @@ def all_books(request):
     )
     books = paginator.get_page(search_form.cleaned_data["page"])
 
+    books_list = []
+    for book in books:
+        statistic = BookStatistic.objects.filter(book_id=book["id"], user=request.user)
+        if statistic.exists():
+            read_mark = statistic.first().read
+        else:
+            read_mark = False
+
+        books_list.append(
+            {
+                "id": book["id"],
+                "title": book["title"],
+                "author": book["author"],
+                "year": book["year"],
+                "read_mark": read_mark,
+            }
+        )
+
     return render(
         request,
         "books/show.html",
         {
             "paginator": paginator,
-            "books": books,
+            "books": books_list,
             "page_name": "books-list",
             "form": search_form.cleaned_data,
         },
     )
+
+
+@login_required
+def mark_as_read(request, book_id: str):
+    if request.method == "POST":
+        book = BookIndex.get(book_id, values=["title"])
+        if not book:
+            raise Http404()
+        BookStatistic.objects.update_or_create(
+            defaults={
+                "read": request.POST.get("read") == "on",
+                "user": request.user,
+            },
+            book_id=book_id,
+        )
+
+    return redirect(reverse("book-about", args=[book_id]))
+
+
+@login_required
+def add_comment(request, book_id: str):
+    if request.method == "POST":
+        book = BookIndex.get(book_id, values=["title"])
+        if not book:
+            raise Http404()
+
+        form = CommentForm(data=request.POST)
+        if form.is_valid():
+            Comment.objects.create(
+                book_id=book_id,
+                user=request.user,
+                text=form.cleaned_data["text"],
+                rating=form.cleaned_data["rating"],
+            )
+
+    return redirect(reverse("book-about", args=[book_id]))

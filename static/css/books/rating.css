@@ -1,0 +1,26 @@
+.rating {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: center;
+}
+
+.rating input {
+  display: none;
+}
+
+.rating label,
+.empty-star {
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns%3D"http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg"%20width%3D%2238"%20height%3D%2237"%20viewBox%3D%220%200%2038%2037"%20fill%3D"%23d9d9d9"><path d%3D"M19,0l5.92,12l13,1c0,-0,-0,-0,-0,-0l-10,10l2,14c0,-0,-0,-0,-0,-0L19,30l-11,6c0,-0,-0,-0,-0,-0l2-14L0,13c0,-0,-0,-0,-0,-0l13-1L19,0C19,-0,-0,-0,19,0z"%2F><%2Fsvg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 76%;
+}
+
+.rating input:checked ~ label,
+.rating input:hover ~ label,
+.star {
+  background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns%3D"http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg"%20width%3D%2238"%20height%3D%2237"%20viewBox%3D%220%200%2038%2037"%20fill%3D"%23f4c150"><path d%3D"M19,0l5.92,12l13,1c0,-0,-0,-0,-0,-0l-10,10l2,14c0,-0,-0,-0,-0,-0L19,30l-11,6c0,-0,-0,-0,-0,-0l2-14L0,13c0,-0,-0,-0,-0,-0l13-1L19,0C19,-0,-0,-0,19,0z"%2F><%2Fsvg>');
+}

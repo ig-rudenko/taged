@@ -16,10 +16,10 @@ Including another URLconf
 from django.contrib import admin
 from django.http.response import HttpResponseRedirect
 from django.urls import path, include, re_path
-from taged_web import views
 from django.views.static import serve
-from taged import settings
 
+from taged import settings
+from taged_web import views
 
 urlpatterns = [
     path("admin/", admin.site.urls),

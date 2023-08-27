@@ -1,9 +1,9 @@
-import re
 import base64
 import hashlib
 import pathlib
-from bs4 import BeautifulSoup
+import re
 
+from bs4 import BeautifulSoup
 from django.conf import settings
 
 

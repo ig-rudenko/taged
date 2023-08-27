@@ -53,11 +53,11 @@
                 {% for t in tags_in %}
                 <div class="py-1">
                     <input type="checkbox"
-                           name="tags-in" class="btn-check"
+                           name="tags_in" class="btn-check"
                            value="{{ t.name }}"
                            {% if t.checked %}checked{% endif %}
-                           id="tag-in-{{ t.name }}" autocomplete="off">
-                    <label class="btn btn-outline-success hstack" for="tag-in-{{ t.name }}">{{ t.name }}</label>
+                           id="tag_in-{{ t.name }}" autocomplete="off">
+                    <label class="btn btn-outline-success hstack" for="tag_in-{{ t.name }}">{{ t.name }}</label>
                 </div>
                 {% endfor %}
           </div>
@@ -85,11 +85,11 @@
                 {% for t in tags_off %}
                 <div class="py-1">
                     <input type="checkbox"
-                           name="tags-off" class="btn-check"
+                           name="tags_off" class="btn-check"
                            value="{{ t.name }}"
                            {% if t.checked %}checked{% endif %}
-                           id="tag-off-{{ t.name }}" autocomplete="off">
-                    <label class="btn btn-outline-danger hstack" for="tag-off-{{ t.name }}">{{ t.name }}</label>
+                           id="tag_off-{{ t.name }}" autocomplete="off">
+                    <label class="btn btn-outline-danger hstack" for="tag_off-{{ t.name }}">{{ t.name }}</label>
                 </div>
                 {% endfor %}
           </div>

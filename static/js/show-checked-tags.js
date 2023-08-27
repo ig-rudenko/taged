@@ -1,6 +1,6 @@
 // Получаем все чекбоксы с именем "tags-in"
-let tagsInCheckboxes = document.querySelectorAll("input[name='tags-in']");
-let tagsOffCheckboxes = document.querySelectorAll("input[name='tags-off']");
+let tagsInCheckboxes = document.querySelectorAll("input[name='tags_in']");
+let tagsOffCheckboxes = document.querySelectorAll("input[name='tags_off']");
 
 // Получаем элемент, в котором будем отображать перечень нажатых чекбоксов
 let tagsInOutput = document.getElementById("tags-in-output");

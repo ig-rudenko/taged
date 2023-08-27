@@ -60,8 +60,8 @@ def autocomplete(request):
 @method_decorator(elasticsearch_check_available, name="dispatch")
 class NotesListView(View):
     def get(self, request):
-        tags_in = request.GET.getlist("tags-in", [])
-        tags_off = request.GET.getlist("tags-off", [])
+        tags_in = request.GET.getlist("tags_in", [])
+        tags_off = request.GET.getlist("tags_off", [])
         search_str = request.GET.get("search", "")
 
         available_tags = request.user.get_tags()
@@ -188,7 +188,7 @@ class EditNoteView(View):
                 {
                     "title": post.title,
                     "input": post.content,
-                    "tags_checked": post.tags_list,
+                    "tags_in": post.tags_list,
                 }
             ),
         }
@@ -206,7 +206,7 @@ class EditNoteView(View):
             # Состоят из тегов, которые были у записи, но недоступные для пользователя
             tags_to_save = [t for t in post.tags_list if t not in user_tags]
             # Плюс те, что он указал явно
-            tags_to_save += request.POST.getlist("tags_checked")
+            tags_to_save += request.POST.getlist("tags_in")
 
             image_formatter = ReplaceImagesInHtml(user_form.cleaned_data["input"])
             # Сохраняем закодированные изображения как файлы
@@ -228,7 +228,7 @@ class EditNoteView(View):
             if user_form.cleaned_data["input"] != post.content:
                 post.content = content
                 updated_fields.append("content")
-            if user_form.cleaned_data["tags_checked"] != post.tags_list:
+            if user_form.cleaned_data["tags_in"] != post.tags_list:
                 post.tags = tags_to_save
                 updated_fields.append("tags")
             post.save(values=updated_fields)
@@ -249,7 +249,7 @@ class EditNoteView(View):
                 "tags": [
                     {
                         "name": tag,
-                        "checked": tag in request.POST.getlist("tags_checked", []),
+                        "checked": tag in request.POST.getlist("tags_in", []),
                     }
                     for tag in request.user.get_tags()
                 ],
@@ -350,7 +350,7 @@ class CreateNoteView(View):
 
             data = {
                 "title": user_form.cleaned_data["title"],
-                "tags": request.POST.getlist("tags_checked"),
+                "tags": request.POST.getlist("tags_in"),
                 "content": user_form.cleaned_data["input"],
             }
 
@@ -398,7 +398,7 @@ class CreateNoteView(View):
 
         else:
             # Выбранные теги
-            tags_checked = dict(request.POST).get("tags_checked") or []
+            tags_checked = dict(request.POST).get("tags_in") or []
 
             # Если не все поля были указаны
             return render(
@@ -439,7 +439,7 @@ class CreateNoteView(View):
                 user_form = PostForm(
                     {
                         "title": post_data["title"],
-                        "tags_checked": post_data["tags"],
+                        "tags_in": post_data["tags"],
                         "input": post_data["content"],
                     },
                 )
@@ -457,7 +457,6 @@ class CreateNoteView(View):
             {
                 "tags": tags_,
                 "page_name": "note-create",
-                "superuser": request.user.is_superuser,
                 "form": user_form,
             },
         )

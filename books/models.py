@@ -17,3 +17,4 @@ class BookStatistic(models.Model):
     book_id = models.CharField(max_length=64)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     read = models.BooleanField(default=False, null=False)
+    favorite = models.BooleanField(default=False, null=False)

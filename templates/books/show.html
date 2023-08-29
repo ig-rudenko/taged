@@ -39,13 +39,25 @@
 {% for book in books %}
     <div class="col py-3">
         <div class="card card-cover h-100 overflow-hidden rounded-4 shadow-lg"
-            {% if book.read_mark %}style="border: 2px solid blueviolet;"{% endif %}>
 
-            {% if book.read_mark %}
+             {# Цвет рамки книги #}
+            {% if book.statistic.read %}style="border: 2px solid blueviolet;"
+            {% elif book.statistic.favorite %}style="border: 2px solid #ff7676;"{% endif %}>
+
+            {# Метки книги #}
+            {% if book.statistic.read %}
                 <span style="position: absolute;right: 10px;top: 10px;background-color: blueviolet;cursor: default;"
                       class="badge">
                 Прочитано
                 </span>
+            {% endif %}
+
+            {% if book.statistic.favorite %}
+                <div style="padding: 9px; position: absolute; left: 6px; top: 6px; cursor: default; background-color: white; border-radius: 100%;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#ff7676" class="bi bi-heart-fill" viewBox="0 0 16 16" style="position: relative;top: 2px;">
+                  <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"></path>
+                </svg>
+                </div>
             {% endif %}
 
             <a href="{% url 'book-about' book.id %}">
@@ -53,6 +65,7 @@
                      src="/media/books/{{ book.id }}/preview.png" class="card-img-top" alt="img:'{{ book.title }}'">
             </a>
 
+            {# Данные книги #}
             <ul class="list-group list-group-flush">
             <li class="list-group-item list-group-item-secondary">{{ book.title }}</li>
                 {% if book.author %}

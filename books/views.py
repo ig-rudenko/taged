@@ -157,18 +157,16 @@ def about_book(request, book_id):
         # Получаем запись по ID
         book = BookIndex.get(id_=book_id)
         comments = Comment.objects.filter(book_id=book_id).select_related("user")
-        statistic = BookStatistic.objects.filter(book_id=book_id, user=request.user)
-        if statistic.exists():
-            read_mark = statistic.first().read
-        else:
-            read_mark = False
+        book_stats, _ = BookStatistic.objects.get_or_create(
+            book_id=book_id, user=request.user
+        )
 
         return render(
             request,
             "books/about_book.html",
             {
                 "book": book,
-                "read_mark": read_mark,
+                "statistic": book_stats,
                 "comments": comments,
             },
         )
@@ -202,22 +200,16 @@ def all_books(request):
 
     books_list = []
     for book in books:
-        statistic = BookStatistic.objects.filter(book_id=book["id"], user=request.user)
-        if statistic.exists():
-            read_mark = statistic.first().read
-            favorite_mark = statistic.first().favorite
-        else:
-            read_mark = False
-            favorite_mark = False
-
+        book_stats, _ = BookStatistic.objects.get_or_create(
+            book_id=book["id"], user=request.user
+        )
         books_list.append(
             {
                 "id": book["id"],
                 "title": book["title"],
                 "author": book["author"],
                 "year": book["year"],
-                "read_mark": read_mark,
-                "favorite_mark": favorite_mark,
+                "statistic": book_stats
             }
         )
 

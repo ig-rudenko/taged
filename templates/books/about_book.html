@@ -19,10 +19,10 @@
 
                 <div class="d-flex">
                     <div>
-                        {% include 'books/mark_as_favorite_form.html' with favorite_mark=favorite_mark %}
+                        {% include 'books/mark_as_favorite_form.html' with favorite_mark=statistic.favorite %}
                     </div>
                     <div>
-                        {% include 'books/mark_as_read_form.html' with read_mark=read_mark %}
+                        {% include 'books/mark_as_read_form.html' with read_mark=statistic.read %}
                     </div>
                 </div>
 

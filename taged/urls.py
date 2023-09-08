@@ -38,7 +38,7 @@ urlpatterns = [
     re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
     # AJAX
     path("ajax/autocomplete/", views.autocomplete),
-    path("ajax/extend_post/<post_id>", views.pre_show_note),
+    path("ajax/extend_post/<post_id>", views.show_note_data),
     path("ckeditor/", include("ckeditor_uploader.urls")),
 ]
 

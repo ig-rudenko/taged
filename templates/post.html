@@ -89,16 +89,42 @@
 </div>
 
 <script>
-$.ajax({
-    url: "/ajax/extend_post/{{ post.id }}",
-    success: function( data ) {
-        if (data.content.length) {
-            $('#post-content').html(data.content)
-        } else {
-            $('#post-content').html('<h1>Не удалось загрузить содержимое</h1>')
+let publishedDateTime
+function loadContent() {
+    $.ajax({
+        url: "/ajax/extend_post/{{ post.id }}",
+        success: function( data ) {
+            if (data.content.length) {
+                $('#post-content').html(data.content)
+            } else {
+                $('#post-content').html('<h1>Не удалось загрузить содержимое</h1>')
+            }
+            if (data.published_at) {
+                publishedDateTime = data.published_at
+            }
         }
-    }
-});
+    });
+}
+
+function checkNoteDateTime() {
+    $.ajax({
+        url: "/ajax/extend_post/{{ post.id }}?fields=published_at",
+        success: function( data ) {
+            if (data.published_at) {
+                if (publishedDateTime !== data.published_at) {
+                    publishedDateTime = data.published_at
+                    loadContent()
+                }
+            }
+        }
+    });
+
+    setTimeout(checkNoteDateTime, 2000)
+}
+
+loadContent()
+checkNoteDateTime()
+
 </script>
 
 {% endblock %}

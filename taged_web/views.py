@@ -316,19 +316,20 @@ def show_note(request, note_id: str):
 
 @login_required
 @elasticsearch_check_available
-def pre_show_note(request, post_id):
+def show_note_data(request, post_id):
     """
     Выводим содержимое заметки
     :param request: запрос
     :param post_id: ID записи в elasticsearch
     :return:
     """
+    fields = request.GET.getlist("fields", ["content"])
 
-    post = PostIndex.get(id_=post_id, values=["content"])
+    post = PostIndex.get(id_=post_id, values=fields)
     if post is None:
         data = {"error": "not found"}
     else:
-        data = {"content": post.content}
+        data = {field: getattr(post, field) for field in fields}
 
     return JsonResponse(data)
 

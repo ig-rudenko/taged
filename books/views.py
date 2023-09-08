@@ -157,18 +157,16 @@ def about_book(request, book_id):
         # Получаем запись по ID
         book = BookIndex.get(id_=book_id)
         comments = Comment.objects.filter(book_id=book_id).select_related("user")
-        statistic = BookStatistic.objects.filter(book_id=book_id, user=request.user)
-        if statistic.exists():
-            read_mark = statistic.first().read
-        else:
-            read_mark = False
+        book_stats, _ = BookStatistic.objects.get_or_create(
+            book_id=book_id, user=request.user
+        )
 
         return render(
             request,
             "books/about_book.html",
             {
                 "book": book,
-                "read_mark": read_mark,
+                "statistic": book_stats,
                 "comments": comments,
             },
         )
@@ -202,19 +200,16 @@ def all_books(request):
 
     books_list = []
     for book in books:
-        statistic = BookStatistic.objects.filter(book_id=book["id"], user=request.user)
-        if statistic.exists():
-            read_mark = statistic.first().read
-        else:
-            read_mark = False
-
+        book_stats, _ = BookStatistic.objects.get_or_create(
+            book_id=book["id"], user=request.user
+        )
         books_list.append(
             {
                 "id": book["id"],
                 "title": book["title"],
                 "author": book["author"],
                 "year": book["year"],
-                "read_mark": read_mark,
+                "statistic": book_stats
             }
         )
 
@@ -230,21 +225,30 @@ def all_books(request):
     )
 
 
-@login_required
-def mark_as_read(request, book_id: str):
+def mark_as(request, book_id: str, mark_name: str):
     if request.method == "POST":
         book = BookIndex.get(book_id, values=["title"])
         if not book:
             raise Http404()
         BookStatistic.objects.update_or_create(
             defaults={
-                "read": request.POST.get("read") == "on",
+                mark_name: request.POST.get(mark_name) == "on",
                 "user": request.user,
             },
             book_id=book_id,
         )
 
     return redirect(reverse("book-about", args=[book_id]))
+
+
+@login_required
+def mark_as_read(request, book_id: str):
+    return mark_as(request, book_id, "read")
+
+
+@login_required
+def mark_as_favorite(request, book_id: str):
+    return mark_as(request, book_id, "favorite")
 
 
 @login_required

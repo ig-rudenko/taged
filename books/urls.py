@@ -13,4 +13,5 @@ urlpatterns = [
     path("delete/<book_id>", views.DeleteBookView.as_view(), name="book-delete"),
     path("<book_id>/add-comment", views.add_comment, name="add-comment"),
     path("<book_id>/mark-as-read", views.mark_as_read, name="mark-as-read"),
+    path("<book_id>/mark-as-favorite", views.mark_as_favorite, name="mark-as-favorite"),
 ]

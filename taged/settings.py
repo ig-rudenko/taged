@@ -277,32 +277,35 @@ CKEDITOR_CONFIGS = {
 logging.basicConfig(filename="logs", level=logging.INFO)
 
 # В формате `es01:9200,es02:9201,es03:9202`
-ELASTICSEARCH_HOSTS_raw_str = os.getenv("ELASTICSEARCH_HOSTS", "localhost:9200")
-ELASTICSEARCH_HOSTS = [
-    {"host": host.split(":")[0], "port": int(host.split(":")[1])}
-    for host in ELASTICSEARCH_HOSTS_raw_str.split(",")
-]
-ELASTICSEARCH_TIMEOUT = 10
+ELASTICSEARCH_HOSTS_raw_str = os.getenv("ELASTICSEARCH_HOSTS")
 
-print("ELASTICSEARCH_HOSTS:", ELASTICSEARCH_HOSTS)
+if ELASTICSEARCH_HOSTS_raw_str:
 
-# Инициализируем подключение к Elasticsearch
-elasticsearch_connector.init(
-    es=Elasticsearch(ELASTICSEARCH_HOSTS), timeout=ELASTICSEARCH_TIMEOUT
-)
+    ELASTICSEARCH_HOSTS = [
+        {"host": host.split(":")[0], "port": int(host.split(":")[1])}
+        for host in ELASTICSEARCH_HOSTS_raw_str.split(",")
+    ]
+    ELASTICSEARCH_TIMEOUT = 10
 
-# Регистратор индексов в Elasticsearch
-es_index_register = IndexRegister()
+    print("ELASTICSEARCH_HOSTS:", ELASTICSEARCH_HOSTS)
 
-while True:
-    try:
-        # Создаем индексы
-        es_index_register.register_index(PostIndex)
-        print("Registered PostIndex")
-        es_index_register.register_index(BookIndex)
-        print("Registered BookIndex")
-        break
-    except ElasticConnectionError as error:
-        print(error)
-        # Если Elasticsearch недоступен, то пытаемся еще раз
-        time.sleep(10)
+    # Инициализируем подключение к Elasticsearch
+    elasticsearch_connector.init(
+        es=Elasticsearch(ELASTICSEARCH_HOSTS), timeout=ELASTICSEARCH_TIMEOUT
+    )
+
+    # Регистратор индексов в Elasticsearch
+    es_index_register = IndexRegister()
+
+    while True:
+        try:
+            # Создаем индексы
+            es_index_register.register_index(PostIndex)
+            print("Registered PostIndex")
+            es_index_register.register_index(BookIndex)
+            print("Registered BookIndex")
+            break
+        except ElasticConnectionError as error:
+            print(error)
+            # Если Elasticsearch недоступен, то пытаемся еще раз
+            time.sleep(10)

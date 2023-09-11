@@ -48,7 +48,10 @@ def autocomplete(request):
     """
 
     try:
-        titles = PostIndex.get_titles(string=request.GET.get("term"))
+        titles = PostIndex.get_titles(
+            string=request.GET.get("term"),
+            unavailable_tags=request.user.unavailable_tags,
+        )
     except es_exceptions.ConnectionError:
         return JsonResponse({"data": None}, status=500)
     else:
@@ -106,7 +109,7 @@ class NotesListView(View):
             paginator = PostIndex.filter(
                 string=search_str,
                 tags_in=tags_in,
-                tags_off=tags_off,
+                tags_off=tags_off + request.user.unavailable_tags,
             )
             posts_list = paginator.get_page(request.GET.get("page"))
             posts_count = paginator.count

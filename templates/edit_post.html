@@ -13,14 +13,22 @@
 
 {% block main %}
 
-    <form class="container" name="theForm" method="post" style="height: 100%" enctype="multipart/form-data">
+    {# КНОПКА ОПУБЛИКОВАТЬ #}
+    <div id="publish-button" class="button-wrapper">
+        <button onclick="" class="arrow-btn" style="background: none" type="submit">Опубликовать<span></span></button>
+    </div>
+
+    <form class="container" id="noteForm" method="post" style="height: 100%" enctype="multipart/form-data">
         {% csrf_token %}
 
-        {# КНОПКА ОПУБЛИКОВАТЬ #}
-        <div class="button-wrapper">
-            <button class="arrow-btn" style="background: none" type="submit">Опубликовать<span></span></button>
+        {% if error %}
+        <p onclick="this.hidden = true" class="alert alert-danger text-center font20">{{ error }}</p>
+        {% endif %}
+
+        <div id="loading-info" style="display: none" class="text-center">
+            <h3 class="py-3">Загрузка, пожалуйста, подождите</h3>
+            <div class="spinner-border" style="width: 100px; height: 100px; color: #F58262" role="status"></div>
         </div>
-        <h4 style="color: darkred; text-align: center">{{ error }}</h4>
 
         <div style="text-align: right">
         {# СПИСОК ТЕГОВ #}
@@ -81,10 +89,10 @@
         {# ХРАНЕНИЕ ID ЗАПИСИ #}
         <input type="text" name="post_id" value="{{ post.id }}" hidden readonly>
 
-    {#  Отображение выбранных тегов  #}
-    <div class="d-flex justify-content-between py-2">
-        <div id="tags-in-output" class="d-flex"></div>
-    </div>
+        {#  Отображение выбранных тегов  #}
+        <div class="d-flex justify-content-between py-2">
+            <div id="tags-in-output" class="d-flex"></div>
+        </div>
 
         {# TITLE #}
         <div class="bg-body text-body">
@@ -93,13 +101,12 @@
 
         {# CONTENT #}
         <div class="bg-body text-body">
-        {{ form.input }}
+            {{ form.input }}
         </div>
 
     </form>
 
     {# РАБОТА С ОТОБРАЖЕНИЕМ ТЕГОВ #}
-<script src="{% static 'js/tags_control.js' %}"></script>
 <script src="{% static 'js/file_format.js' %}"></script>
 <script src="{% static 'js/input_files_control.js' %}"></script>
 <script src="{% static 'js/show-checked-tags.js' %}"></script>
@@ -108,7 +115,16 @@ $(document).ready ( function(){
     $(".django-ckeditor-widget").css({"width" : "100%"});
     $("#cke_id_input").css({"width" : ''});
 });
-</script>
 
+$("#publish-button").click(
+    function () {
+        if ($("#id_title")[0].value) {
+            $(this).hide()
+            $("#loading-info").show()
+            document.getElementById('noteForm').submit();
+        }
+    }
+)
+</script>
 
 {% endblock %}

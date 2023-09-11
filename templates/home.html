@@ -105,10 +105,11 @@
     <div id="tags-off-output" class="d-flex"></div>
 </div>
 
+{% if posts_count %}
 <div class="last-post-text">
     Всего записей: {{ posts_count }}
 </div>
-
+{% endif %}
 
 {% include "pagination.html" with p=pagination %}
 

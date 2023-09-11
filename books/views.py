@@ -209,7 +209,7 @@ def all_books(request):
                 "title": book["title"],
                 "author": book["author"],
                 "year": book["year"],
-                "statistic": book_stats
+                "statistic": book_stats,
             }
         )
 
@@ -236,6 +236,7 @@ def mark_as(request, book_id: str, mark_name: str):
                 "user": request.user,
             },
             book_id=book_id,
+            user=request.user,
         )
 
     return redirect(reverse("book-about", args=[book_id]))

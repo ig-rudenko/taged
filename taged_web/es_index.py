@@ -253,19 +253,34 @@ class PostIndex(AbstractIndex):
         return result
 
     @classmethod
-    def get_titles(cls, string: str) -> List[str]:
+    def get_titles(cls, string: str, unavailable_tags: List[str]) -> List[str]:
         """
         ## Возвращает заголовки, которые соответствуют искомой строке.
 
         :param string: Строка для поиска.
+        :param unavailable_tags: Недоступные пользователю теги.
         :return: Список заголовков, которые соответствуют искомой подстроке или пустой список.
         """
 
         # Поиск по строке в title и content
         res = cls.Meta.connector.es.search(
             index=cls.Meta.index_name,
-            _source=["title"],
-            query={"simple_query_string": {"query": string, "fields": ["title"]}},
+            _source=["title", "tags"],
+            query={
+                "bool": {
+                    "must": [
+                        {
+                            "simple_query_string": {
+                                "query": string,
+                                "fields": ["title^2"],
+                            }
+                        }
+                    ],
+                    "must_not": [
+                        {"match": {"tags": " ".join(unavailable_tags)}},
+                    ],
+                }
+            },
             request_timeout=cls.Meta.connector.timeout,
         )
         # Проверяет, есть ли хоть одна запись в ответе.

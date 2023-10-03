@@ -19,29 +19,13 @@
                 <input class="atuin-btn" type="submit" value="Создать">
             </form>
 
-            {% for t in tags %}
-
-                <a class="tag-in" onclick="delete_tag('{{ t.id }}', '{{ t.tag_name }}')">{{ t.tag_name }}</a>
-
-            {% endfor %}
+            <div class="container">
+                {% for t in tags %}
+                    <div class="tag-in">{{ t.tag_name }}</div>
+                {% endfor %}
+            </div>
             </div>
         </div>
     </div>
 
-<script>
-const CSRF_TOKEN = document.querySelector("input[name='csrfmiddlewaretoken']").value
-
-function delete_tag(id, name) {
-    if (confirm("Вы согласны удалить тег \"" + name + "\" ?")) {
-        fetch(
-            "/notes/tag/" + id + "/delete",
-            {
-                method: "post",
-                credentials: "include",
-                headers: {"X-CSRFToken": CSRF_TOKEN}
-            }
-        ).then(resp => {window.location.reload();})
-    }
-}
-</script>
 {% endblock %}

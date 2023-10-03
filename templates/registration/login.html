@@ -5,68 +5,74 @@
 <head>
     <meta charset="UTF-8">
     <title>LOGIN</title>
-    <link rel="stylesheet" href="{% static "css/styles.css" %}" />
-{#    <link rel="stylesheet" href="{% static "css/buttons.css" %}" />#}
-    <link rel="stylesheet" href="{% static "css/login.css" %}" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
     <script src="{% static 'js/jquery.min.js' %}"></script>
+    <style>
+        input:focus, button:focus {
+            border-color: #F58262!important;
+            box-shadow: 0 0 0 0.25rem rgba(245,130,98,.25)!important;
+        }
+        button {
+            background-color: rgba(245,130,98,.5)!important;
+        }
+    </style>
 </head>
 &nbsp;
 <body>
-    <div class="center_" style="background-color: white; min-height: 100%; padding-top: 20px">
-    {% block content %}
+    <div class="container text-center w-25">
 
-    {% if form.errors %}
-      <p id="errors">Неверный логин или пароль!</p>
-    {% endif %}
-
-    {% if next %}
-      {% if user.is_authenticated %}
-        <p id="errors">Your account doesn't have access to this page. To proceed,
-        please login with an account that has access.</p>
-      {% else %}
-        <p> </p>
-      {% endif %}
-    {% endif %}
-
-    {# Картинка кота #}
-    <div class="center_" style="margin-bottom: 40px">
         {% if form.errors %}
-          <img id="angry_cat" src="/static/images/cat_angry.gif" alt="cat" onclick="show_nice_cat()">
-          <img id="nice_cat" src="/static/images/cat7.gif" height="250px" width="250px" alt="cat" style="display: none">
-        {% else %}
-        <img src="/static/images/cat7.gif" height="250px" width="250px" alt="cat">
+          <p class="alert alert-danger text-dark" id="errors">Неверный логин или пароль!</p>
         {% endif %}
-    </div>
+
+        {% if next %}
+          {% if user.is_authenticated %}
+            <p id="errors">Your account doesn't have access to this page. To proceed,
+            please login with an account that has access.</p>
+          {% else %}
+            <p> </p>
+          {% endif %}
+        {% endif %}
+
+        {# Картинка кота #}
+        <div class="py-4">
+            {% if form.errors %}
+              <img id="angry_cat" src="/static/images/cat_angry.gif" alt="cat" onclick="show_nice_cat()">
+              <img id="nice_cat" src="/static/images/cat7.gif" alt="cat" style="display: none">
+            {% else %}
+            <img src="/static/images/cat7.gif" alt="cat">
+            {% endif %}
+        </div>
 
 
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            <input class="atuin-btn center_" type="hidden" name="next" value="{{ next }}" />
 
+            <div class="form-floating mb-3">
+              <input id="username" type="text" autofocus name="username" class="form-control" placeholder="Имя пользователя">
+              <label for="username">Имя пользователя</label>
+            </div>
+            <div class="form-floating">
+              <input id="password" type="password" name="password" class="form-control" placeholder="Пароль">
+              <label for="password">Пароль</label>
+            </div>
 
-    <form method="post" action="{% url 'login' %}">
-    {% csrf_token %}
-    <table>
+            <div class="py-3">
+                <button class="btn w-100" type="submit" value="Войти">
+                    Войти
+                </button>
+            </div>
 
-    <tr>
-      <td>{{ form.username.label_tag }}</td>
-      <td>{{ form.username }}</td>
-    </tr>
+        </form>
 
-    <tr>
-      <td>{{ form.password.label_tag }}</td>
-      <td>{{ form.password }}</td>
-    </tr>
-    </table>
+        <p style="margin-bottom: 50px; text-align: left">
+            <a class="text-muted" href="{% url 'password_reset' %}">Забыли пароль?</a>
+        </p>
+        <p class="mt-5 mb-3 text-muted">
+            АО "Севастополь Телеком" @ NOC<br> Руденко Игорь © 2021-2023
+        </p>
 
-    <div style="display: none">
-        <input class="atuin-btn" type="submit" value="Войти" />
-        <input class="atuin-btn center_" type="hidden" name="next" value="{{ next }}" />
-    </div>
-
-    </form>
-
-    {# Assumes you setup the password_reset view in your URLconf #}
-    <p><a class="no_decoration center_" href="{% url 'password_reset' %}">Забыли пароль?</a></p>
-
-    {% endblock %}
     </div>
 </body>
 <script>

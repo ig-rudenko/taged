@@ -22,13 +22,16 @@ class User(AbstractUser):
         # Проверка, является ли пользователь суперпользователем или нет.
         # Если пользователь является суперпользователем, он вернет все теги.
         # Если пользователь не является суперпользователем, он вернет теги, связанные с пользователем.
-        user_tags = (
-            Tags.objects.all().values("tag_name")
+        return (
+            Tags.objects.all().values_list("tag_name", flat=True)
             if self.is_superuser
-            else self.tags_set.values("tag_name")
+            else self.tags_set.values_list("tag_name", flat=Tags)
         )
-        # Создание списка тегов доступных тегов
-        return [t["tag_name"] for t in user_tags]
+
+    @property
+    def unavailable_tags(self) -> List[str]:
+        all_tags = set(Tags.objects.all().values_list("tag_name", flat=True))
+        return list(set(all_tags) - set(self.get_tags()))
 
     def __str__(self):
         return self.username

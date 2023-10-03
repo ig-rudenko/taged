@@ -15,6 +15,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.clickjacking import xframe_options_exempt
 from elasticsearch import exceptions as es_exceptions
 
 from elasticsearch_control.cache import get_or_cache
@@ -297,6 +298,7 @@ def download_file(request, note_id: str, file_name: str):
 
 @login_required
 @elasticsearch_check_available
+@xframe_options_exempt
 def show_note(request, note_id: str):
     """
     Выводим содержимое заметки

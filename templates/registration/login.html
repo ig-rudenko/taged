@@ -1,84 +1,15 @@
 <!DOCTYPE html>
 {% load static %}
 <html lang="ru">
-<link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
-<head>
-    <meta charset="UTF-8">
-    <title>LOGIN</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
-    <script src="{% static 'js/jquery.min.js' %}"></script>
-    <style>
-        input:focus, button:focus {
-            border-color: #F58262!important;
-            box-shadow: 0 0 0 0.25rem rgba(245,130,98,.25)!important;
-        }
-        button {
-            background-color: rgba(245,130,98,.5)!important;
-        }
-    </style>
-</head>
-&nbsp;
+    <head>
+        <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
+        <meta charset="UTF-8">
+        <title>Вход</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    </head>
 <body>
-    <div class="container text-center w-25">
-
-        {% if form.errors %}
-          <p class="alert alert-danger text-dark" id="errors">Неверный логин или пароль!</p>
-        {% endif %}
-
-        {% if next %}
-          {% if user.is_authenticated %}
-            <p id="errors">Your account doesn't have access to this page. To proceed,
-            please login with an account that has access.</p>
-          {% else %}
-            <p> </p>
-          {% endif %}
-        {% endif %}
-
-        {# Картинка кота #}
-        <div class="py-4">
-            {% if form.errors %}
-              <img id="angry_cat" src="/static/images/cat_angry.gif" alt="cat" onclick="show_nice_cat()">
-              <img id="nice_cat" src="/static/images/cat7.gif" alt="cat" style="display: none">
-            {% else %}
-            <img src="/static/images/cat7.gif" alt="cat">
-            {% endif %}
-        </div>
-
-
-        <form method="post" action="{% url 'login' %}">
-            {% csrf_token %}
-            <input class="atuin-btn center_" type="hidden" name="next" value="{{ next }}" />
-
-            <div class="form-floating mb-3">
-              <input id="username" type="text" autofocus name="username" class="form-control" placeholder="Имя пользователя">
-              <label for="username">Имя пользователя</label>
-            </div>
-            <div class="form-floating">
-              <input id="password" type="password" name="password" class="form-control" placeholder="Пароль">
-              <label for="password">Пароль</label>
-            </div>
-
-            <div class="py-3">
-                <button class="btn w-100" type="submit" value="Войти">
-                    Войти
-                </button>
-            </div>
-
-        </form>
-
-        <p style="margin-bottom: 50px; text-align: left">
-            <a class="text-muted" href="{% url 'password_reset' %}">Забыли пароль?</a>
-        </p>
-        <p class="mt-5 mb-3 text-muted">
-            АО "Севастополь Телеком" @ NOC<br> Руденко Игорь © 2021-2023
-        </p>
-
-    </div>
+    {% csrf_token %}
+    <div id="app"></div>
+    <script type="module" src="{% static 'js/login.js' %}"></script>
 </body>
-<script>
-    function show_nice_cat(){
-        $('#angry_cat').css('display', 'none')
-        $('#nice_cat').css('display', 'inline')
-    }
-</script>
 </html>

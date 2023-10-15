@@ -23,6 +23,7 @@ from taged_web import views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/notes/", include("taged_web.api.urls")),
     # NOTE
     path("", lambda x: HttpResponseRedirect("/notes"), name="home"),
     path("notes/", include("taged_web.urls")),

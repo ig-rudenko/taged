@@ -34,3 +34,13 @@ def icon_path(file: str):
 
     # Возврат пути к иконке
     return "images/icons/" + icon
+
+
+def format_bytes(size: int) -> str:
+    power = 2**10
+    n = 0
+    power_labels = {0: "", 1: "К", 2: "М", 3: "Г", 4: "Т"}
+    while size > power:
+        size /= power
+        n += 1
+    return f"{size:.2f} {power_labels[n]}Б"

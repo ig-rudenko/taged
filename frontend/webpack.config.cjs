@@ -4,7 +4,7 @@ const { VueLoaderPlugin } = require('vue-loader'); // плагин для заг
 module.exports = {
     entry: {
         login: './src/login.js',
-        // main: './src/main.js',
+        main: './src/main.js',
     },
     mode: "production",
     output: {

@@ -52,7 +52,7 @@
 
               <p>{{ note.title }}</p>
               <div class="flex justify-content-end">
-                <Button size="small" rounded severity="warning" icon="pi pi-eye" @click="showNote(note.id)"></Button>
+                <Button size="small" rounded class="bg-orange-light border-0" icon="pi pi-eye" @click="showNote(note.id)"></Button>
               </div>
               <div>
                 <small class="text-black-alpha-60"><i class="pi pi-calendar"/> {{ note.published_at }}</small>

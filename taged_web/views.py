@@ -1,4 +1,3 @@
-import random
 from datetime import datetime
 from typing import List
 
@@ -18,7 +17,6 @@ from django.views import View
 from django.views.decorators.clickjacking import xframe_options_exempt
 from elasticsearch import exceptions as es_exceptions
 
-from elasticsearch_control.cache import get_or_cache
 from elasticsearch_control.decorators import elasticsearch_check_available
 from taged.settings import MEDIA_ROOT
 from taged_web.models import Tags
@@ -39,128 +37,9 @@ def get_note(note_id: str) -> PostIndex:
 
 
 @login_required
-def autocomplete(request):
-    """
-    Подключаемся к серверу Elasticsearch, получаем начало заголовки документов,
-    соответствующие поисковому запросу, и возвращаем их полные названия в виде ответа JSON.
-
-    :param request: Объект запроса.
-    :return: Список заголовков.
-    """
-
-    try:
-        titles = PostIndex.get_titles(
-            string=request.GET.get("term"),
-            unavailable_tags=request.user.unavailable_tags,
-        )
-    except es_exceptions.ConnectionError:
-        return JsonResponse({"data": None}, status=500)
-    else:
-        return JsonResponse({"data": titles})
-
-
-@method_decorator(login_required, name="dispatch")
-@method_decorator(elasticsearch_check_available, name="dispatch")
-class NotesListView(View):
-    def get(self, request):
-        tags_in = request.GET.getlist("tags_in", [])
-        tags_off = request.GET.getlist("tags_off", [])
-        search_str = request.GET.get("search", "")
-
-        available_tags = request.user.get_tags()
-        posts_list = []
-        posts_count = None
-        paginator = None
-
-        # Проверка того, является ли метод запроса GET и является ли пользователь суперпользователем. Если оба условия
-        # выполняются, он получает последние опубликованные сообщения от Elasticsearch.
-        if not tags_in and not tags_off and not search_str:
-            if request.user.is_superuser:
-                # Просмотр последних статей доступен только суперпользователю
-
-                last_posts_paginator = PostIndex.filter(
-                    sort="published_at", sort_desc=True, values=["title", "tags"]
-                )
-
-                # Ограничиваем кол-во полученных записей до 6
-                last_posts_paginator.per_page = 6
-
-                # Получаем записи из кэша или они будут созданы по функции
-                posts_list = get_or_cache(
-                    function=last_posts_paginator.get_page,
-                    kwargs={"page": 1},
-                    unique_name="last_updated_posts",
-                    cache_period=60 * 10,
-                )
-
-                posts_count = last_posts_paginator.count
-
-        else:
-            # Проверка, ввел ли пользователь поисковый запрос или теги.
-            # Если нет, он перенаправляет пользователя на домашнюю страницу.
-            if (
-                not search_str  # Если (нет поиска по слову)
-                and not tags_in  # и (нет тегов)
-                or set(tags_in or set())  # или (теги содержат запрещенные)
-                - set(available_tags)  # (определяем разностью)
-            ):
-                return HttpResponseRedirect("/")
-
-            # Поиск постов в базе данных elasticsearch.
-            paginator = PostIndex.filter(
-                string=search_str,
-                tags_in=tags_in,
-                tags_off=tags_off + request.user.unavailable_tags,
-            )
-            posts_list = paginator.get_page(request.GET.get("page"))
-            posts_count = paginator.count
-
-        self.add_file_mark(posts_list)
-        tags_in = self.mark_selected_tags(tags_in, available_tags)
-        tags_off = self.mark_selected_tags(tags_off, available_tags)
-
-        # Отрисовка страницы home.html с данными из базы данных.
-        return render(
-            request,
-            "home.html",
-            {
-                "pagination": paginator,
-                "posts_count": posts_count,
-                "page_name": "notes-list",
-                "has_search": bool(search_str),  # Был ли поиск по строке
-                "data": posts_list,
-                "tags_in": tags_in,
-                "tags_off": tags_off,
-                "image": f"images/cat{random.randint(0, 9)}.gif",
-            },
-        )
-
-    @staticmethod
-    def add_file_mark(objects: List[dict]):
-        for post in objects:
-            # Проверяем, существуют ли у записей прикрепленные файлы.
-            for file in (MEDIA_ROOT / f'{post["id"]}').glob("*"):
-                if file.is_file():
-                    post["files"] = True
-                    break  # Если нашли файл, прекращаем поиск
-            else:
-                # Если не нашли файлы
-                post["files"] = False
-
-    @staticmethod
-    def mark_selected_tags(selected_tags, available_tags):
-        if not selected_tags:
-            tags_ = [{"name": tag, "checked": False} for tag in available_tags]
-        else:
-            tags_ = [
-                {
-                    "name": tag,
-                    "checked": tag in selected_tags,
-                }
-                for tag in available_tags
-            ]
-        return sorted(tags_, key=lambda x: x["name"].lower())  # Сортируем по алфавиту
-
+@elasticsearch_check_available
+def main(request):
+    return render(request, "notes/main.html")
 
 @method_decorator(login_required, name="dispatch")
 @method_decorator(elasticsearch_check_available, name="dispatch")

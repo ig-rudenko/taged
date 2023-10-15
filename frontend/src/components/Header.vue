@@ -35,7 +35,6 @@
 </template>
 
 <script>
-import "/src/assets/header.css"
 import Button from "primevue/button/Button.vue";
 import api_request from "../api_request.js";
 

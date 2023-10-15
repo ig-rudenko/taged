@@ -4,11 +4,12 @@ const { VueLoaderPlugin } = require('vue-loader'); // плагин для заг
 module.exports = {
     entry: {
         login: './src/login.js',
+        // main: './src/main.js',
     },
     mode: "production",
     output: {
-        path: path.resolve(__dirname, '../static/js/'),
-        publicPath: '/static/js/',
+        path: path.resolve(__dirname, '../static/'),
+        publicPath: '/static/',
         filename: '[name].js'
     },
     module: {

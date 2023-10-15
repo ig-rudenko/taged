@@ -15,15 +15,17 @@
     </div>
 
     <div class="mb-5 flex flex-wrap">
-      <a v-for="file in noteData.files"
-         :href="'/notes/download/'+noteId+'/'+file.name"
-         class="mr-3 flex align-items-center no-underline text-900">
-        <img class="mr-2" :src="'/static/'+file.icon" height="48" width="48">
-        <span class="font-normal">
+      <p v-for="file in noteData.files" class="mr-3 flex align-items-center">
+        <Image v-if="RegExp(/\.jpg$/).test(file.name)"
+               :src="'/notes/download/'+noteId+'/'+file.name" :alt="file.name"
+               class="mr-2" width="48" height="48" preview />
+        <img v-else class="mr-2" :src="'/static/'+file.icon" height="48" width="48">
+
+        <a :href="'/notes/download/'+noteId+'/'+file.name" class="font-normal no-underline text-900">
           {{ file.name }}<br>
           <span class="text-400" style="font-size: 0.8rem">{{ file.size }}</span>
-        </span>
-      </a>
+        </a>
+      </p>
     </div>
 
     <hr>
@@ -39,6 +41,7 @@
 
 <script>
 import Tag from "primevue/tag/Tag.vue";
+import Image from "primevue/image/Image.vue";
 import ScrollTop from "primevue/scrolltop/ScrollTop.vue";
 
 import api_request from "../api_request.js";
@@ -47,6 +50,7 @@ export default {
   name: "ViewNote",
   components: {
     Tag,
+    Image,
     ScrollTop,
   },
   props: {

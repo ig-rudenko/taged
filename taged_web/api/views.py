@@ -2,55 +2,58 @@ import re
 from datetime import datetime
 from typing import List
 
-from django.contrib.auth.decorators import login_required
 from django.contrib.humanize.templatetags import humanize
-from django.http import JsonResponse, Http404
+from django.core.cache import cache
+from django.http import Http404
 from django.utils.decorators import method_decorator
-from django.views import View
 from django.conf import settings
+from rest_framework.generics import ListAPIView, GenericAPIView
 
 from elasticsearch import exceptions as es_exceptions
+from rest_framework.response import Response
+
 from elasticsearch_control.cache import get_or_cache
 from elasticsearch_control.decorators import api_elasticsearch_check_available
+from taged_web.api.serializers import NoteSerializer
 from taged_web.es_index import PostIndex
-from taged_web.models import Tags
+from taged_web.image_decoder import ReplaceImagesInHtml
 
 
-@login_required
-@api_elasticsearch_check_available
-def autocomplete(request):
+@method_decorator(api_elasticsearch_check_available, name="dispatch")
+class AutocompleteAPIView(GenericAPIView):
     """
     Подключаемся к серверу Elasticsearch, получаем начало заголовки документов,
     соответствующие поисковому запросу, и возвращаем их полные названия в виде ответа JSON.
     """
-    try:
-        titles = PostIndex.get_titles(
-            string=request.GET.get("term"),
-            unavailable_tags=request.user.unavailable_tags
-        )
-    except es_exceptions.ConnectionError:
-        return JsonResponse([], status=500, safe=False)
-    else:
-        return JsonResponse(titles, status=200, safe=False)
+
+    def get(self, request):
+        try:
+            titles = PostIndex.get_titles(
+                string=request.GET.get("term"),
+                unavailable_tags=request.user.unavailable_tags,
+            )
+        except es_exceptions.ConnectionError:
+            return Response([], status=500)
+        else:
+            return Response(titles)
 
 
-@login_required
-@api_elasticsearch_check_available
-def notes_count(request):
-    """Получает кол-во записей от Elasticsearch"""
-    paginator = PostIndex.filter(
-        tags_off=request.user.unavailable_tags,
-    )
-    return JsonResponse({"totalCount": paginator.count}, status=200)
-
-
-@method_decorator(login_required, name="dispatch")
 @method_decorator(api_elasticsearch_check_available, name="dispatch")
-class NotesListAPIView(View):
+class NotesCount(GenericAPIView):
+    """Получает кол-во записей от Elasticsearch"""
+
+    def get(self, request):
+        paginator = PostIndex.filter(
+            tags_off=request.user.unavailable_tags,
+        )
+        return Response({"totalCount": paginator.count})
+
+
+@method_decorator(api_elasticsearch_check_available, name="dispatch")
+class NotesListCreateAPIView(GenericAPIView):
     def get(self, request):
         search = request.GET.get("search", "")
         tags_in = request.GET.getlist("tags-in", [])
-        print(tags_in)
         page = request.GET.get("page", "1")
 
         # Если не указана строка поиска, то сортируем по времени создания
@@ -81,7 +84,7 @@ class NotesListAPIView(View):
         self.remove_content(records)
         self.humanize_datetime(records)
 
-        return JsonResponse(
+        return Response(
             {
                 "records": records,
                 "totalRecords": paginator.count,
@@ -125,26 +128,80 @@ class NotesListAPIView(View):
                 )
             )
 
+    def post(self, request):
+        serializer = NoteSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
 
-@login_required
-def tags_list(request):
-    tags = request.user.get_tags()
-    return JsonResponse(list(tags), status=200, safe=False)
+        data = {
+            "title": serializer.validated_data["title"],
+            "tags": serializer.validated_data["tags"],
+            "content": serializer.validated_data["content"],
+        }
+
+        # Ищем закодированные изображения (base64) в содержимом заметки.
+        image_formatter = ReplaceImagesInHtml(data["content"])
+
+        if not image_formatter.has_base64_encoded_images:
+            # У содержимого заметки нет изображений закодированных с помощью base64,
+            # то сохраняем как есть
+            post = PostIndex.create(**data)
+        else:
+            # Если есть закодированные изображения.
+            # Создаем запись в базе данных elasticsearch без содержимого.
+            data["content"] = ""
+            # Его мы обновим далее, заменив base64 изображения на ссылки.
+            post = PostIndex.create(**data)
+
+            # Сохраняем закодированные изображения как файлы
+            # и заменяем у них атрибут src на ссылку файла.
+            image_formatter.save_images_and_update_src(
+                image_prefix="image",
+                folder=f"{post.id}/content_images",
+            )
+            # Обновляем содержимое с измененными изображениями
+            post.content = image_formatter.html
+            post.save(values=["content"])
+
+        # Обнуляем кеш
+        cache.delete("all_posts_count")
+        cache.delete("last_updated_posts")
+
+        return Response({"id": post.id}, status=201)
 
 
-@login_required
-@api_elasticsearch_check_available
-def note_view(request, note_id: str):
-    note = PostIndex.get(id_=note_id)
-    user_unavailable_tags = set(request.user.unavailable_tags)
+class NoteFilesAPIView(GenericAPIView):
+    def post(self, request, note_id: str):
+        files = dict(request.FILES)
+        if files:
+            (settings.MEDIA_ROOT / note_id).mkdir(parents=True, exist_ok=True)
+            # Создаем папку для текущей заметки
+            for uploaded_file in files["files"]:  # Для каждого файла
+                with open(
+                    settings.MEDIA_ROOT / f"{note_id}/{uploaded_file.name}", "wb+"
+                ) as file:
+                    for chunk_ in uploaded_file.chunks():
+                        file.write(chunk_)  # Записываем файл
+        return Response({"filesCount": len(files)}, status=201)
 
-    if note is None or user_unavailable_tags & set(note.tags_list):
-        # Если нет такой записи, либо пользователь не имеет к ней доступа
-        raise Http404()
 
-    note_json_data = note.json()
-    note_json_data["published_at"] = humanize.naturaltime(
-        note_json_data["published_at"]
-    )
-    note_json_data["files"] = [file.json() for file in note.get_files()]
-    return JsonResponse(note_json_data, status=200)
+class TagsListAPIView(ListAPIView):
+    def get(self, *args, **kwargs):
+        return Response(self.request.user.get_tags())
+
+
+@method_decorator(api_elasticsearch_check_available, name="dispatch")
+class NoteAPIView(GenericAPIView):
+    def get(self, request, note_id: str):
+        note = PostIndex.get(id_=note_id)
+        user_unavailable_tags = set(request.user.unavailable_tags)
+
+        if note is None or user_unavailable_tags & set(note.tags_list):
+            # Если нет такой записи, либо пользователь не имеет к ней доступа
+            raise Http404()
+
+        note_json_data = note.json()
+        note_json_data["published_at"] = humanize.naturaltime(
+            note_json_data["published_at"]
+        )
+        note_json_data["files"] = [file.json() for file in note.get_files()]
+        return Response(note_json_data)

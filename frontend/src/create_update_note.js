@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 import PrimeVue from 'primevue/config/config.esm.js';
 import BadgeDirective from 'primevue/badgedirective/badgedirective.esm.js';
-import App from './Notes.vue'
+import App from './CreateUpdateNote.vue'
 import "primevue/resources/themes/viva-light/theme.css"
 
 

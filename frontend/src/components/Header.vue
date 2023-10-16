@@ -6,29 +6,29 @@
         <div>
           <div class="flex flex-wrap justify-content-between">
             <div class="flex lg:align-items-center">
-              <div class="mb-3 mr-2 surface-card shadow-2 flex align-items-center justify-content-center knowledge-button cursor-pointer">
+              <a href="/" class="mb-3 mr-2 surface-card shadow-2 flex align-items-center justify-content-center knowledge-button cursor-pointer">
                 <img class="knowledge-button" src="/static/img/digital-brain.png" alt="Image">
-              </div>
+              </a>
               <div class="mb-3 surface-card shadow-2 flex align-items-center justify-content-center library-button cursor-pointer">
                 <!--            <img src="images/blocks/logos/hyper.svg" alt="Image" width="70" height="70">-->
               </div>
             </div>
 
-            <div class="flex flex-wrap">
+            <div v-if="showCount" class="flex flex-wrap">
               <div class="p-3 mr-2 w-10rem text-center bg-purple-400 shadow-2" style="border-radius: 12px;">
-              <span class="inline-flex justify-content-center align-items-center bg-purple-500 border-circle mb-3 p-3">
-                <i class="pi pi-file text-xl text-white"></i>
-              </span>
+                <span class="inline-flex justify-content-center align-items-center bg-purple-500 border-circle mb-3 p-3">
+                  <i class="pi pi-file text-xl text-white"></i>
+                </span>
                 <div class="text-2xl font-medium text-white mb-2">{{ totalCount }}</div>
                 <span class="text-indigo-100 font-medium">Записей</span>
               </div>
             </div>
 
           </div>
-          <div class="text-900 text-3xl font-medium mb-3">База знаний</div>
-          <p class="mt-0 mb-3 text-700 text-xl">Здесь вы можете найти необходимую для вас информацию</p>
+          <div class="text-900 text-3xl font-medium mb-3">{{ sectionName }}</div>
+          <p class="mt-0 mb-3 text-700 text-xl">{{ sectionDescription }}</p>
         </div>
-        <Button rounded label="Создать" />
+        <Button v-if="showCreateButton" rounded label="Создать" />
       </div>
     </div>
   </div>
@@ -43,13 +43,21 @@ export default {
   components: {
     Button,
   },
+  props: {
+    showCount: {required: false, default: true},
+    sectionName: {required: true},
+    sectionDescription: {required: false, default: ""},
+    showCreateButton: {required: false, default: false},
+  },
   data() {
     return {
       totalCount: 0
     }
   },
   mounted() {
-    this.getTotalRecordsCount()
+    if (this.showCount){
+      this.getTotalRecordsCount()
+    }
   },
   methods: {
     getTotalRecordsCount() {

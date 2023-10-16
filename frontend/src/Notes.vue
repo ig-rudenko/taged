@@ -1,12 +1,14 @@
 <template>
-  <Header/>
+  <Header section-name="База знаний" section-description="Здесь вы можете найти необходимую для вас информацию"
+          :show-create-button="true"/>
 
-  <div class="surface-ground px-4 md:px-6 lg:px-8">
+  <div class="px-4 md:px-6 lg:px-8">
 
-    <div class="container">
+    <div class="border-300 border-top-1 container">
 
       <div class="py-8 flex-column p-fluid">
         <AutoComplete class="h-4rem text-900" autofocus v-model.trim="search"
+                      :input-style="{'text-align': 'center', 'font-size': '1.5rem'}"
                       @keydown.enter="getNotes"
                       :suggestions="titles"
                       @complete="autocomplete"
@@ -27,7 +29,7 @@
 
       <div class="flex flex-wrap justify-content-center">
 
-        <div class="w-30rem pr-2 py-2" v-for="note in notes">
+        <div class="w-30rem p-3" v-for="note in notes">
 
           <Badge v-if="note.score>0.05" :class="badgeClasses(note)" :value="'match: '+Math.round(note.score * 100)+'%'" />
 

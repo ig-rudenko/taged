@@ -25,7 +25,7 @@ class User(AbstractUser):
         return (
             Tags.objects.all().values_list("tag_name", flat=True)
             if self.is_superuser
-            else self.tags_set.values_list("tag_name", flat=Tags)
+            else self.tags_set.values_list("tag_name", flat=True)
         )
 
     @property

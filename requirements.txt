@@ -6,3 +6,4 @@ PyMuPdf
 django-ckeditor
 redis
 beautifulsoup4
+djangorestframework

@@ -7,9 +7,10 @@ from . import views
 app_name = "api:notes"
 
 urlpatterns = [
-    path("", views.NotesListAPIView.as_view()),
-    path("autocomplete", views.autocomplete),
-    path("count", views.notes_count),
-    path("tags", views.tags_list),
-    path("get/<str:note_id>", views.note_view),
+    path("", views.NotesListCreateAPIView.as_view()),
+    path("autocomplete", views.AutocompleteAPIView.as_view()),
+    path("count", views.NotesCount.as_view()),
+    path("tags", views.TagsListAPIView.as_view()),
+    path("get/<str:note_id>", views.NoteAPIView.as_view()),
+    path("files/<str:note_id>", views.NoteFilesAPIView.as_view()),
 ]

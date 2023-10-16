@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "ckeditor",
     "taged_web",
     "books",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [

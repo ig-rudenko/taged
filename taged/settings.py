@@ -165,115 +165,13 @@ CACHES = {
     }
 }
 
-CKEDITOR_UPLOAD_PATH = "notes/"
-
-CKEDITOR_CONFIGS = {
-    "default": {
-        "skin": "moono-lisa",
-        "toolbar_Basic": [["Source", "-", "Bold", "Italic"]],
-        "toolbar_YourCustomToolbarConfig": [
-            {
-                "name": "document",
-                "items": [
-                    "Source",
-                    "-",
-                    "Save",
-                    "NewPage",
-                    "Preview",
-                    "Print",
-                    "-",
-                    "Templates",
-                ],
-            },
-            "/",
-            {
-                "name": "basicstyles",
-                "items": [
-                    "Bold",
-                    "Italic",
-                    "Underline",
-                    "Strike",
-                    "Subscript",
-                    "Superscript",
-                    "-",
-                    "RemoveFormat",
-                ],
-            },
-            {
-                "name": "paragraph",
-                "items": [
-                    "NumberedList",
-                    "BulletedList",
-                    "-",
-                    "Outdent",
-                    "Indent",
-                    "-",
-                    "Blockquote",
-                    "CreateDiv",
-                    "-",
-                    "JustifyLeft",
-                    "JustifyCenter",
-                    "JustifyRight",
-                    "JustifyBlock",
-                    "-",
-                    "BidiLtr",
-                    "BidiRtl",
-                    "Language",
-                ],
-            },
-            {"name": "links", "items": ["Link", "Unlink", "Anchor"]},
-            {
-                "name": "insert",
-                "items": [
-                    "Image",
-                    "Flash",
-                    "Table",
-                    "HorizontalRule",
-                    "Smiley",
-                    "SpecialChar",
-                    "PageBreak",
-                    "Iframe",
-                ],
-            },
-            "/",
-            {"name": "styles", "items": ["Styles", "Format", "Font", "FontSize"]},
-            {"name": "colors", "items": ["TextColor", "BGColor"]},
-            {"name": "tools", "items": ["Maximize", "ShowBlocks"]},
-            {"name": "about", "items": ["About"]},
-            "/",  # put this to force next toolbar on new line
-            {
-                "name": "yourcustomtools",
-                "items": [
-                    # put the name of your editor.ui.addButton here
-                    "Preview",
-                    "Maximize",
-                ],
-            },
-        ],
-        "toolbar": "YourCustomToolbarConfig",  # put selected toolbar config here
-        # 'toolbarGroups': [{ 'name': 'document', 'groups': [ 'mode', 'document', 'doctools' ] }],
-        "height": "400px",
-        "width": "100%",
-        "tabSpaces": 4,
-        "extraPlugins": ",".join(
-            [
-                "uploadimage",  # the upload image feature
-                # your extra plugins here
-                "div",
-                "autolink",
-                "autoembed",
-                "embedsemantic",
-                "autogrow",
-                "widget",
-                "lineutils",
-                "clipboard",
-                "dialog",
-                "dialogui",
-                "elementspath",
-            ]
-        ),
-    }
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ]
 }
+
+CKEDITOR_UPLOAD_PATH = "notes/"
 
 logging.basicConfig(filename="logs", level=logging.INFO)
 

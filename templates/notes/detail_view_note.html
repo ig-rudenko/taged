@@ -4,13 +4,13 @@
 <head>
     <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
     <meta charset="UTF-8">
-    <title>{{ page_title }}</title>
+    <title>{{ title }}</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 <body style="margin: 0">
     {% csrf_token %}
     <div id="app"></div>
-    <script type="module" src="{% static 'create_update_note.js' %}"></script>
+    <script type="module" src="{% static 'detail_view_note.js' %}"></script>
 </body>
 </html>

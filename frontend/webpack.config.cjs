@@ -6,6 +6,7 @@ module.exports = {
         login: './src/login.js',
         main: './src/main.js',
         create_update_note: './src/create_update_note.js',
+        detail_view_note: './src/detail_view_note.js',
     },
     mode: "production",
     output: {

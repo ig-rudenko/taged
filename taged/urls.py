@@ -36,7 +36,7 @@ urlpatterns = [
         r"^static/(?P<path>.*)$", serve, {"document_root": settings.STATICFILES_DIRS[0]}
     ),
     re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
-    # AJAX
+    # CKEDITOR
     path("ckeditor/", include("ckeditor_uploader.urls")),
 ]
 

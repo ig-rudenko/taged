@@ -21,9 +21,13 @@
                    :maxSelectedLabels="3" class="w-full md:w-20rem" />
     </div>
 
+
+
     <Dialog style="max-height: 100%" v-model:visible="showNoteModal" modal :show-header="true" :style="{ width: '100vw', height: '100%' }">
       <ViewNote @selected-tag="selectTag" :note-id="showNoteID"/>
     </Dialog>
+
+
 
     <div class="flex flex-wrap justify-content-center">
 
@@ -32,7 +36,7 @@
           <Badge v-if="note.score>0.05" :class="badgeClasses(note)" :value="'match: '+Math.round(note.score * 100)+'%'" />
 
           <div :class="noteClasses(note)" style="height: 100%">
-            <div class="flex justify-content-center cursor-pointer">
+            <div @click="goToViewNoteURL(note.id)" class="flex justify-content-center cursor-pointer">
               <img v-if="note.previewImage" :src="note.previewImage" class="border-round-2xl p-2 border-round-2xl" style="max-height: 230px; width: 100%">
               <svg v-else class="border-round-top-2xl cursor-pointer" width="100%" height="225" xmlns="http://www.w3.org/2000/svg"
                    role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false">
@@ -50,7 +54,7 @@
                 <i v-if="note.filesCount>0" v-badge="note.filesCount" class="pi pi-file p-overlay-badge" style="font-size: 2rem" />
               </div>
 
-              <p>{{ note.title }}</p>
+              <h2>{{ note.title }}</h2>
               <div class="flex justify-content-end">
                 <Button size="small" rounded class="bg-orange-light border-0" icon="pi pi-eye" @click="showNote(note.id)"></Button>
               </div>
@@ -178,7 +182,12 @@ export default {
     showNote(note_id) {
       this.showNoteID = note_id;
       this.showNoteModal = true
-    }
+    },
+
+    goToViewNoteURL(note_id) {
+      window.location.href = "/notes/" + note_id
+    },
+
   }
 }
 </script>

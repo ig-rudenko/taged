@@ -18,7 +18,7 @@ from elasticsearch_control.decorators import api_elasticsearch_check_available
 from taged_web.api.serializers import NoteSerializer
 from taged_web.es_index import PostIndex, T_Values
 from taged_web.image_decoder import ReplaceImagesInHtml
-from taged_web.models import User, Tags
+from taged_web.models import User
 
 
 def get_note_or_404(
@@ -200,6 +200,11 @@ class NoteDetailUpdateAPIView(GenericAPIView):
         self.perform_update(note, serializer)
         cache.delete("last_updated_posts")
         return Response({"id": note.id, "published_at": note.published_at})
+
+    def delete(self, request: Request, note_id: str):
+        note = get_note_or_404(note_id, request.user)
+        note.delete()
+        return Response(status=204)
 
     @staticmethod
     def perform_update(note: PostIndex, serializer: NoteSerializer):

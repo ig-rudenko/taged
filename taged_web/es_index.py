@@ -11,7 +11,7 @@ from elasticsearch_control import (
     QueryLimitParams,
 )
 from elasticsearch_control.transport import elasticsearch_connector
-from taged_web.helpers import icon_path, format_bytes
+from taged_web.helpers import icon_path
 
 T_Values = Literal["title", "content", "tags", "published_at"]
 
@@ -25,7 +25,7 @@ class PostFile(NamedTuple):
         return {
             "name": self.name,
             "icon": self.icon,
-            "size": format_bytes(self.size),
+            "size": self.size,
         }
 
 

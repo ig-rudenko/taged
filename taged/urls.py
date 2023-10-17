@@ -29,7 +29,6 @@ urlpatterns = [
     path("notes/", include("taged_web.urls")),
     # ACCOUNT
     path("accounts/", include("django.contrib.auth.urls")),
-    path("logout", views.logout, name="submit-logout"),
     # BOOKS
     path("books/", include("books.urls")),
     # STATIC
@@ -38,7 +37,6 @@ urlpatterns = [
     ),
     re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
     # AJAX
-    path("ajax/extend_post/<post_id>", views.show_note_data),
     path("ckeditor/", include("ckeditor_uploader.urls")),
 ]
 

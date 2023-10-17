@@ -1,10 +1,12 @@
 <template>
-  <Header section-name="Создание новой записи" :show-count="false"/>
+  <Header :section-name="editNoteID?'Редактирование записи':'Создание новой записи'"
+          :show-count="false"/>
 
   <div class="lg:px-8">
 
     <div class="px-3">
-      <Button @click="submit" severity="success" icon="pi pi-check" label="Создать"></Button>
+      <Button @click="submit" severity="success" icon="pi pi-check"
+              :label="editNoteID?'Обновить':'Создать'"/>
     </div>
 
     <div class="p-inputgroup p-3">
@@ -28,6 +30,22 @@
       </div>
 
       <div class="lg:border-round p-3">
+
+        <div v-if="editNoteID" class="align-items-end flex flex-column">
+          <div class="font-bold">Существующие файлы</div>
+          <div class="flex flex-wrap">
+            <div v-for="file in noteData.files" class="p-3 w-15rem">
+              <div class="flex align-items-end flex-column">
+                <i v-if="file.disable" @click="toggleFile(file)" class="pi pi-check border-round-2xl border-1 px-1 py-1 cursor-pointer hover:text-green-500" aria-label="Cancel" />
+                <i v-else @click="toggleFile(file)" class="pi pi-times border-round-2xl border-1 px-1 py-1 cursor-pointer hover:text-red-500" aria-label="Cancel" />
+                <div :class="file.disable?['opacity-30']:[]" >
+                  <MediaPreview :file="file" :is-file-object="false" :fileNoteID="editNoteID"/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <LoadMedia @selectedFiles="v => updateFiles(v)"/>
       </div>
 
@@ -56,6 +74,7 @@ import MultiSelect from "primevue/multiselect/MultiSelect.vue";
 import ScrollTop from "primevue/scrolltop/ScrollTop.vue";
 import Button from "primevue/button/Button.vue";
 
+import MediaPreview from "./components/MediaPreview.vue";
 import Header from "./components/Header.vue";
 import Footer from "./components/Footer.vue";
 import api_request from "./api_request.js";
@@ -70,6 +89,7 @@ export default {
     Button,
     Footer,
     InputText,
+    MediaPreview,
     MultiSelect,
     ckeditor,
     ScrollTop,
@@ -82,6 +102,7 @@ export default {
         published_at: "",
         tags: [],
         content: "",
+        files: [],
       },
       errors: {
         title: null,
@@ -92,22 +113,27 @@ export default {
         }
       },
       editNoteID: null,
-      availableTags: ["Docker", "Ansible", "IT"],
+      availableTags: [],
     }
   },
   mounted() {
-    // this.getNote()
-    // api_request.get("/api/notes/tags")
-    //     .then(
-    //         resp => this.tags = resp.data
-    //     )
-    //     .catch(reason => console.log(reason))
-    this.setCkeditorHeight()
-    // document.addEventListener("resize", () => {
-    //   this.windowHeight = window.innerHeight
-    //   this.setCkeditorHeight();
-    // })
+    // Проверяем, не является ли данная ссылка редактированием существующей записи
+    const match = window.location.href.match(/notes\/(\S+)\/edit\/$/)
+    if (match) {
+      // В таком случае получаем её данные
+      this.editNoteID = match[1]
+      this.getNote()
+    }
+
+    // Получаем доступные пользователем теги
+    api_request.get("/api/notes/tags")
+        .then(resp => this.availableTags = resp.data)
+        .catch(reason => console.log(reason))
+
+    this.setCkeditorHeight() // Изменяем высоту окна ckeditor
   },
+
+
   methods: {
     getNote() {
       let url = "/api/notes/" + this.editNoteID
@@ -115,6 +141,7 @@ export default {
           .then(resp => this.noteData = resp.data)
           .catch(reason => console.log(reason))
     },
+
     setCkeditorHeight() {
       console.log("setCkeditorHeight", document.getElementById("cke_1_contents"))
       if (document.getElementById("cke_1_contents") === null) {
@@ -123,9 +150,12 @@ export default {
         document.getElementById("cke_1_contents").style.height = window.innerHeight + "px"
       }
     },
-    updateFiles(files){
-      this.files = files
-    },
+
+    updateFiles(files){ this.files = files },
+
+    toggleFile(file) { file.disable = !file.disable },
+
+    /** Подтверждаем данные заметки */
     submit() {
       if (this.noteData.title.length === 0) this.errors.title = true;
       if (this.noteData.tags.length === 0) this.errors.tags = true;
@@ -135,14 +165,41 @@ export default {
       for (const file of this.files) {
         form.append("files", file)
       }
-      api_request.post("/api/notes/", this.noteData)
-          .then(
-            resp => {
-              api_request.post("/api/notes/files/" + resp.data.id, form)
-            }
-          )
 
+      if (this.editNoteID) {
+        // Если заметка уже существовала, то обновляем
+        api_request.put("/api/notes/"+this.editNoteID, this.noteData).then(resp => { this.changeFiles(resp.data.id, form) })
+      } else {
+        // Иначе создаем новую заметку
+        api_request.post("/api/notes/", this.noteData).then(resp => { this.changeFiles(resp.data.id, form) })
+      }
+
+    },
+
+    /**
+     * Обновляем файлы заметки
+     * @param {String} note_id
+     * @param {FormData} files_form
+     */
+    changeFiles(note_id, files_form) {
+      if (this.editNoteID) {
+        // Если заметка редактировалась, то проверяем файлы, которые уже существовали
+        for (const file of this.noteData.files) {
+          if (file.disable) {
+            // Удаляем файлы, которые были отключены
+            api_request.delete("/api/notes/" + note_id + '/files/' + file.name)
+          }
+        }
+      }
+      // Загружаем новые добавленные файлы
+      api_request.post("/api/notes/" + note_id + '/files', files_form)
+      this.goToNoteViewURL(note_id)
+    },
+
+    goToNoteViewURL(note_id) {
+      window.location.href = "/notes/" + note_id
     }
+
   }
 }
 </script>

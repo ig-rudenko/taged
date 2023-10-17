@@ -3,18 +3,20 @@
   <div class="flex align-items-center align-self-center">
     <Image v-if="isImage" preview :image-style="{'max-height': '64px', 'max-width': '64px'}"
            class="rounded-3 mr-2" :src="imageSrc" alt="Предпросмотр изображения"/>
-    <img v-else height="64" class="mr-2"
-         :src="'/static/images/icons/'+fileFormat+'.png'" :alt="file.name">
+
+    <img v-else height="48" class="mr-2" :src="'/static/images/icons/'+fileFormat+'.png'" :alt="file.name">
 
     <div class="flex flex-column">
-      <span>{{shortenString(file.name)}}</span>
-      <span class="font-normal text-500">{{format_bytes(file.size)}}</span>
+      <span v-if="isFileObject">{{shortenString(file.name)}}</span>
+      <a v-else :href="getFileDownloadLink()" class="text-900 no-underline hover:text-indigo-500">{{shortenString(file.name)}}</a>
+      <span class="font-normal text-500">{{formatBytes(file.size)}}</span>
     </div>
   </div>
 </template>
 
 <script>
 import Image from "primevue/image/Image.vue";
+import format_bytes from "../helpers/format_size.js";
 
 export default {
   name: "MediaPreview",
@@ -22,9 +24,9 @@ export default {
     Image,
   },
   props: {
-    file: {
-      required: true,
-    }
+    file: {required: true},
+    isFileObject: {required: true},
+    fileNoteID: {required: false, default: null},
   },
   data() {
     return {
@@ -74,7 +76,7 @@ export default {
         return 'archive'
       }
         return 'file'
-      }
+    }
   },
 
   methods: {
@@ -93,23 +95,23 @@ export default {
     },
 
     checkFile() {
-      this.isImage = this.file.type.startsWith("image/");
-      if (this.isImage) {
-        // Создать URL-адрес объекта для предварительного просмотра изображения
-        this.imageSrc = URL.createObjectURL(this.file);
+      if (this.isFileObject) {
+        this.isImage = this.file.type.startsWith("image/");
+        if (this.isImage) {
+          // Создать URL-адрес объекта для предварительного просмотра изображения
+          this.imageSrc = URL.createObjectURL(this.file);
+        }
+      } else {
+        this.isImage = RegExp(/.+\.(png|jpe?g|gif|bpm|svg|ico|tiff)$/i).test(this.file.name)
+        this.imageSrc = this.getFileDownloadLink()
       }
     },
 
-    format_bytes(size) {
-      const power = 2 ** 10
-      let n = 0
-      const power_labels = {0: "", 1: "К", 2: "М", 3: "Г", 4: "Т"}
-      while (size > power) {
-        size /= power
-        n += 1
-      }
-      return Math.round(size) + power_labels[n] + "Б"
-    }
+    getFileDownloadLink() {
+      return '/api/notes/'+this.fileNoteID+'/files/'+this.file.name
+    },
+
+    formatBytes(size) { return format_bytes(size) },
   }
 }
 </script>

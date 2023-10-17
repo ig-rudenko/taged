@@ -27,7 +27,7 @@
 
         <a :href="getFileDownloadURL(file.name)" class="font-normal no-underline text-900">
           {{ file.name }}<br>
-          <span class="text-400" style="font-size: 0.8rem">{{ file.size }}</span>
+          <span class="text-400" style="font-size: 0.8rem">{{ formatBytes(file.size) }}</span>
         </a>
       </p>
     </div>
@@ -49,6 +49,7 @@ import Image from "primevue/image/Image.vue";
 import ScrollTop from "primevue/scrolltop/ScrollTop.vue";
 
 import api_request from "../api_request.js";
+import format_bytes from "../helpers/format_size.js";
 
 export default {
   name: "ViewNote",
@@ -61,7 +62,7 @@ export default {
     noteId: {required: true, type: String}
   },
   mounted() {
-    api_request.get("/api/notes/get/"+this.noteId).then(resp => this.noteData = resp.data)
+    api_request.get("/api/notes/"+this.noteId).then(resp => this.noteData = resp.data)
   },
   data() {
     return {
@@ -73,8 +74,9 @@ export default {
       return RegExp(/.+\.(png|jpe?g|gif|bpm|svg|ico|tiff)$/i).test(fileName)
     },
     getFileDownloadURL(fileName) {
-      return '/notes/download/'+this.noteId+'/'+fileName
-    }
+      return '/api/notes/'+this.noteId+'/files/'+fileName
+    },
+    formatBytes(size) { return format_bytes(size) },
   }
 }
 </script>

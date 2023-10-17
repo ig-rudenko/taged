@@ -4,19 +4,31 @@ from typing import List, Dict
 
 from django.contrib.humanize.templatetags import humanize
 from django.core.cache import cache
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.core.files.uploadedfile import UploadedFile
 from django.utils.decorators import method_decorator
 from django.conf import settings
 from rest_framework.generics import ListAPIView, GenericAPIView
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from elasticsearch import exceptions as es_exceptions
 from elasticsearch_control.cache import get_or_cache
 from elasticsearch_control.decorators import api_elasticsearch_check_available
 from taged_web.api.serializers import NoteSerializer
-from taged_web.es_index import PostIndex
+from taged_web.es_index import PostIndex, T_Values
 from taged_web.image_decoder import ReplaceImagesInHtml
+from taged_web.models import User, Tags
+
+
+def get_note_or_404(
+    note_id: str, user: User, values: List[T_Values] = None
+) -> PostIndex:
+    note = PostIndex.get(id_=note_id, values=values)
+    if note is None or set(user.unavailable_tags) & set(note.tags_list):
+        # Если нет такой записи, либо пользователь не имеет к ней доступа
+        raise Http404()
+    return note
 
 
 @method_decorator(api_elasticsearch_check_available, name="dispatch")
@@ -26,7 +38,7 @@ class AutocompleteAPIView(GenericAPIView):
     соответствующие поисковому запросу, и возвращаем их полные названия в виде ответа JSON.
     """
 
-    def get(self, request):
+    def get(self, request: Request):
         try:
             titles = PostIndex.get_titles(
                 string=request.GET.get("term"),
@@ -42,7 +54,7 @@ class AutocompleteAPIView(GenericAPIView):
 class NotesCount(GenericAPIView):
     """Получает кол-во записей от Elasticsearch"""
 
-    def get(self, request):
+    def get(self, request: Request):
         paginator = PostIndex.filter(
             tags_off=request.user.unavailable_tags,
         )
@@ -51,7 +63,7 @@ class NotesCount(GenericAPIView):
 
 @method_decorator(api_elasticsearch_check_available, name="dispatch")
 class NotesListCreateAPIView(GenericAPIView):
-    def get(self, request):
+    def get(self, request: Request):
         search = request.GET.get("search", "")
         tags_in = request.GET.getlist("tags-in", [])
         page = request.GET.get("page", "1")
@@ -128,7 +140,7 @@ class NotesListCreateAPIView(GenericAPIView):
                 )
             )
 
-    def post(self, request):
+    def post(self, request: Request):
         serializer = NoteSerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -169,8 +181,49 @@ class NotesListCreateAPIView(GenericAPIView):
         return Response({"id": post.id}, status=201)
 
 
-class NoteFilesAPIView(GenericAPIView):
-    def post(self, request, note_id: str):
+@method_decorator(api_elasticsearch_check_available, name="dispatch")
+class NoteDetailUpdateAPIView(GenericAPIView):
+    def get(self, request: Request, note_id: str):
+        note = get_note_or_404(note_id, request.user)
+        note_json_data = note.json()
+
+        note_json_data["published_at"] = humanize.naturaltime(
+            note_json_data["published_at"]
+        )
+        note_json_data["files"] = [file.json() for file in note.get_files()]
+        return Response(note_json_data)
+
+    def put(self, request: Request, note_id: str):
+        note = get_note_or_404(note_id, request.user)
+        serializer = NoteSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(note, serializer)
+        cache.delete("last_updated_posts")
+        return Response({"id": note.id, "published_at": note.published_at})
+
+    @staticmethod
+    def perform_update(note: PostIndex, serializer: NoteSerializer):
+        # Обновляем существующую в elasticsearch запись
+        # Смотрим какие именно поля изменились и обновляем только их
+        updated_fields: List[T_Values] = ["published_at"]
+        note.published_at = datetime.now()
+        if serializer.validated_data["title"] != note.title:
+            note.title = serializer.validated_data["title"]
+            updated_fields.append("title")
+        if serializer.validated_data["content"] != note.content:
+            note.content = serializer.validated_data["content"]
+            updated_fields.append("content")
+        if serializer.validated_data["tags"] != note.tags_list:
+            note.tags = serializer.validated_data["tags"]
+            updated_fields.append("tags")
+        note.save(values=updated_fields)
+
+
+class NoteFilesListCreateAPIView(GenericAPIView):
+    def post(self, request: Request, note_id: str):
+        # Проверяем, имеет ли пользователь доступ к текущей записи, чтобы удалить её файл
+        get_note_or_404(note_id, request.user, values=["tags"])
+
         files: Dict[str, List[UploadedFile]] = dict(request.FILES)
         if files and files.get("files"):
             (settings.MEDIA_ROOT / note_id).mkdir(parents=True, exist_ok=True)
@@ -184,24 +237,32 @@ class NoteFilesAPIView(GenericAPIView):
         return Response({"filesCount": len(files)}, status=201)
 
 
+class NoteFileDetailDeleteAPIView(GenericAPIView):
+    def get(self, request: Request, note_id: str, file_name: str):
+        # Проверяем, имеет ли пользователь доступ к текущей записи, чтобы удалить её файл
+        get_note_or_404(note_id, request.user, values=["tags"])
+
+        # Отправляем пользователю файл
+        file_path = settings.MEDIA_ROOT / note_id / file_name
+        if file_path.exists():
+            with file_path.open("rb") as file:
+                response = HttpResponse(
+                    file.read(), content_type="application/vnd.ms-excel"
+                )
+            response["Content-Disposition"] = f"inline; filename={file_name}"
+            return response
+        else:
+            raise Http404()
+
+    def delete(self, request: Request, note_id: str, file_name: str):
+        # Проверяем, имеет ли пользователь доступ к текущей записи, чтобы удалить её файл
+        get_note_or_404(note_id, request.user, values=["tags"])
+
+        file_path = settings.MEDIA_ROOT / note_id / file_name
+        file_path.unlink()
+        return Response(status=204)
+
+
 class TagsListAPIView(ListAPIView):
     def get(self, *args, **kwargs):
         return Response(self.request.user.get_tags())
-
-
-@method_decorator(api_elasticsearch_check_available, name="dispatch")
-class NoteAPIView(GenericAPIView):
-    def get(self, request, note_id: str):
-        note = PostIndex.get(id_=note_id)
-        user_unavailable_tags = set(request.user.unavailable_tags)
-
-        if note is None or user_unavailable_tags & set(note.tags_list):
-            # Если нет такой записи, либо пользователь не имеет к ней доступа
-            raise Http404()
-
-        note_json_data = note.json()
-        note_json_data["published_at"] = humanize.naturaltime(
-            note_json_data["published_at"]
-        )
-        note_json_data["files"] = [file.json() for file in note.get_files()]
-        return Response(note_json_data)

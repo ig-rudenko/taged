@@ -36,8 +36,9 @@
           <Badge v-if="note.score>0.05" :class="badgeClasses(note)" :value="'match: '+Math.round(note.score * 100)+'%'" />
 
           <div :class="noteClasses(note)" style="height: 100%">
-            <div @click="goToViewNoteURL(note.id)" class="flex justify-content-center cursor-pointer">
-              <img v-if="note.previewImage" :src="note.previewImage" class="border-round-2xl p-2 border-round-2xl" style="max-height: 230px; width: 100%">
+            <div @click="goToViewNoteURL(note.id)" class=" flex justify-content-center align-content-center align-items-center cursor-pointer" style="min-height: 230px;">
+              <img v-if="note.previewImage" :src="note.previewImage"
+                   class="border-round-2xl p-2 border-round-2xl" style="max-height: 230px; max-width: 28rem;">
               <svg v-else class="border-round-top-2xl cursor-pointer" width="100%" height="225" xmlns="http://www.w3.org/2000/svg"
                    role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false">
                 <title>Placeholder</title>

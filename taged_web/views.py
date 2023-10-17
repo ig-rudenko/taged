@@ -218,132 +218,13 @@ def show_note_data(request, post_id):
     return JsonResponse(data)
 
 
-@method_decorator(login_required, name="dispatch")
-@method_decorator(elasticsearch_check_available, name="dispatch")
-class CreateNoteView(View):
+@login_required
+@elasticsearch_check_available
+def create_note(request):
     """
     Создаем новую запись
     """
-
-    @staticmethod
-    def post(request):
-        user_form = PostForm(request.POST)  # Заполняем форму
-
-        if user_form.is_valid():  # Проверяем форму
-            # Данные для сохранения
-
-            data = {
-                "title": user_form.cleaned_data["title"],
-                "tags": request.POST.getlist("tags_in"),
-                "content": user_form.cleaned_data["input"],
-            }
-
-            # Ищем закодированные изображения (base64) в содержимом заметки.
-            image_formatter = ReplaceImagesInHtml(user_form.cleaned_data["input"])
-
-            if not image_formatter.has_base64_encoded_images:
-                # У содержимого заметки нет изображений закодированных с помощью base64,
-                # то сохраняем как есть
-                post = PostIndex.create(**data)
-            else:
-                # Если есть закодированные изображения.
-                # Создаем запись в базе данных elasticsearch без содержимого.
-                data["content"] = ""
-                # Его мы обновим далее, заменив base64 изображения на ссылки.
-                post = PostIndex.create(**data)
-
-                # Сохраняем закодированные изображения как файлы
-                # и заменяем у них атрибут src на ссылку файла.
-                image_formatter.save_images_and_update_src(
-                    image_prefix="image",
-                    folder=f"{post.id}/content_images",
-                )
-                # Обновляем содержимое с измененными изображениями
-                post.content = image_formatter.html
-                post.save(values=["content"])
-
-            if request.FILES.get("files"):
-                (MEDIA_ROOT / post.id).mkdir(parents=True, exist_ok=True)
-                # Создаем папку для текущей заметки
-                for uploaded_file in dict(request.FILES)["files"]:  # Для каждого файла
-                    with open(
-                        MEDIA_ROOT / f"{post.id}/{uploaded_file.name}", "wb+"
-                    ) as file:
-                        for chunk_ in uploaded_file.chunks():
-                            file.write(chunk_)  # Записываем файл
-
-            # Обнуляем кеш
-            cache.delete("all_posts_count")
-            cache.delete("last_updated_posts")
-
-            return HttpResponseRedirect(
-                reverse("note-show", kwargs={"note_id": post.id})
-            )
-
-        else:
-            # Выбранные теги
-            tags_checked = dict(request.POST).get("tags_in") or []
-
-            # Если не все поля были указаны
-            return render(
-                request,
-                "edit_post.html",
-                {
-                    "tags": [
-                        {"name": t, "checked": True if t in tags_checked else False}
-                        for t in request.user.get_tags()
-                    ],
-                    "page_name": "note-create",
-                    "error": "Необходимо указать хотя бы один тег, название заметки и её содержимое!",
-                    "form": user_form,
-                },
-            )
-
-    @staticmethod
-    def get(request):
-        user_form = PostForm()  # Создаем форму
-
-        available_tags = request.user.get_tags()
-
-        tags_ = sorted(
-            [{"name": t, "checked": False} for t in available_tags],
-            key=lambda x: x["name"].lower(),  # Сортируем по алфавиту
-        )  # Если новая запись, то все теги изначально отключены
-
-        # Клонируем заметку
-        if request.GET.get("cl"):
-            post_data = PostIndex.get(id_=request.GET.get("cl")).json()
-
-            try:
-                # Только разрешенные теги добавятся в клонированную заметку
-                post_data["tags"] = set(post_data["tags"]) & set(available_tags)
-                # Добавляем в конце заголовка приписку (копия)
-                post_data["title"] += " (копия)"
-
-                user_form = PostForm(
-                    {
-                        "title": post_data["title"],
-                        "tags_in": post_data["tags"],
-                        "input": post_data["content"],
-                    },
-                )
-
-                tags_ = [
-                    {"name": t, "checked": t in post_data["tags"]}
-                    for t in available_tags
-                ]
-            except es_exceptions.NotFoundError:
-                pass
-
-        return render(
-            request,
-            "edit_post.html",
-            {
-                "tags": tags_,
-                "page_name": "note-create",
-                "form": user_form,
-            },
-        )
+    return render(request, "notes/update_create.html")
 
 
 @method_decorator(login_required, name="dispatch")

@@ -1,17 +1,17 @@
 import re
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 
 from django.contrib.humanize.templatetags import humanize
 from django.core.cache import cache
 from django.http import Http404
+from django.core.files.uploadedfile import UploadedFile
 from django.utils.decorators import method_decorator
 from django.conf import settings
 from rest_framework.generics import ListAPIView, GenericAPIView
-
-from elasticsearch import exceptions as es_exceptions
 from rest_framework.response import Response
 
+from elasticsearch import exceptions as es_exceptions
 from elasticsearch_control.cache import get_or_cache
 from elasticsearch_control.decorators import api_elasticsearch_check_available
 from taged_web.api.serializers import NoteSerializer
@@ -171,8 +171,8 @@ class NotesListCreateAPIView(GenericAPIView):
 
 class NoteFilesAPIView(GenericAPIView):
     def post(self, request, note_id: str):
-        files = dict(request.FILES)
-        if files:
+        files: Dict[str, List[UploadedFile]] = dict(request.FILES)
+        if files and files.get("files"):
             (settings.MEDIA_ROOT / note_id).mkdir(parents=True, exist_ok=True)
             # Создаем папку для текущей заметки
             for uploaded_file in files["files"]:  # Для каждого файла

@@ -4,30 +4,28 @@
 
   <div class="px-4 md:px-6 lg:px-8">
 
-    <div class="border-300 border-top-1 container">
+    <div class="py-8 flex-column p-fluid">
+      <AutoComplete class="h-4rem text-900" v-model.trim="search"
+                    :input-style="{'text-align': 'center', 'font-size': '1.5rem'}"
+                    @keydown.enter="getNotes"
+                    :suggestions="titles"
+                    @complete="autocomplete"
+                    @itemSelect="getNotes"
+                    placeholder="Поиск информации">
+        <template #empty>
+          Заголовок с таким названием не найден
+        </template>
+      </AutoComplete>
+      <MultiSelect v-model="tagsSelected" :options="tags" filter placeholder="Выберите теги"
+                   @change="getNotes" scroll-height="400px"
+                   :maxSelectedLabels="3" class="w-full md:w-20rem" />
+    </div>
 
-      <div class="py-8 flex-column p-fluid">
-        <AutoComplete class="h-4rem text-900" autofocus v-model.trim="search"
-                      :input-style="{'text-align': 'center', 'font-size': '1.5rem'}"
-                      @keydown.enter="getNotes"
-                      :suggestions="titles"
-                      @complete="autocomplete"
-                      @itemSelect="getNotes"
-                      placeholder="Поиск информации">
-          <template #empty>
-            Заголовок с таким названием не найден
-          </template>
-        </AutoComplete>
-        <MultiSelect v-model="tagsSelected" :options="tags" filter placeholder="Выберите теги"
-                     @change="getNotes" scroll-height="400px"
-                     :maxSelectedLabels="3" class="w-full md:w-20rem" />
-      </div>
+    <Dialog style="max-height: 100%" v-model:visible="showNoteModal" modal :show-header="true" :style="{ width: '100vw', height: '100%' }">
+      <ViewNote @selected-tag="selectTag" :note-id="showNoteID"/>
+    </Dialog>
 
-      <Dialog style="max-height: 100%" v-model:visible="showNoteModal" modal :show-header="true" :style="{ width: '100vw', height: '100%' }">
-        <ViewNote @selected-tag="selectTag" :note-id="showNoteID"/>
-      </Dialog>
-
-      <div class="flex flex-wrap justify-content-center">
+    <div class="flex flex-wrap justify-content-center">
 
         <div class="w-30rem p-3" v-for="note in notes">
 
@@ -64,7 +62,6 @@
         </div>
 
       </div>
-    </div>
 
   </div>
 

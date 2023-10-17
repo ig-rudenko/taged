@@ -11,17 +11,21 @@
 
     <!-- TAGS -->
     <div class="mb-5">
-      <Tag class="bg-orange-light hover:bg-indigo-500 hover:shadow-4 mr-2 cursor-pointer font-normal" @click="$emit('selected-tag', tag)" v-for="tag in noteData.tags" :value="tag"/>
+      <Tag v-for="tag in noteData.tags" :value="tag"
+           class="bg-orange-light hover:bg-indigo-500 hover:shadow-4 mr-2 cursor-pointer font-normal"
+           @click="$emit('selected-tag', tag)"/>
     </div>
 
     <div class="mb-5 flex flex-wrap">
       <p v-for="file in noteData.files" class="mr-3 flex align-items-center">
-        <Image v-if="RegExp(/\.jpg$/).test(file.name)"
-               :src="'/notes/download/'+noteId+'/'+file.name" :alt="file.name"
-               class="mr-2" width="48" height="48" preview />
-        <img v-else class="mr-2" :src="'/static/'+file.icon" height="48" width="48">
+        <Image v-if="isImage(file.name)"
+               :src="getFileDownloadURL(file.name)" :alt="file.name"
+               class="mr-2" :image-style="{'max-height': '64px', 'max-width': '64px'}" preview />
 
-        <a :href="'/notes/download/'+noteId+'/'+file.name" class="font-normal no-underline text-900">
+        <!-- Иконка формата файла -->
+        <img v-else class="mr-2" :src="'/static/'+file.icon" height="48" width="48" :alt="file.name">
+
+        <a :href="getFileDownloadURL(file.name)" class="font-normal no-underline text-900">
           {{ file.name }}<br>
           <span class="text-400" style="font-size: 0.8rem">{{ file.size }}</span>
         </a>
@@ -62,6 +66,14 @@ export default {
   data() {
     return {
       noteData: null,
+    }
+  },
+  methods: {
+    isImage(fileName) {
+      return RegExp(/.+\.(png|jpe?g|gif|bpm|svg|ico|tiff)$/i).test(fileName)
+    },
+    getFileDownloadURL(fileName) {
+      return '/notes/download/'+this.noteId+'/'+fileName
     }
   }
 }

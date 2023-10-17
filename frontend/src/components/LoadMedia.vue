@@ -77,29 +77,6 @@ export default {
     addFiles(files) {
       this.files = [...Array.from(files), ...this.files]
       this.$emit("selectedFiles", this.files)
-      // let old_files = []
-      // // Если после загрузки добавляются еще файлы, то обнуляем статус загрузки
-      // for (const file of files) {
-      //
-      //   let imageSrc = null
-      //   const isImage = file.type.startsWith("image/");
-      //   console.log(isImage)
-      //   if (isImage) {
-      //     // Создать URL-адрес объекта для предварительного просмотра изображения
-      //     imageSrc = URL.createObjectURL(file);
-      //   }
-      //
-      //   old_files.push(
-      //     {
-      //       // file: file,
-      //       isImage: isImage,
-      //       imageSrc: imageSrc,
-      //     }
-      //   )
-      // }
-      // console.log(old_files)
-      // this.userFiles = old_files
-
     },
 
     deleteFile(index){

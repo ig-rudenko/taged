@@ -28,7 +28,7 @@
           <div class="text-900 text-3xl font-medium mb-3">{{ sectionName }}</div>
           <p class="mt-0 mb-3 text-700 text-xl">{{ sectionDescription }}</p>
         </div>
-        <Button v-if="showCreateButton" rounded label="Создать" />
+        <Button v-if="showCreateButton" @click="goToCreateNoteURL" rounded label="Создать" />
       </div>
     </div>
   </div>
@@ -62,6 +62,9 @@ export default {
   methods: {
     getTotalRecordsCount() {
       api_request.get("/api/notes/count").then(resp => this.totalCount = resp.data.totalCount)
+    },
+    goToCreateNoteURL() {
+      window.location.href = "/notes/create"
     }
   }
 

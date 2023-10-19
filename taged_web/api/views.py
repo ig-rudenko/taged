@@ -13,8 +13,10 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from elasticsearch import exceptions as es_exceptions
+
 from elasticsearch_control.cache import get_or_cache
 from elasticsearch_control.decorators import api_elasticsearch_check_available
+from taged_web.api.permissions import NotePermission
 from taged_web.api.serializers import NoteSerializer
 from taged_web.es_index import PostIndex, T_Values
 from taged_web.image_decoder import ReplaceImagesInHtml
@@ -31,10 +33,26 @@ def get_note_or_404(
     return note
 
 
+def clear_cache():
+    all_usernames = User.objects.all().values_list("username", flat=True)
+    keys = [f"{NotesCount.cache_key}.{username}" for username in all_usernames]
+    keys += [
+        f"{NotesListCreateAPIView.cache_key}.{username}" for username in all_usernames
+    ]
+    cache.delete_many(keys)
+
+
 class ListUserPermissions(GenericAPIView):
     def get(self, *args, **kwargs):
-        permissions = sorted(self.request.user.get_all_permissions())
-        return Response(permissions)
+        # Получаем все права пользователей, которые связаны с данным приложением `taged_web`
+        taged_web_permissions = filter(
+            lambda x: x.startswith("taged_web"),
+            self.request.user.get_all_permissions(),
+        )
+        # Приводим права "taged_web.update_note" к виду "update_note"
+        permissions = map(lambda p: p.split(".")[1], taged_web_permissions)
+
+        return Response(sorted(permissions))
 
 
 @method_decorator(api_elasticsearch_check_available, name="dispatch")
@@ -60,15 +78,32 @@ class AutocompleteAPIView(GenericAPIView):
 class NotesCount(GenericAPIView):
     """Получает кол-во записей от Elasticsearch"""
 
+    cache_key = "NotesCount"
+    cache_timeout = 60 * 1
+
     def get(self, request: Request):
-        paginator = PostIndex.filter(
-            tags_off=request.user.unavailable_tags,
-        )
-        return Response({"totalCount": paginator.count})
+        total_count = cache.get(f"{self.cache_key}.{request.user.username}")
+
+        if not total_count:
+            paginator = PostIndex.filter(
+                tags_off=request.user.unavailable_tags,
+            )
+            total_count = paginator.count
+            cache.set(
+                f"{self.cache_key}.{request.user.username}",
+                total_count,
+                self.cache_timeout,
+            )
+
+        return Response({"totalCount": total_count})
 
 
 @method_decorator(api_elasticsearch_check_available, name="dispatch")
 class NotesListCreateAPIView(GenericAPIView):
+    permission_classes = [NotePermission]
+    cache_key = "last_updated_posts"
+    cache_timeout = 60 * 1
+
     def get(self, request: Request):
         search = request.GET.get("search", "")
         tags_in = request.GET.getlist("tags-in", [])
@@ -91,7 +126,7 @@ class NotesListCreateAPIView(GenericAPIView):
             records = get_or_cache(
                 function=paginator.get_page,
                 kwargs={"page": page},
-                unique_name=f"last_updated_posts:{request.user.username}",
+                unique_name=f"{self.cache_key}:{request.user.username}",
                 cache_period=1,
             )
         else:
@@ -181,14 +216,23 @@ class NotesListCreateAPIView(GenericAPIView):
             post.save(values=["content"])
 
         # Обнуляем кеш
-        cache.delete("all_posts_count")
-        cache.delete("last_updated_posts")
+        clear_cache()
 
         return Response({"id": post.id}, status=201)
+
+    @staticmethod
+    def clear_cache():
+        keys = [
+            f"{NotesCount.cache_key}.{username}"
+            for username in User.objects.all().values_list("username", flat=True)
+        ]
+        cache.delete_many(keys)
 
 
 @method_decorator(api_elasticsearch_check_available, name="dispatch")
 class NoteDetailUpdateAPIView(GenericAPIView):
+    permission_classes = [NotePermission]
+
     def get(self, request: Request, note_id: str):
         note = get_note_or_404(note_id, request.user)
         note_json_data = note.json()
@@ -210,6 +254,7 @@ class NoteDetailUpdateAPIView(GenericAPIView):
     def delete(self, request: Request, note_id: str):
         note = get_note_or_404(note_id, request.user)
         note.delete()
+        clear_cache()
         return Response(status=204)
 
     @staticmethod

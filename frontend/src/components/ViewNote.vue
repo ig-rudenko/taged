@@ -22,8 +22,9 @@
       </div>
 
       <div class="mb-4">
-        <Button @click="goToNoteEditURL" severity="warning" class="mr-2" label="Редактировать" size="small"></Button>
-        <Button severity="danger" @click="showDeleteModal=true" label="Удалить" size="small"></Button>
+        <Button v-if="hasPermissionToUpdateNote" @click="goToNoteEditURL"
+                severity="warning" class="mr-2" label="Редактировать" size="small"></Button>
+        <Button v-if="hasPermissionToDeleteNote" severity="danger" @click="showDeleteModal=true" label="Удалить" size="small"></Button>
       </div>
 
     </div>
@@ -94,14 +95,27 @@ export default {
     noteId: {required: true, type: String}
   },
   mounted() {
+    api_request.get("/api/notes/permissions").then(resp => {this.userPermissions = resp.data})
+
     api_request.get("/api/notes/"+this.noteId).then(resp => this.noteData = resp.data)
   },
   data() {
     return {
       noteData: null,
       showDeleteModal: false,
+      userPermissions: [],
     }
   },
+
+  computed: {
+    hasPermissionToUpdateNote(){
+      return this.userPermissions.includes("update_notes")
+    },
+    hasPermissionToDeleteNote(){
+      return this.userPermissions.includes("delete_notes")
+    },
+  },
+
   methods: {
     isImage(fileName) {
       return RegExp(/.+\.(png|jpe?g|gif|bpm|svg|ico|tiff)$/i).test(fileName)

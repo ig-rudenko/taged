@@ -1,6 +1,6 @@
 <template>
   <Header section-name="База знаний" section-description="Здесь вы можете найти необходимую для вас информацию"
-          :show-create-button="true"/>
+          :show-create-button="showCreateButton"/>
 
   <div class="px-4 md:px-6 lg:px-8">
 
@@ -117,17 +117,28 @@ export default {
         currentPage: 1,
         maxPages: 1,
         perPage: 24,
-      }
+      },
+      userPermissions: [],
     }
   },
   mounted() {
+    api_request.get("/api/notes/permissions").then(resp => {this.userPermissions = resp.data})
+
     this.getNotes()
+
     api_request.get("/api/notes/tags")
         .then(
             resp => this.tags = resp.data
         )
         .catch(reason => console.log(reason))
   },
+
+  computed: {
+    showCreateButton() {
+      return this.userPermissions.includes("create_notes")
+    }
+  },
+
   methods: {
     autocomplete(event) {
       api_request.get("/api/notes/autocomplete?term=" + event.query)

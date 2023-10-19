@@ -1,4 +1,4 @@
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import render
 
 from elasticsearch_control.decorators import elasticsearch_check_available
@@ -13,6 +13,7 @@ def main(request):
 
 @login_required
 @elasticsearch_check_available
+@permission_required(perm="taged_web.create_notes", raise_exception=True)
 def create_note(request):
     return render(
         request,
@@ -23,6 +24,7 @@ def create_note(request):
 
 @login_required
 @elasticsearch_check_available
+@permission_required(perm="taged_web.update_notes", raise_exception=True)
 def edit_note(request, note_id: str):
     note = get_note_or_404(note_id, request.user, values=["tags"])
     return render(

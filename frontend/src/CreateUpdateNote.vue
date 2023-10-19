@@ -2,6 +2,8 @@
   <Header :section-name="editNoteID?'Редактирование записи':'Создание новой записи'"
           :show-count="false"/>
 
+  <Toast />
+
   <div class="lg:px-8">
 
     <div class="px-3">
@@ -73,6 +75,7 @@ import InlineMessage from "primevue/inlinemessage/InlineMessage.vue";
 import MultiSelect from "primevue/multiselect/MultiSelect.vue";
 import ScrollTop from "primevue/scrolltop/ScrollTop.vue";
 import Button from "primevue/button/Button.vue";
+import Toast from "primevue/toast";
 
 import MediaPreview from "./components/MediaPreview.vue";
 import Header from "./components/Header.vue";
@@ -93,6 +96,7 @@ export default {
     MultiSelect,
     ckeditor,
     ScrollTop,
+    Toast,
   },
   data() {
     return {
@@ -167,10 +171,16 @@ export default {
 
       if (this.editNoteID) {
         // Если заметка уже существовала, то обновляем
-        api_request.put("/api/notes/"+this.editNoteID, this.noteData).then(resp => { this.changeFiles(resp.data.id, form) })
+        this.handleError(
+            api_request.put("/api/notes/"+this.editNoteID, this.noteData)
+                .then(resp => { this.changeFiles(resp.data.id, form) })
+        )
       } else {
         // Иначе создаем новую заметку
-        api_request.post("/api/notes/", this.noteData).then(resp => { this.changeFiles(resp.data.id, form) })
+        this.handleError(
+            api_request.post("/api/notes/", this.noteData)
+                .then(resp => { this.changeFiles(resp.data.id, form) })
+        )
       }
 
     },
@@ -186,13 +196,25 @@ export default {
         for (const file of this.noteData.files) {
           if (file.disable) {
             // Удаляем файлы, которые были отключены
-            api_request.delete("/api/notes/" + note_id + '/files/' + file.name)
+            this.handleError(api_request.delete("/api/notes/" + note_id + '/files/' + file.name))
           }
         }
       }
       // Загружаем новые добавленные файлы
-      api_request.post("/api/notes/" + note_id + '/files', files_form)
+      this.handleError(api_request.post("/api/notes/" + note_id + '/files', files_form))
       this.goToNoteViewURL(note_id)
+    },
+
+    /**
+     * Обрабатывает ошибку API запроса и выводит в toast сообщение
+     * @param {Promise} request
+     */
+    handleError(request) {
+      request.catch(
+          reason => {
+            this.$toast.add({ severity: 'error', summary: 'Error: ' + reason.response.status, detail: reason.response.data, life: 5000 });
+          }
+      )
     },
 
     goToNoteViewURL(note_id) {

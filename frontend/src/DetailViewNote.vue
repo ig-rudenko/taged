@@ -30,7 +30,6 @@ export default {
 
   mounted() {
     const match = window.location.href.match(/\/notes\/(\S+)$/);
-    console.log(match)
     if (match) this.noteID = match[1];
   },
 

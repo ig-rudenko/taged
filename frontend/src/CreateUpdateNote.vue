@@ -19,11 +19,22 @@
     </div>
 
     <div class="flex flex-column">
-      <div class="lg:border-round p-3">
-        <MultiSelect v-model="noteData.tags" @change="() => errors.tags=null" display="chip"
-                     :options="availableTags" filter placeholder="Выберите теги для записи"
-                     scroll-height="400px" class="mb-4"/>
+      <div class="lg:border-round p-3 flex align-items-center">
+        <div class="p-inputgroup" style="width: max-content">
+          <MultiSelect v-model="noteData.tags" @change="() => errors.tags=null" display="chip"
+                       :options="availableTags" filter placeholder="Выберите теги для записи"
+                       scroll-height="400px"/>
+          <Button v-if="hasPermissionToCreateTag && !showAddTagInput"
+                  @click="showAddTagInput=true" icon="pi pi-plus-circle" severity="warning" />
+          <template v-if="showAddTagInput">
+            <InputText v-model.trim="newTag" @keydown.enter="addNewTag" placeholder="Укажите новый тег" />
+            <Button @click="showAddTagInput=false" icon="pi pi-times" severity="warning" />
+          </template>
+        </div>
+
         <InlineMessage v-if="errors.tags">Выберите хотя бы 1 тег</InlineMessage>
+
+
 <!--        <div class="px-4 py-2 mb-1 border-round-2xl border-orange-500 border-1 bg-orange-light" v-for="tag in noteData.tags">-->
 <!--          <div class="flex align-items-center">-->
 <!--            <i class="pi pi-tag mr-2" style="font-size: 1.2rem"></i><span>{{tag}}</span>-->
@@ -113,14 +124,20 @@ export default {
         tags: null,
         content: null,
         hasErrors() {
-          return this.title && this.tags && this.content
+          return !this.title && !this.tags && !this.content
         }
       },
-      editNoteID: null,
       availableTags: [],
+      userPermissions: [],
+
+      showAddTagInput: false,
+      editNoteID: null,
+      newTag: "",
     }
   },
   mounted() {
+    api_request.get("/api/notes/permissions").then(resp => {this.userPermissions = resp.data})
+
     // Проверяем, не является ли данная ссылка редактированием существующей записи
     const match = window.location.href.match(/notes\/(\S+)\/edit\/$/)
     if (match) {
@@ -135,6 +152,13 @@ export default {
         .catch(reason => console.log(reason))
 
     this.setCkeditorHeight() // Изменяем высоту окна ckeditor
+  },
+
+
+  computed: {
+    hasPermissionToCreateTag() {
+      return this.userPermissions.includes("add_tags")
+    },
   },
 
 
@@ -158,12 +182,27 @@ export default {
 
     toggleFile(file) { file.disable = !file.disable },
 
+    addNewTag() {
+      console.log(this.newTag)
+      if (!this.newTag.length) return;
+      this.availableTags.push(this.newTag)
+      this.noteData.tags.push(this.newTag)
+      this.newTag = ""
+    },
+
+    noteIsValid() {
+      this.errors.title = this.noteData.title.length === 0
+      this.errors.tags = this.noteData.tags.length === 0
+      this.errors.content = this.noteData.content.length === 0
+      return this.errors.hasErrors()
+    },
+
     /** Подтверждаем данные заметки */
     submit() {
-      if (this.noteData.title.length === 0) this.errors.title = true;
-      if (this.noteData.tags.length === 0) this.errors.tags = true;
-      if (this.noteData.content.length === 0) this.errors.content = true;
-      if (this.errors.hasErrors()) return
+      if (!this.noteIsValid()){
+        return
+      }
+
       let form = new FormData()
       for (const file of this.files) {
         form.append("files", file)

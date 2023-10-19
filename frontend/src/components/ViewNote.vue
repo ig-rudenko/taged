@@ -4,27 +4,30 @@
     <Toast/>
 
     <div class="flex flex-wrap justify-content-between align-items-center">
-      <h2 class="border-blue-600 text-2xl p-3 mb-3 text-900" style="border-left: 8px solid;">
-        {{ noteData.title }}
-      </h2>
+
+      <div class="border-blue-600 pl-4 mb-3 text-900" style="border-left: 8px solid;">
+        <h1>{{ noteData.title }}</h1>
+
+        <div class="text-600 text-sm mb-3">
+          <span class="font-bold"><i class="pi pi-calendar mr-1"/> {{ noteData.published_at }}</span>
+        </div>
+
+        <!-- TAGS -->
+        <div class="mb-5">
+          <Tag v-for="tag in noteData.tags" :value="tag"
+               class="bg-orange-light hover:bg-indigo-500 hover:shadow-4 mr-2 cursor-pointer font-normal"
+               @click="$emit('selected-tag', tag)"/>
+        </div>
+
+      </div>
 
       <div class="mb-4">
         <Button @click="goToNoteEditURL" severity="warning" class="mr-2" label="Редактировать" size="small"></Button>
         <Button severity="danger" @click="showDeleteModal=true" label="Удалить" size="small"></Button>
       </div>
+
     </div>
 
-    <div class="text-600 text-sm mb-3">
-      <span class="font-bold"><i class="pi pi-calendar"/> {{ noteData.published_at }}</span>
-    </div>
-
-
-    <!-- TAGS -->
-    <div class="mb-5">
-      <Tag v-for="tag in noteData.tags" :value="tag"
-           class="bg-orange-light hover:bg-indigo-500 hover:shadow-4 mr-2 cursor-pointer font-normal"
-           @click="$emit('selected-tag', tag)"/>
-    </div>
 
     <div class="mb-5 flex flex-wrap">
       <p v-for="file in noteData.files" class="mr-3 flex align-items-center">
@@ -42,10 +45,9 @@
       </p>
     </div>
 
-    <hr>
-
     <!-- CONTENT -->
-    <div v-html="noteData.content"></div>
+    <div v-html="noteData.content" class="border-300 border-top-1 pt-5"></div>
+
 
     <Dialog v-model:visible="showDeleteModal" modal close-icon="pi" header="Подтвердите удаление" >
       <div class="flex flex-column align-items-center">

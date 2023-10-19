@@ -31,7 +31,7 @@
 
       <div class="lg:border-round p-3">
 
-        <div v-if="editNoteID" class="align-items-end flex flex-column">
+        <div v-if="editNoteID && noteData.files.length" class="align-items-end flex flex-column">
           <div class="font-bold">Существующие файлы</div>
           <div class="flex flex-wrap">
             <div v-for="file in noteData.files" class="p-3 w-15rem">
@@ -143,7 +143,6 @@ export default {
     },
 
     setCkeditorHeight() {
-      console.log("setCkeditorHeight", document.getElementById("cke_1_contents"))
       if (document.getElementById("cke_1_contents") === null) {
         setTimeout(this.setCkeditorHeight, 20)
       } else {

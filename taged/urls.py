@@ -30,7 +30,7 @@ urlpatterns = [
     # ACCOUNT
     path("accounts/", include("django.contrib.auth.urls")),
     # BOOKS
-    path("books/", include("books.urls")),
+    # path("books/", include("books.urls")),
     # STATIC
     re_path(
         r"^static/(?P<path>.*)$", serve, {"document_root": settings.STATICFILES_DIRS[0]}

@@ -6,17 +6,17 @@
         <div>
           <div class="flex flex-wrap justify-content-between">
             <div class="flex lg:align-items-center">
-              <a href="/" class="mb-3 mr-2 surface-card shadow-2 flex align-items-center justify-content-center knowledge-button cursor-pointer">
-                <img class="knowledge-button" src="/static/img/digital-brain.png" alt="Image">
+              <a href="/" class="mb-3 mr-2 flex align-items-center justify-content-center knowledge-button cursor-pointer">
+                <img class="knowledge-button" src="/static/img/note.svg" alt="Image">
               </a>
-              <div class="mb-3 surface-card shadow-2 flex align-items-center justify-content-center library-button cursor-pointer">
-                <!--            <img src="images/blocks/logos/hyper.svg" alt="Image" width="70" height="70">-->
-              </div>
+<!--              <div class="mb-3 surface-card shadow-2 flex align-items-center justify-content-center library-button cursor-pointer">-->
+<!--                &lt;!&ndash;            <img src="images/blocks/logos/hyper.svg" alt="Image" width="70" height="70">&ndash;&gt;-->
+<!--              </div>-->
             </div>
 
             <div v-if="showCount" class="flex flex-wrap">
-              <div class="p-3 mr-2 w-10rem text-center bg-purple-400 shadow-2" style="border-radius: 12px;">
-                <span class="inline-flex justify-content-center align-items-center bg-purple-500 border-circle mb-3 p-3">
+              <div class="p-3 mr-2 w-10rem text-center bg-indigo-500 shadow-2" style="border-radius: 12px;">
+                <span class="inline-flex justify-content-center align-items-center bg-indigo-600 border-circle mb-3 p-3">
                   <i class="pi pi-file text-xl text-white"></i>
                 </span>
                 <div class="text-2xl font-medium text-white mb-2">{{ totalCount }}</div>

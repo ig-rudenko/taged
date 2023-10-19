@@ -1,6 +1,5 @@
-{% extends 'errors/err_base.html' %}
+{% extends 'errors/404.html' %}
 
-{% block code %}500{% endblock %}
+{% block code %}{% block title %}500{% endblock %}{% endblock %}
 
-{% block desc %}{% block title %}Ошибка сервера{% endblock %}{% endblock %}
-{% block image %}<img src="/static/images/cat_500.gif" alt="cat_cry">{% endblock %}
+{% block desc %}Ошибка сервера{% endblock %}

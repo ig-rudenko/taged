@@ -18,17 +18,17 @@
       <InlineMessage v-if="errors.title">Укажите заголовок</InlineMessage>
     </div>
 
-    <div class="lg:px-8 p-3 flex flex-wrap justify-content-between">
+    <div class="flex flex-column">
       <div class="lg:border-round p-3">
-        <MultiSelect v-model="noteData.tags" @change="() => errors.tags=null"
+        <MultiSelect v-model="noteData.tags" @change="() => errors.tags=null" display="chip"
                      :options="availableTags" filter placeholder="Выберите теги для записи"
-                     scroll-height="400px" class="mb-4" />
+                     scroll-height="400px" class="mb-4"/>
         <InlineMessage v-if="errors.tags">Выберите хотя бы 1 тег</InlineMessage>
-        <div class="px-4 py-2 mb-1 border-round-2xl border-orange-500 border-1 bg-orange-light" v-for="tag in noteData.tags">
-          <div class="flex align-items-center">
-            <i class="pi pi-tag mr-2" style="font-size: 1.2rem"></i><span>{{tag}}</span>
-          </div>
-        </div>
+<!--        <div class="px-4 py-2 mb-1 border-round-2xl border-orange-500 border-1 bg-orange-light" v-for="tag in noteData.tags">-->
+<!--          <div class="flex align-items-center">-->
+<!--            <i class="pi pi-tag mr-2" style="font-size: 1.2rem"></i><span>{{tag}}</span>-->
+<!--          </div>-->
+<!--        </div>-->
       </div>
 
       <div class="lg:border-round p-3">

@@ -4,13 +4,25 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}{% endblock %}</title>
-    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+    <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+body {
+    display: flex;
+    flex-flow: wrap;
+    justify-items: center;
+    align-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+* {
+    font-family: "Bitstream Vera Sans Mono", Monaco, "Courier New", Courier, monospace;
+}
+</style>
 </head>
 <body>
-<div class="center_">
-    <div style="font-size: 68px; margin-top: 100px">{% block code %}{% endblock %}</div>
-    <p>{% block desc %}{% endblock %}</p>
-    {% block image %}{% endblock %}
-</div>
+<div style="font-size: 68px; margin-top: 50px">{% block code %}{% endblock %}</div>
+<h1>{% block desc %}{% endblock %}</h1>
+{% block image %}{% endblock %}
 </body>
 </html>

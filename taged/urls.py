@@ -19,7 +19,7 @@ from django.urls import path, include, re_path
 from django.views.static import serve
 
 from taged import settings
-from taged_web import views
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),

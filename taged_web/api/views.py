@@ -31,6 +31,12 @@ def get_note_or_404(
     return note
 
 
+class ListUserPermissions(GenericAPIView):
+    def get(self, *args, **kwargs):
+        permissions = sorted(self.request.user.get_all_permissions())
+        return Response(permissions)
+
+
 @method_decorator(api_elasticsearch_check_available, name="dispatch")
 class AutocompleteAPIView(GenericAPIView):
     """

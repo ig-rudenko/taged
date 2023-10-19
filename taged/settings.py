@@ -53,9 +53,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     "ckeditor",
-    "taged_web",
-    "books",
     "rest_framework",
+    "taged_web.apps.TagedWebConfig",
+    "books",
 ]
 
 MIDDLEWARE = [
@@ -168,6 +168,9 @@ CACHES = {
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
     ]
 }
 

@@ -143,7 +143,14 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
+
+@media (max-width: 600px) {
+  img {
+      width: 100%
+  }
+}
+
 .bg-orange-light {
   background-color: #FEAA69;
 }

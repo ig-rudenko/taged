@@ -8,7 +8,7 @@ class NotePermission(BasePermission):
         if request.method in SAFE_METHODS:
             return True
         if request.method == "POST":
-            return request.user.has_perms(["taged_web.crete_notes"])
+            return request.user.has_perms(["taged_web.create_notes"])
         if request.method in ["PUT", "PATCH"]:
             return request.user.has_perms(["taged_web.update_notes"])
         if request.method == "DELETE":

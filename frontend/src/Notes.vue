@@ -2,22 +2,26 @@
   <Header section-name="База знаний" section-description="Здесь вы можете найти необходимую для вас информацию"
           :show-create-button="showCreateButton"/>
 
-  <div class="px-4 md:px-6 lg:px-8">
+  <div class="md:px-6 lg:px-8">
 
-    <div class="py-8 flex-column p-fluid">
-      <AutoComplete class="h-4rem text-900" v-model.trim="search"
-                    :input-style="{'text-align': 'center', 'font-size': '1.5rem'}"
-                    @keydown.enter="getNotes"
-                    :suggestions="titles"
-                    @complete="autocomplete"
-                    @itemSelect="getNotes"
-                    placeholder="Поиск информации">
-        <template #empty>
-          Заголовок с таким названием не найден
-        </template>
-      </AutoComplete>
+    <div class="flex-column p-fluid">
+      <div class="p-inputgroup flex-1">
+        <AutoComplete class="h-4rem text-900" v-model="search"
+                      :input-style="{'text-align': 'center', 'font-size': '1.5rem'}"
+                      @keydown.enter="performNewSearch"
+                      :suggestions="titles"
+                      @complete="autocomplete"
+                      @itemSelect="performNewSearch"
+                      :auto-option-focus="false"
+                      placeholder="Поиск информации">
+          <template #empty>
+            Заголовок с таким названием не найден
+          </template>
+        </AutoComplete>
+        <div v-if="totalRecords" class="bg-indigo-500 p-inputgroup-addon text-white">{{ totalRecords }}</div>
+      </div>
       <MultiSelect v-model="tagsSelected" :options="tags" filter placeholder="Выберите теги"
-                   @change="getNotes" scroll-height="400px"
+                   @change="performNewSearch" scroll-height="400px"
                    :maxSelectedLabels="3" class="w-full md:w-20rem" />
     </div>
 
@@ -38,7 +42,7 @@
           <div :class="noteClasses(note)" style="height: 100%">
             <div @click="goToViewNoteURL(note.id)" class=" flex justify-content-center align-content-center align-items-center cursor-pointer" style="min-height: 230px;">
               <img v-if="note.previewImage" :src="note.previewImage"
-                   class="border-round-2xl p-2 border-round-2xl" style="max-height: 230px; max-width: 28rem;">
+                   class="border-round-2xl p-2 border-round-2xl" style="max-height: 230px; max-width: 100%;">
               <svg v-else class="border-round-top-2xl cursor-pointer" width="100%" height="225" xmlns="http://www.w3.org/2000/svg"
                    role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false">
                 <title>Placeholder</title>
@@ -67,6 +71,12 @@
         </div>
 
       </div>
+
+
+    <div @click="addNextPage" class="pt-4 align-items-center cursor-pointer flex flex-column" style="font-size: 1.2rem;">
+        <div>Больше</div>
+        <i class="p-button-icon pi pi-angle-double-down" data-pc-section="icon" style="font-size: 1.5rem;" />
+    </div>
 
   </div>
 
@@ -124,7 +134,7 @@ export default {
   mounted() {
     api_request.get("/api/notes/permissions").then(resp => {this.userPermissions = resp.data})
 
-    this.getNotes()
+    this.performNewSearch()
 
     api_request.get("/api/notes/tags")
         .then(
@@ -154,7 +164,7 @@ export default {
       if (note.score > 0.9) {
         classes.push("total-match")
       } else {
-        classes.push("shadow-2")
+        classes.push("shadow-4")
       }
       return classes
     },
@@ -170,9 +180,21 @@ export default {
     selectTag(tagName) {
       this.tagsSelected = [tagName]
       this.showNoteModal = false
-      this.getNotes()
+      this.performNewSearch()
     },
-    getNotes() {
+
+    // Получение записей на первой странице
+    performNewSearch() {
+      this.paginator.currentPage = 1
+      this.findNotes('rebase')
+    },
+
+    /**
+     * Ищет новые записи и согласно указанному типу сохранения `append`, `rebase`
+     * добавляет к уже имеющимся записям новые, либо переопределяет их
+     * @param {String} save_mode
+     */
+    findNotes(save_mode) {
       let url = "/api/notes/?"
       url += "page=" + this.paginator.currentPage
       url += "&search=" + this.search
@@ -182,15 +204,25 @@ export default {
       api_request.get(url)
           .then(
               resp => {
-                this.notes = resp.data.records
+                if (save_mode === 'append') {
+                  this.notes.push(...resp.data.records)
+                } else {
+                  this.notes = resp.data.records
+                }
                 this.totalRecords = resp.data.totalRecords
                 this.paginator = resp.data.paginator
               }
           )
-          .catch(
-              reason => console.log(reason)
-          )
+          .catch(reason => console.log(reason))
     },
+
+    addNextPage() {
+      this.paginator.currentPage++
+      if (this.paginator.currentPage <= this.paginator.maxPages) {
+        this.findNotes('append')
+      }
+    },
+
     showNote(note_id) {
       this.showNoteID = note_id;
       this.showNoteModal = true

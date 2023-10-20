@@ -74,17 +74,8 @@ services:
     volumes:
       # Чтобы добавлять новые изображения и книги
       - ./media:/app/media
-      # Скрипт для запуска контейнера
-      - ./run.sh:/app/run.sh
       # База данных
       - ./db.sqlite3:/app/db.sqlite3
-
-      - ./taged:/app/taged
-      - ./taged_web:/app/taged_web
-      - ./templates:/app/templates
-      - ./test.py:/app/test.py
-      - ./books:/app/books
-      - ./elasticsearch_control:/app/elasticsearch_control
     depends_on:
       - elasticsearch
       - redis

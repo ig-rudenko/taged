@@ -25,7 +25,7 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - taged-network
+      - knowledge-base-network
 
   web:
     image: nginx
@@ -51,14 +51,14 @@ services:
       # Сертификат и ключи Диффи-Хеллмана
       - ./settings/nginx/certs:/etc/ssl/certs/
     depends_on:
-      - taged
+      - knowledge_base
     networks:
-      - taged-network
+      - knowledge-base-network
 
-  taged:
+  knowledge_base:
     build: .
     container_name: taged_container
-    image: taged:0.8.3
+    image: knowledge_base:1.0
     restart: always
     command: /bin/bash /app/run.sh
     environment:
@@ -89,13 +89,13 @@ services:
       - elasticsearch
       - redis
     networks:
-      - taged-network
+      - knowledge-base-network
 
   redis:
     image: redis
     restart: always
     networks:
-      - taged-network
+      - knowledge-base-network
     deploy:
       resources:
         limits:
@@ -105,7 +105,7 @@ services:
 
 networks:
   # Создаем свою сеть, чтобы не было конфликтов с уже существующей
-  taged-network:
+  knowledge-base-network:
     ipam:
       driver: default
       config:

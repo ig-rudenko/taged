@@ -9,9 +9,9 @@
               <a href="/" class="mb-3 mr-2 flex align-items-center justify-content-center knowledge-button cursor-pointer">
                 <img class="knowledge-button" src="/static/img/note.svg" alt="Image">
               </a>
-<!--              <div class="mb-3 surface-card shadow-2 flex align-items-center justify-content-center library-button cursor-pointer">-->
-<!--                &lt;!&ndash;            <img src="images/blocks/logos/hyper.svg" alt="Image" width="70" height="70">&ndash;&gt;-->
-<!--              </div>-->
+              <div class="align-items-center border-round-2xl flex justify-content-center library-button mb-3">
+                  <img :src="'/static/images/cat'+getRandomInt(0, 8)+'.gif'" alt="Image" width="120" height="120">
+              </div>
             </div>
 
             <div v-if="showCount" class="flex flex-wrap">
@@ -65,7 +65,12 @@ export default {
     },
     goToCreateNoteURL() {
       window.location.href = "/notes/create"
-    }
+    },
+    getRandomInt(min, max) {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    },
   }
 
 }

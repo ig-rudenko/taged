@@ -4,7 +4,7 @@
     <div class="px-4 py-5 md:px-6 lg:px-8 surface-section">
       <div class="flex-column lg:flex-row lg:align-items-center lg:justify-content-between relative" style="margin-top: -2rem; top: -70px; margin-bottom: -70px;">
         <div>
-          <div class="flex flex-wrap justify-content-between">
+          <div class="menu-card">
             <div class="flex lg:align-items-center">
               <a href="/" class="mb-3 mr-2 flex align-items-center justify-content-center knowledge-button cursor-pointer">
                 <img class="knowledge-button" src="/static/img/note.svg" alt="Image">
@@ -25,7 +25,7 @@
             </div>
 
           </div>
-          <div class="text-900 text-3xl font-medium mb-3">{{ sectionName }}</div>
+          <div class="pt-4 text-900 text-3xl font-medium mb-3">{{ sectionName }}</div>
           <p class="mt-0 mb-3 text-700 text-xl">{{ sectionDescription }}</p>
         </div>
         <Button v-if="showCreateButton" @click="goToCreateNoteURL" rounded label="Создать" />
@@ -103,5 +103,22 @@ export default {
 .library-button:hover {
   transform: scale(1.04);
 }
+
+.menu-card {
+  display: flex;
+  flex-wrap: wrap;
+  -webkit-box-pack: justify!important;
+  -ms-flex-pack: justify!important;
+  justify-content: space-between!important;
+}
+
+@media (max-width: 500px) {
+  .menu-card {
+    -webkit-box-pack: center!important;
+    -ms-flex-pack: center!important;
+    justify-content: center!important;
+  }
+}
+
 
 </style>

@@ -95,7 +95,7 @@ class NotesCount(GenericAPIView):
     """Получает кол-во записей от Elasticsearch"""
 
     cache_key = "NotesCount"
-    cache_timeout = 60 * 1
+    cache_timeout = 60 * 10
 
     def get(self, request: Request):
         total_count = cache.get(f"{self.cache_key}.{request.user.username}")
@@ -118,7 +118,7 @@ class NotesCount(GenericAPIView):
 class NotesListCreateAPIView(GenericAPIView):
     permission_classes = [NotePermission]
     cache_key = "last_updated_posts"
-    cache_timeout = 60 * 1
+    cache_timeout = 60 * 10
 
     def get_serializer_class(self):
         """

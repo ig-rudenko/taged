@@ -18,11 +18,17 @@
             Заголовок с таким названием не найден
           </template>
         </AutoComplete>
-        <div v-if="totalRecords" class="bg-indigo-500 p-inputgroup-addon text-white">{{ totalRecords }}</div>
       </div>
       <MultiSelect v-model="tagsSelected" :options="tags" filter placeholder="Выберите теги"
                    @change="performNewSearch" scroll-height="400px"
                    :maxSelectedLabels="3" class="w-full md:w-20rem" />
+
+      <div v-if="showTotalCount" class="flex justify-content-center">
+        <div class="bg-indigo-500 border-round-3xl flex justify-content-around p-2 text-white" style="width: 150px;">
+          Найдено: {{ totalRecords }}
+        </div>
+      </div>
+
     </div>
 
 
@@ -129,12 +135,13 @@ export default {
         perPage: 24,
       },
       userPermissions: [],
+      showTotalCount: false,
     }
   },
   mounted() {
     api_request.get("/api/notes/permissions").then(resp => {this.userPermissions = resp.data})
 
-    this.performNewSearch()
+    this.findNotes('rebase')
 
     api_request.get("/api/notes/tags")
         .then(
@@ -187,6 +194,7 @@ export default {
     performNewSearch() {
       this.paginator.currentPage = 1
       this.findNotes('rebase')
+      this.showTotalCount = true
     },
 
     /**

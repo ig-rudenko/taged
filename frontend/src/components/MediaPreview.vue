@@ -17,6 +17,7 @@
 <script>
 import Image from "primevue/image/Image.vue";
 import format_bytes from "../helpers/format_size.js";
+import getFileFormatIconName from "../helpers/icons.js";
 
 export default {
   name: "MediaPreview",
@@ -48,34 +49,7 @@ export default {
 
   computed: {
     fileFormat() {
-      if (this.file.name.match(/.+\.(docx?|rtf)$/i)){
-        return 'docx'
-      }
-      if (this.file.name.match(/.+\.xls[xm]?$/i)){
-        return 'xlsx'
-      }
-      if (this.file.name.match(/.+\.pdf$/i)){
-        return 'pdf'
-      }
-      if (this.file.name.match(/.+\.xml$/i)){
-        return 'xml'
-      }
-      if (this.file.name.match(/.+\.drawio$/i)){
-        return 'drawio'
-      }
-      if (this.file.name.match(/.+\.txt$/i)){
-        return 'txt'
-      }
-      if (this.file.name.match(/.+\.vsdx?$/i)){
-        return 'visio'
-      }
-      if (this.file.name.match(/.+\.(png|jpe?g|gif|bpm|svg|ico|tiff)$/i)){
-        return 'img'
-      }
-      if (this.file.name.match(/.+\.(rar|7z|zip|tar[.gz]|iso)$/i)){
-        return 'archive'
-      }
-        return 'file'
+      getFileFormatIconName(this.file.name)
     }
   },
 

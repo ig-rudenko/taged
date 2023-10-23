@@ -58,7 +58,7 @@ services:
   knowledge_base:
     build: .
     container_name: taged_container
-    image: knowledge_base:1.0
+    image: knowledge_base:1.0.5
     restart: always
     command: /bin/bash /app/run.sh
     environment:

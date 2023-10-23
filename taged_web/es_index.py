@@ -11,20 +11,17 @@ from elasticsearch_control import (
     QueryLimitParams,
 )
 from elasticsearch_control.transport import elasticsearch_connector
-from taged_web.helpers import icon_path
 
 T_Values = Literal["title", "content", "tags", "published_at"]
 
 
 class PostFile(NamedTuple):
     name: str
-    icon: str
     size: int
 
     def json(self):
         return {
             "name": self.name,
-            "icon": self.icon,
             "size": self.size,
         }
 
@@ -312,7 +309,6 @@ class PostIndex(AbstractIndex):
                 files.append(
                     PostFile(
                         name=f.name,
-                        icon=icon_path(f.name),
                         size=f.stat().st_size,
                     )
                 )

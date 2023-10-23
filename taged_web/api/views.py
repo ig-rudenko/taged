@@ -310,6 +310,16 @@ class NoteDetailUpdateAPIView(GenericAPIView):
             note.title = new_title
             updated_fields.append("title")
         if new_content != note.content:
+            # Ищем закодированные изображения (base64) в содержимом заметки.
+            image_formatter = ReplaceImagesInHtml(new_content)
+            if image_formatter.has_base64_encoded_images:
+                # Сохраняем закодированные изображения как файлы и заменяем у них атрибут src на ссылку файла.
+                image_formatter.save_images_and_update_src(
+                    image_prefix="image", folder=f"{note.id}/content_images"
+                )
+                # Обновляем содержимое с измененными изображениями
+                new_content = image_formatter.html
+
             note.content = new_content
             updated_fields.append("content")
         if new_tags != note.tags_list:

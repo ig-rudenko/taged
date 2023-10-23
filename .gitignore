@@ -4,7 +4,6 @@ media
 test*
 logs
 db.sqlite3
-.gitignore
 static/debug_toolbar
 static/ckeditor
 static/admin

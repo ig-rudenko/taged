@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, Optional, List
+from typing import Any, Self
 
 from elasticsearch import exceptions
 
@@ -8,7 +8,7 @@ from .limiter import ElasticsearchPaginator
 from .transport import ElasticsearchConnection
 
 
-def _map_type(annotation: Any) -> Optional[str]:
+def _map_type(annotation: Any) -> str | None:
     if annotation == str:
         mtype = "text"
     elif annotation == int:
@@ -28,7 +28,7 @@ def _map_type(annotation: Any) -> Optional[str]:
     return mtype
 
 
-def _types_base_value(type_: Any) -> Any:
+def _types_base_value(type_: Any) -> str | bytes | int | float | bool | dict | None:
     """
     Определяем, какой тип будет по умолчанию для определенного поля по его аннотации.
 
@@ -85,11 +85,11 @@ class AbstractIndex(metaclass=MetaIndex):
     Абстрактный класс, для управления индексом в Elasticsearch
     """
 
-    id: Optional[str] = None
+    id: str | None = None
 
     @classmethod
     @abstractmethod
-    def create(cls, *args, **kwargs):
+    def create(cls, *args, **kwargs) -> Self | None:
         """
         Создание нового индекса
         """
@@ -111,7 +111,7 @@ class AbstractIndex(metaclass=MetaIndex):
         pass
 
     @classmethod
-    def get(cls, id_, *args, **kwargs) -> Optional[Any]:
+    def get(cls, id_, *args, **kwargs) -> dict | Any:
         """
         Возвращает одну запись из индекса по его `id`, либо `None` если такой записи нет.
         """
@@ -140,7 +140,7 @@ class AbstractIndex(metaclass=MetaIndex):
             return False
         return result["_shards"].get("failed") == 0
 
-    def save(self, values: Optional[List[str]] = None) -> bool:
+    def save(self, values: list[str] = None) -> bool:
         """
         Сохраняет переданные в списке `values` поля для текущей записи.
         Если `values` не были переданы, то сохраняет все поля.
@@ -166,7 +166,7 @@ class AbstractIndex(metaclass=MetaIndex):
         return result["_shards"].get("failed") == 0
 
     @classmethod
-    def get_index_settings(cls) -> Dict[str, Any]:
+    def get_index_settings(cls) -> dict[str, Any]:
         """
         Возвращает все необходимые настройки индекса, для его создания в Elasticsearch.
         """
@@ -186,7 +186,7 @@ class AbstractIndex(metaclass=MetaIndex):
 
         connector: ElasticsearchConnection
         index_name: str
-        settings: Dict[str, Any]
+        settings: dict[str, Any]
 
         # Создается автоматически, не трогать
-        mappings: Dict[str, Dict[str, Any]]
+        mappings: dict[str, dict[str, Any]]

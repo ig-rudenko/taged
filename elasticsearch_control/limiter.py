@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from typing import List, Callable, Optional, Dict, Literal, Union
+from typing import Callable, Literal
 
 from elasticsearch import Elasticsearch
 
@@ -12,10 +12,10 @@ class QueryLimitParams:
     """
 
     index: str
-    source: List[str]
+    source: list[str]
     query: dict
     request_timeout: int
-    sort: Optional[Dict[str, Literal["desc", "asc"]]] = None
+    sort: dict[str, Literal["desc", "asc"]] | None = None
 
     @property
     def to_dict(self) -> dict:
@@ -30,6 +30,7 @@ class QueryLimitParams:
 
         return data
 
+
 class ElasticsearchPaginator:
     """
     Класс для пагинации запросов Elasticsearch.
@@ -38,7 +39,11 @@ class ElasticsearchPaginator:
     per_page = 24
 
     def __init__(
-        self, es: Elasticsearch, params: QueryLimitParams, convert_result: Optional[Callable] = None, **extra
+        self,
+        es: Elasticsearch,
+        params: QueryLimitParams,
+        convert_result: Callable = None,
+        **extra
     ):
         """
         Инициализируем пагинатор запросов.
@@ -81,7 +86,7 @@ class ElasticsearchPaginator:
         from_ = (page_num - 1) * self.per_page
         return from_, self.per_page
 
-    def get_page(self, page: Union[str, int, float]) -> list:
+    def get_page(self, page: str | int | float) -> list:
         """
         Получаем данные из конкретной страницы.
 
@@ -108,7 +113,7 @@ class ElasticsearchPaginator:
 
         return []
 
-    def validate_number(self, number: Union[str, int, float]) -> int:
+    def validate_number(self, number: str | int | float) -> int:
         try:
             number = int(number)
         except (ValueError, TypeError):

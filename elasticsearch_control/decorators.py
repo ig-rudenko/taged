@@ -1,13 +1,16 @@
 from functools import wraps
+from typing import Callable
 
+from django.core.handlers.wsgi import WSGIRequest
 from django.http import JsonResponse
 from django.shortcuts import render
 from elasticsearch.exceptions import TransportError
+from rest_framework.request import Request
 
 
-def elasticsearch_check_available(func):
+def elasticsearch_check_available(func: Callable):
     @wraps(func)
-    def wrapper(request, *args, **kwargs):
+    def wrapper(request: WSGIRequest, *args, **kwargs):
         try:
             return func(request, *args, **kwargs)
         except TransportError:
@@ -16,9 +19,9 @@ def elasticsearch_check_available(func):
     return wrapper
 
 
-def api_elasticsearch_check_available(func):
+def api_elasticsearch_check_available(func: Callable):
     @wraps(func)
-    def wrapper(request, *args, **kwargs):
+    def wrapper(request: Request, *args, **kwargs):
         try:
             return func(request, *args, **kwargs)
         except TransportError:

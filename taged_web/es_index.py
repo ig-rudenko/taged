@@ -1,6 +1,6 @@
 import shutil
 from datetime import datetime
-from typing import Optional, List, Literal, Sequence, NamedTuple
+from typing import Literal, Sequence, NamedTuple, Self
 
 from django.conf import settings
 from elasticsearch import exceptions
@@ -55,7 +55,7 @@ class PostIndex(AbstractIndex):
         }
 
     @property
-    def tags_list(self) -> List[str]:
+    def tags_list(self) -> list[str]:
         if isinstance(self.tags, str):
             return self.tags.split(", ")
         if isinstance(self.tags, list):
@@ -70,9 +70,7 @@ class PostIndex(AbstractIndex):
         }
 
     @classmethod
-    def get(
-        cls, id_: str, values: Optional[Sequence[T_Values]] = None, **kwargs
-    ) -> Optional["PostIndex"]:
+    def get(cls, id_: str, values: Sequence[T_Values] = None, **kwargs) -> Self | None:
         """
         Возвращает заметку, если была найдена, в противном случае `None`.
 
@@ -112,7 +110,7 @@ class PostIndex(AbstractIndex):
         return None
 
     @classmethod
-    def create(cls, title: str, tags: List[str], content: str) -> Optional["PostIndex"]:
+    def create(cls, title: str, tags: list[str], content: str) -> Self | None:
         """
         Создает новую заметку и возвращает её.
 
@@ -151,10 +149,10 @@ class PostIndex(AbstractIndex):
     @classmethod
     def filter(
         cls,
-        tags_in: List[str] = None,
-        tags_off: List[str] = None,
+        tags_in: list[str] = None,
+        tags_off: list[str] = None,
         string: str = "",
-        values: Optional[Sequence[T_Values]] = None,
+        values: Sequence[T_Values] = None,
         sort: T_Values = None,
         sort_desc: bool = False,
     ) -> ElasticsearchPaginator:
@@ -228,7 +226,9 @@ class PostIndex(AbstractIndex):
         )
 
     @staticmethod
-    def _convert_post_result(res, tags_in, tags_off) -> List[dict]:
+    def _convert_post_result(
+        res, tags_in: list[str], tags_off: list[str]
+    ) -> list[dict]:
         # Присваивает переменной max_score максимальный балл из всех записей в ответе.
         max_score = float(res["hits"]["max_score"] or 1)
         result = []
@@ -261,7 +261,7 @@ class PostIndex(AbstractIndex):
         return result
 
     @classmethod
-    def get_titles(cls, string: str, unavailable_tags: List[str]) -> List[str]:
+    def get_titles(cls, string: str, unavailable_tags: list[str]) -> list[str]:
         """
         ## Возвращает заголовки, которые соответствуют искомой строке.
 
@@ -297,7 +297,7 @@ class PostIndex(AbstractIndex):
         else:
             return []
 
-    def get_files(self) -> List[PostFile]:
+    def get_files(self) -> list[PostFile]:
         """
         ## Возвращаем список файлов, которые прикреплены к заметке
 

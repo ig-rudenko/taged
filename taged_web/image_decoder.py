@@ -107,7 +107,7 @@ class ReplaceImagesInHtml:
                 continue
             else:
                 # Вычисляем хеш изображения
-                hash_ = hashlib.md5(decoded_image.image_binary).hexdigest()[:10]
+                hash_ = hashlib.md5(decoded_image.image_binary).hexdigest()
 
                 # Имя изображения "префикс-номер-хеш.png"
                 image_name = (

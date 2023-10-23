@@ -46,7 +46,7 @@
           <Badge v-if="note.score>0.05" :class="badgeClasses(note)" :value="'match: '+Math.round(note.score * 100)+'%'" />
 
           <div :class="noteClasses(note)" style="height: 100%">
-            <div @click="goToViewNoteURL(note.id)" class=" flex justify-content-center align-content-center align-items-center cursor-pointer" style="min-height: 230px;">
+            <a :href="'/notes/' + note.id" class=" flex justify-content-center align-content-center align-items-center cursor-pointer" style="min-height: 230px;">
               <img v-if="note.previewImage" :src="note.previewImage"
                    class="border-round-2xl p-2 border-round-2xl" style="max-height: 230px; max-width: 100%;">
               <svg v-else class="border-round-top-2xl cursor-pointer" width="100%" height="225" xmlns="http://www.w3.org/2000/svg"
@@ -55,7 +55,7 @@
                 <rect width="100%" height="100%" fill="#aaaaaa"></rect>
                 <text x="38%" y="50%" fill="#eceeef" dy=".3em">Нет изображения</text>
               </svg>
-            </div>
+            </a>
 
             <div class="p-3">
               <div class="flex flex-wrap justify-content-between align-items-center">
@@ -235,11 +235,6 @@ export default {
       this.showNoteID = note_id;
       this.showNoteModal = true
     },
-
-    goToViewNoteURL(note_id) {
-      window.location.href = "/notes/" + note_id
-    },
-
   }
 }
 </script>

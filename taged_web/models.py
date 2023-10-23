@@ -1,5 +1,3 @@
-from typing import List
-
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -18,7 +16,7 @@ class Tags(models.Model):
 
 
 class User(AbstractUser):
-    def get_tags(self) -> List[str]:
+    def get_tags(self) -> list[str]:
         # Проверка, является ли пользователь суперпользователем или нет.
         # Если пользователь является суперпользователем, он вернет все теги.
         # Если пользователь не является суперпользователем, он вернет теги, связанные с пользователем.
@@ -29,7 +27,7 @@ class User(AbstractUser):
         )
 
     @property
-    def unavailable_tags(self) -> List[str]:
+    def unavailable_tags(self) -> list[str]:
         all_tags = set(Tags.objects.all().values_list("tag_name", flat=True))
         return list(set(all_tags) - set(self.get_tags()))
 

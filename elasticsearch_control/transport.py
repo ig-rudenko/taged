@@ -1,5 +1,3 @@
-from typing import Optional
-
 from elasticsearch import Elasticsearch
 
 
@@ -9,8 +7,8 @@ class ElasticsearchConnection:
     """
 
     def __init__(self):
-        self.es: Optional[Elasticsearch] = None
-        self.timeout = None
+        self.es: Elasticsearch | None = None
+        self.timeout: int | None = None
 
     def init(self, es: Elasticsearch, timeout: int) -> None:
         """

@@ -1,6 +1,5 @@
 import re
 from datetime import datetime
-from typing import List, Dict
 
 from django.contrib.humanize.templatetags import humanize
 from django.core.cache import cache
@@ -27,7 +26,7 @@ from taged_web.models import User, Tags
 
 
 def get_note_or_404(
-    note_id: str, user: User, values: List[T_Values] = None
+    note_id: str, user: User, values: list[T_Values] = None
 ) -> PostIndex:
     note = PostIndex.get(id_=note_id, values=values)
     if note is None or set(user.unavailable_tags) & set(note.tags_list):
@@ -45,7 +44,7 @@ def clear_cache() -> None:
     cache.delete_many(keys)
 
 
-def add_tags_to_user_if_not_exist(tags_names: List[str], by_user: User) -> None:
+def add_tags_to_user_if_not_exist(tags_names: list[str], by_user: User) -> None:
     """
     Принимает строку названий тегов и создает отсутствующие из них.
     Затем добавляет их к пользователю.
@@ -176,7 +175,7 @@ class NotesListCreateAPIView(GenericAPIView):
         )
 
     @staticmethod
-    def add_file_mark(objects: List[dict]):
+    def add_file_mark(objects: list[dict]):
         for post in objects:
             post["filesCount"] = 0
             # Проверяем, существуют ли у записей прикрепленные файлы.
@@ -185,7 +184,7 @@ class NotesListCreateAPIView(GenericAPIView):
                     post["filesCount"] += 1
 
     @staticmethod
-    def add_preview_image(objects: List[dict]):
+    def add_preview_image(objects: list[dict]):
         for post in objects:
             post["previewImage"] = None
             first_image = re.search('<img .*?src="(\S+)"', post["content"])
@@ -193,12 +192,12 @@ class NotesListCreateAPIView(GenericAPIView):
                 post["previewImage"] = first_image.group(1)
 
     @staticmethod
-    def remove_content(objects: List[dict], width: int = 70):
+    def remove_content(objects: list[dict], width: int = 70):
         for post in objects:
             del post["content"]
 
     @staticmethod
-    def humanize_datetime(objects: List[dict], width: int = 70):
+    def humanize_datetime(objects: list[dict], width: int = 70):
         for post in objects:
             post["published_at"] = humanize.naturaltime(
                 datetime.strptime(
@@ -300,7 +299,7 @@ class NoteDetailUpdateAPIView(GenericAPIView):
         Обновляем существующую в elasticsearch запись.
         Смотрим какие именно поля изменились и обновляем только их.
         """
-        updated_fields: List[T_Values] = ["published_at"]
+        updated_fields: list[T_Values] = ["published_at"]
         note.published_at = datetime.now()
 
         new_title = serializer.validated_data["title"]
@@ -326,7 +325,7 @@ class NoteFilesListCreateAPIView(GenericAPIView):
         # Проверяем, имеет ли пользователь доступ к текущей записи, чтобы удалить её файл
         get_note_or_404(note_id, request.user, values=["tags"])
 
-        files: Dict[str, List[UploadedFile]] = dict(request.FILES)
+        files: dict[str, list[UploadedFile]] = dict(request.FILES)
         if files and files.get("files"):
             (settings.MEDIA_ROOT / note_id).mkdir(parents=True, exist_ok=True)
             # Создаем папку для текущей заметки

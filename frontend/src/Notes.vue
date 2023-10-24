@@ -32,11 +32,17 @@
     </div>
 
 
-
     <Dialog style="max-height: 100%" v-model:visible="showNoteModal" modal :show-header="true" :style="{ width: '100vw', height: '100%' }">
       <ViewNote @selected-tag="selectTag" :note-id="showNoteID"/>
     </Dialog>
 
+    <OverlayPanel ref="showFiles">
+      <div class="flex flex-column">
+        <p v-for="file in noteFilesShow.files" class="mr-3 flex align-items-center">
+          <MediaPreview :file="file" :is-file-object="false" :fileNoteID="noteFilesShow.id"/>
+        </p>
+      </div>
+    </OverlayPanel>
 
 
     <div class="flex flex-wrap justify-content-center">
@@ -60,9 +66,11 @@
             <div class="p-3">
               <div class="flex flex-wrap justify-content-between align-items-center">
                 <div>
-                  <Tag class="bg-orange-light hover:bg-indigo-500 hover:shadow-4 mr-2 font-normal cursor-pointer" @click="selectTag(tag)" v-for="tag in note.tags" :value="tag"/>
+                  <Tag @click="selectTag(tag)" v-for="tag in note.tags" :value="tag"
+                       class="bg-orange-light hover:bg-indigo-500 hover:shadow-4 mr-2 font-normal cursor-pointer" />
                 </div>
-                <i v-if="note.filesCount>0" v-badge="note.filesCount" class="pi pi-file p-overlay-badge" style="font-size: 2rem" />
+                <i v-if="note.filesCount>0" @click="(e) => showNoteFiles(note, e)"
+                   v-badge="note.filesCount" class="pi pi-file p-overlay-badge cursor-pointer" style="font-size: 2rem" />
               </div>
 
               <h2>{{ note.title }}</h2>
@@ -99,21 +107,25 @@ import MultiSelect from "primevue/multiselect/MultiSelect.vue";
 import AutoComplete  from "primevue/autocomplete/AutoComplete.vue";
 import Button from "primevue/button/Button.vue"
 import Header from "./components/Header.vue";
+import OverlayPanel from "primevue/overlaypanel";
 import ViewNote from "./components/ViewNote.vue";
 import Tag from "primevue/tag/Tag.vue";
 import ScrollTop from 'primevue/scrolltop';
 import Footer from "./components/Footer.vue";
 import api_request from "./api_request.js";
+import MediaPreview from "./components/MediaPreview.vue";
 
 export default {
   name: "Notes",
   components: {
+    MediaPreview,
     AutoComplete,
     Badge,
     Footer,
     Dialog,
     MultiSelect,
     ViewNote,
+    OverlayPanel,
     Header,
     Button,
     Tag,
@@ -136,6 +148,7 @@ export default {
       },
       userPermissions: [],
       showTotalCount: false,
+      noteFilesShow: null,
     }
   },
   mounted() {
@@ -184,6 +197,18 @@ export default {
       }
       return classes
     },
+
+    showNoteFiles(note, event) {
+      const op = this.$refs.showFiles
+      api_request.get("/api/notes/"+note.id+"/files").then(
+          resp => {
+            note.files = resp.data;
+            this.noteFilesShow = note
+          }
+      )
+      op.toggle(event)
+    },
+
     selectTag(tagName) {
       this.tagsSelected = [tagName]
       this.showNoteModal = false

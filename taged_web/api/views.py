@@ -331,8 +331,12 @@ class NoteDetailUpdateAPIView(GenericAPIView):
 
 
 class NoteFilesListCreateAPIView(GenericAPIView):
+    def get(self, request: Request, note_id: str):
+        note = get_note_or_404(note_id, request.user, values=["tags"])
+        return Response([file.json() for file in note.get_files()])
+
     def post(self, request: Request, note_id: str):
-        # Проверяем, имеет ли пользователь доступ к текущей записи, чтобы удалить её файл
+        # Проверяем, имеет ли пользователь доступ к текущей записи
         get_note_or_404(note_id, request.user, values=["tags"])
 
         files: dict[str, list[UploadedFile]] = dict(request.FILES)

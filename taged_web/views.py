@@ -37,5 +37,5 @@ def edit_note(request, note_id: str):
 @login_required
 @elasticsearch_check_available
 def view_note(request, note_id: str):
-    note = get_note_or_404(note_id, request.user, values=["tags"])
+    note = get_note_or_404(note_id, request.user, values=["tags", "title"])
     return render(request, "notes/detail_view_note.html", {"title": note.title})

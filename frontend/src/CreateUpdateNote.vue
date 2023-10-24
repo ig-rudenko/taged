@@ -211,7 +211,7 @@ export default {
       }
       const data = await resp.data
 
-      if (resp.status === 200 || resp.stats === 201){
+      if (resp.status === 200 || resp.status === 201){
         await this.changeFiles(data.id, form)
       } else {
         this.showError(resp.status, data)

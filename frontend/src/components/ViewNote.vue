@@ -32,17 +32,7 @@
 
     <div class="mb-5 flex flex-wrap">
       <p v-for="file in noteData.files" class="mr-3 flex align-items-center">
-        <Image v-if="isImage(file.name)"
-               :src="getFileDownloadURL(file.name)" :alt="file.name"
-               class="mr-2" :image-style="{'max-height': '64px', 'max-width': '64px'}" preview />
-
-        <!-- Иконка формата файла -->
-        <img v-else class="mr-2" :src="getFileIconURL(file.name)" height="48" width="48" :alt="file.name">
-
-        <a :href="getFileDownloadURL(file.name)" class="font-normal no-underline text-900">
-          {{ file.name }}<br>
-          <span class="text-400" style="font-size: 0.8rem">{{ formatBytes(file.size) }}</span>
-        </a>
+        <MediaPreview :file="file" :is-file-object="false" :fileNoteID="noteId"/>
       </p>
     </div>
 
@@ -78,6 +68,7 @@ import ScrollTop from "primevue/scrolltop/ScrollTop.vue";
 import Tag from "primevue/tag/Tag.vue";
 import Toast from "primevue/toast";
 
+import MediaPreview from "./MediaPreview.vue";
 import api_request from "../api_request.js";
 import format_bytes from "../helpers/format_size.js";
 import getFileFormatIconName from "../helpers/icons.js";
@@ -85,6 +76,7 @@ import getFileFormatIconName from "../helpers/icons.js";
 export default {
   name: "ViewNote",
   components: {
+    MediaPreview,
     Button,
     Dialog,
     Image,

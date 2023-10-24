@@ -23,7 +23,7 @@
           <div v-for="(file_obj, index) in files" class="m-2 w-15rem">
             <div class="flex align-items-end flex-column">
               <i @click="deleteFile(index)" class="pi pi-times border-round-2xl border-1 px-1 py-1 cursor-pointer hover:text-red-500" aria-label="Cancel" />
-              <MediaPreview class="mr-3" :file="file_obj" :is-file-object="true" />
+              <MediaPreview class="mr-3" :file="file_obj" :is-file-object="true" :max-file-name-length="20" />
             </div>
           </div>
 

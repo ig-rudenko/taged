@@ -46,7 +46,8 @@
                 <i v-if="file.disable" @click="toggleFile(file)" class="pi pi-check border-round-2xl border-1 px-1 py-1 cursor-pointer hover:text-green-500" aria-label="Cancel" />
                 <i v-else @click="toggleFile(file)" class="pi pi-times border-round-2xl border-1 px-1 py-1 cursor-pointer hover:text-red-500" aria-label="Cancel" />
                 <div :class="file.disable?['opacity-30']:[]" >
-                  <MediaPreview :file="file" :is-file-object="false" :fileNoteID="editNoteID"/>
+                  <MediaPreview :file="file" :is-file-object="false"
+                                :max-file-name-length="20" :fileNoteID="editNoteID"/>
                 </div>
               </div>
             </div>

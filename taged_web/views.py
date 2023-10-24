@@ -26,7 +26,7 @@ def create_note(request):
 @elasticsearch_check_available
 @permission_required(perm="taged_web.update_notes", raise_exception=True)
 def edit_note(request, note_id: str):
-    note = get_note_or_404(note_id, request.user, values=["tags"])
+    note = get_note_or_404(note_id, request.user, values=["tags", "title"])
     return render(
         request,
         "notes/update_create.html",

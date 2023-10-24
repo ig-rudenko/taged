@@ -34,12 +34,6 @@
 
         <InlineMessage v-if="errors.tags">Выберите хотя бы 1 тег</InlineMessage>
 
-
-<!--        <div class="px-4 py-2 mb-1 border-round-2xl border-orange-500 border-1 bg-orange-light" v-for="tag in noteData.tags">-->
-<!--          <div class="flex align-items-center">-->
-<!--            <i class="pi pi-tag mr-2" style="font-size: 1.2rem"></i><span>{{tag}}</span>-->
-<!--          </div>-->
-<!--        </div>-->
       </div>
 
       <div class="lg:border-round p-3">
@@ -198,28 +192,28 @@ export default {
     },
 
     /** Подтверждаем данные заметки */
-    submit() {
-      if (!this.noteIsValid()){
-        return
-      }
+    async submit() {
+      if (!this.noteIsValid()){ return }
 
       let form = new FormData()
       for (const file of this.files) {
         form.append("files", file)
       }
 
+      let resp
       if (this.editNoteID) {
         // Если заметка уже существовала, то обновляем
-        this.handleError(
-            api_request.put("/api/notes/"+this.editNoteID, this.noteData)
-                .then(resp => { this.changeFiles(resp.data.id, form) })
-        )
+        resp = await api_request.put("/api/notes/"+this.editNoteID, this.noteData)
       } else {
         // Иначе создаем новую заметку
-        this.handleError(
-            api_request.post("/api/notes/", this.noteData)
-                .then(resp => { this.changeFiles(resp.data.id, form) })
-        )
+        resp = await api_request.post("/api/notes/", this.noteData)
+      }
+      const data = await resp.data
+
+      if (resp.status === 200 || resp.stats === 201){
+        await this.changeFiles(data.id, form)
+      } else {
+        this.showError(resp.status, data)
       }
 
     },
@@ -229,7 +223,7 @@ export default {
      * @param {String} note_id
      * @param {FormData} files_form
      */
-    changeFiles(note_id, files_form) {
+    async changeFiles(note_id, files_form) {
       if (this.editNoteID) {
         // Если заметка редактировалась, то проверяем файлы, которые уже существовали
         for (const file of this.noteData.files) {
@@ -240,8 +234,14 @@ export default {
         }
       }
       // Загружаем новые добавленные файлы
-      this.handleError(api_request.post("/api/notes/" + note_id + '/files', files_form))
-      this.goToNoteViewURL(note_id)
+      const resp = await api_request.post("/api/notes/" + note_id + '/files', files_form)
+      const data = await resp.data
+
+      if (resp.status === 201) {
+        this.goToNoteViewURL(note_id)
+      } else {
+        this.showError(resp.status, data)
+      }
     },
 
     /**
@@ -254,6 +254,15 @@ export default {
             this.$toast.add({ severity: 'error', summary: 'Error: ' + reason.response.status, detail: reason.response.data, life: 5000 });
           }
       )
+    },
+
+    /**
+     * Выводит ошибку API запроса в toast сообщение
+     * @param {Number} status
+     * @param {Object} data
+     */
+    showError(status, data) {
+      this.$toast.add({ severity: 'error', summary: 'Error: ' + status, detail: data, life: 5000 });
     },
 
     goToNoteViewURL(note_id) {

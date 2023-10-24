@@ -4,7 +4,7 @@
     <Image v-if="isImage" preview :image-style="{'max-height': '64px', 'max-width': '64px'}"
            class="rounded-3 mr-2" :src="imageSrc" alt="Предпросмотр изображения"/>
 
-    <img v-else height="48" class="mr-2" :src="'/static/images/icons/'+fileFormat+'.png'" :alt="file.name">
+    <img v-else height="48" class="mr-2" :src="fileIconURL" :alt="file.name">
 
     <div class="flex flex-column">
       <span v-if="isFileObject">{{shortenString(file.name)}}</span>
@@ -48,8 +48,9 @@ export default {
   },
 
   computed: {
-    fileFormat() {
-      getFileFormatIconName(this.file.name)
+    fileIconURL() {
+      const icon = getFileFormatIconName(this.file.name)
+      return'/static/images/icons/' + icon + '.png'
     }
   },
 

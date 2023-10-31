@@ -2,7 +2,6 @@ version: '3.3'
 
 services:
   elasticsearch:
-    container_name: taged_elasticsearch
     image: elasticsearch:7.14.1
     restart: always
     ports:
@@ -25,7 +24,7 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - knowledge-base-network
+      - knowledge-base-elasticsearch-network
 
   web:
     image: nginx
@@ -53,12 +52,11 @@ services:
     depends_on:
       - knowledge_base
     networks:
-      - knowledge-base-network
+      - knowledge-base-web-network
 
   knowledge_base:
     build: .
-    container_name: taged_container
-    image: knowledge_base:1.0.8
+    image: knowledge_base:1.0.9
     restart: always
     command: /bin/bash /app/run.sh
     environment:
@@ -80,13 +78,14 @@ services:
       - elasticsearch
       - redis
     networks:
-      - knowledge-base-network
+      - knowledge-base-web-network
+      - knowledge-base-elasticsearch-network
 
   redis:
     image: redis
     restart: always
     networks:
-      - knowledge-base-network
+      - knowledge-base-elasticsearch-network
     deploy:
       resources:
         limits:
@@ -96,7 +95,12 @@ services:
 
 networks:
   # Создаем свою сеть, чтобы не было конфликтов с уже существующей
-  knowledge-base-network:
+  knowledge-base-web-network:
+    ipam:
+      driver: default
+      config:
+        - subnet: '10.198.198.0/29'
+  knowledge-base-elasticsearch-network:
     ipam:
       driver: default
       config:

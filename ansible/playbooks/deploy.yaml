@@ -49,6 +49,14 @@
       debug:
         msg: "{{ result.stdout or result.stderr }}"
 
+    - name: Применение Django миграций
+      command: "{{ root_folder }}/venv/bin/python {{ root_folder }}/manage.py migrate"
+      register: result
+
+    - name: Результат применения миграций
+      debug:
+        msg: "{{ result.stdout or result.stderr }}"
+
     - name: Создание суперпользователя Django
       command: "{{ root_folder }}/venv/bin/python {{ root_folder }}/manage.py createsuperuser --noinput"
       environment:

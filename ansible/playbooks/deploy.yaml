@@ -49,6 +49,19 @@
       debug:
         msg: "{{ result.stdout or result.stderr }}"
 
+    - name: Создание суперпользователя Django
+      command: "{{ root_folder }}/venv/bin/python {{ root_folder }}/manage.py createsuperuser --noinput"
+      environment:
+        DJANGO_SUPERUSER_USERNAME: "{{django_superuser_username}}"
+        DJANGO_SUPERUSER_PASSWORD: "{{django_superuser_password}}"
+        DJANGO_SUPERUSER_EMAIL: "{{django_superuser_email}}"
+      register: superuser_output
+      failed_when: "superuser_output.stderr and 'already taken' not in superuser_output.stderr"
+
+    - name: Статус создания суперпользователя
+      debug:
+        msg: "{{ superuser_output.stdout or superuser_output.stderr }}"
+
     - name: Создание папки /etc/sysconfig
       file:
         path: /etc/sysconfig

@@ -41,14 +41,14 @@ services:
       # Медиа - картинки, книги
       - ./media:/var/www/media
       # Статика - CSS, JS
-      - ./static:/var/www/static
+      - ./static:/var/www/static:ro
 
       # Настройки nginx
-      - ./settings/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./settings/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       # Приватный ключ
-      - ./settings/nginx/private:/etc/ssl/private/
+      - /etc/ssl/taged/private:/etc/ssl/private/:ro
       # Сертификат и ключи Диффи-Хеллмана
-      - ./settings/nginx/certs:/etc/ssl/certs/
+      - /etc/ssl/taged/certs:/etc/ssl/certs/:ro
     depends_on:
       - knowledge_base
     networks:
@@ -56,11 +56,11 @@ services:
 
   knowledge_base:
     build: .
-    image: knowledge_base:1.0.9
+    image: knowledge_base:1.0.10
     restart: always
     command: /bin/bash /app/run.sh
-    environment:
-      ELASTICSEARCH_HOSTS: 'elasticsearch:9200'
+    env_file:
+      - /etc/sysconfig/taged
 
     deploy:
       resources:

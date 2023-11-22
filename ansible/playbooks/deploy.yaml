@@ -1,0 +1,72 @@
+---
+- name: Развертывание базы знаний
+  hosts: knowledge-host
+  become: true
+  tasks:
+
+    - name: Создание папки для проекта
+      file:
+        path: "{{ root_folder }}"
+        state: directory
+        mode: '0755'
+
+    - name: Клонирование проекта с GitHub
+      git:
+        repo: https://github.com/ig-rudenko/taged.git
+        dest: "{{ root_folder }}"
+
+    - name: Создание папки медиафайлов
+      file:
+        path: "{{ root_folder }}/media"
+        state: directory
+        owner: 1000
+        group: 1000
+        recurse: true
+
+    - name: Создание прав на директорию для данных elasticsearch
+      file:
+        path: "{{ root_folder }}/esdata"
+        state: directory
+        owner: 1000
+        group: 1000
+        recurse: true
+
+    - name: Создание виртуального окружения и установка зависимостей
+      pip:
+        requirements: "{{ root_folder }}/requirements.txt"
+        virtualenv: "{{ root_folder }}/venv"
+        virtualenv_command: python{{python_version}} -m venv
+        state: present
+
+    - name: Сбор статических файлов Django
+      command: "{{ root_folder }}/venv/bin/python {{ root_folder }}/manage.py collectstatic --noinput"
+      environment:
+        DJANGO_SECRET_KEY: "{{DJANGO_SECRET_KEY}}"
+      register: result
+
+    - name: Результат сбора статических файлов
+      debug:
+        msg: "{{ result.stdout or result.stderr }}"
+
+    - name: Создание папки /etc/sysconfig
+      file:
+        path: /etc/sysconfig
+        state: directory
+        owner: root
+        group: root
+        mode: 0600
+
+    - name: Создание файла с переменными окружения (/etc/sysconfig/taged)
+      copy:
+        dest: /etc/sysconfig/taged
+        content: |
+          DJANGO_SECRET_KEY={{DJANGO_SECRET_KEY}}
+          ELASTICSEARCH_HOSTS=elasticsearch:9200
+        owner: root
+        group: root
+        mode: 0600
+
+    - name: Старт docker compose
+      shell: docker-compose up -d
+      args:
+        chdir: "{{ root_folder }}"

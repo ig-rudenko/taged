@@ -1,6 +1,6 @@
 ---
 - name: Развертывание базы знаний
-  hosts: knowledge-host
+  hosts: knowledge_host
   become: true
   tasks:
 

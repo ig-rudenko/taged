@@ -1,5 +1,5 @@
-[knowledge-host]
-knowledge-host ansible_host=
+[knowledge_host]
+knowledge_host ansible_host=
 
 [knowledge-host:vars]
 python_version=3.8

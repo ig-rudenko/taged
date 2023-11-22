@@ -1,7 +1,7 @@
-[knowledge-host]
-knowledge-host ansible_host=
+[knowledge_host]
+knowledge_host ansible_host=
 
-[knowledge-host:vars]
+[knowledge_host:vars]
 python_version=3.8
 root_folder=/opt/taged
 DJANGO_SECRET_KEY=

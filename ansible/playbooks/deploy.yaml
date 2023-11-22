@@ -42,7 +42,7 @@
     - name: Сбор статических файлов Django
       command: "{{ root_folder }}/venv/bin/python {{ root_folder }}/manage.py collectstatic --noinput"
       environment:
-        DJANGO_SECRET_KEY: "{{DJANGO_SECRET_KEY}}"
+        DJANGO_COLLECT_STATIC: 1
       register: result
 
     - name: Результат сбора статических файлов

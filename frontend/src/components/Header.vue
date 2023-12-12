@@ -80,7 +80,6 @@ export default {
 .header-image {
   height: 200px;
   background-image: url('/static/img/knowledge-background.png');
-  background-repeat: no-repeat;
   background-position: center;
 }
 

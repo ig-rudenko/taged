@@ -56,7 +56,7 @@ services:
 
   knowledge_base:
     build: .
-    image: knowledge_base:1.0.10
+    image: knowledge_base:1.0.12
     restart: always
     command: /bin/bash /app/run.sh
     env_file:

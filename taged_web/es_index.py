@@ -1,4 +1,5 @@
 import shutil
+import uuid
 from datetime import datetime
 from typing import Literal, Sequence, NamedTuple, Self
 
@@ -125,6 +126,7 @@ class PostIndex(AbstractIndex):
         try:
             result = cls.Meta.connector.es.index(
                 index=cls.Meta.index_name,
+                id=str(uuid.uuid4()),
                 document=post.json(),
                 request_timeout=cls.Meta.connector.timeout,
             )

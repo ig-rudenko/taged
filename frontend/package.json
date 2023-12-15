@@ -1,8 +1,12 @@
 {
   "name": "frontend",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.13",
   "type": "module",
+  "description": "Гибкое хранилище записей с разграничением уровня доступа",
+  "repository": "https://github.com/ig-rudenko/taged.git",
+  "author": "Igor Rudenko",
+  "license": "Apache 2.0",
   "scripts": {
     "dev": "vite",
     "build": "webpack",

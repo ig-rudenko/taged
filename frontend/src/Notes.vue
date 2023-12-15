@@ -1,7 +1,6 @@
 <template>
   <Header section-name="База знаний" section-description="Здесь вы можете найти необходимую для вас информацию"
-          :show-create-button="showCreateButton"/>
-
+          :show-create-button="userPermissions.hasPermissionToCreateNote"/>
   <div class="md:px-6 lg:px-8">
 
     <div class="flex-column p-fluid">
@@ -46,15 +45,14 @@
 
 
     <div class="flex flex-wrap justify-content-center">
-
         <div class="w-30rem p-3" v-for="note in notes">
 
-          <Badge v-if="note.score>0.05" :class="badgeClasses(note)" :value="'match: '+Math.round(note.score * 100)+'%'" />
+          <Badge v-if="note.score>0.05" :class="badgeClasses(note)" :value="'match: '+note.scorePercents+'%'" />
 
           <div :class="noteClasses(note)" style="height: 100%">
             <a :href="'/notes/' + note.id" class=" flex justify-content-center align-content-center align-items-center cursor-pointer" style="min-height: 230px;">
               <img v-if="note.previewImage" :src="note.previewImage"
-                   class="border-round-2xl p-2 border-round-2xl" style="max-height: 230px; max-width: 100%;">
+                   class="border-round-2xl p-2 border-round-2xl" style="max-height: 230px; max-width: 100%;" alt="preview">
               <svg v-else class="border-round-top-2xl cursor-pointer" width="100%" height="225" xmlns="http://www.w3.org/2000/svg"
                    role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false">
                 <title>Placeholder</title>
@@ -100,20 +98,29 @@
 
 </template>
 
-<script>
+<script lang="ts">
 import Badge from "primevue/badge/Badge.vue";
 import Dialog from "primevue/dialog/Dialog.vue";
 import MultiSelect from "primevue/multiselect/MultiSelect.vue";
 import AutoComplete  from "primevue/autocomplete/AutoComplete.vue";
 import Button from "primevue/button/Button.vue"
-import Header from "./components/Header.vue";
 import OverlayPanel from "primevue/overlaypanel";
-import ViewNote from "./components/ViewNote.vue";
 import Tag from "primevue/tag/Tag.vue";
 import ScrollTop from 'primevue/scrolltop';
-import Footer from "./components/Footer.vue";
-import api_request from "./api_request.js";
+
+import Header from "./components/Header.vue";
 import MediaPreview from "./components/MediaPreview.vue";
+import Footer from "./components/Footer.vue";
+import ViewNote from "./components/ViewNote.vue";
+import api_request from "./api_request";
+import {Paginator} from "./paginator";
+import {DetailNote, getFiles, newDetailNote} from "./note";
+import {UserPermissions} from "./permissions";
+
+enum FindNotesMode {
+  rebase = "rebase",
+  append = "append"
+}
 
 export default {
   name: "Notes",
@@ -133,28 +140,24 @@ export default {
   },
   data() {
     return {
-      showNoteID: null,
+      showNoteID: null as string,
       showNoteModal: false,
       search: "",
-      tagsSelected: [],
-      titles: [],
-      notes: [],
-      tags: [],
+      tagsSelected: [] as Array<string>,
+      titles: [] as Array<string>,
+      notes: [] as Array<DetailNote>,
+      tags: [] as Array<string>,
       totalRecords: 0,
-      paginator: {
-        currentPage: 1,
-        maxPages: 1,
-        perPage: 24,
-      },
-      userPermissions: [],
+      paginator: new Paginator(),
+      userPermissions: new UserPermissions([]),
       showTotalCount: false,
-      noteFilesShow: null,
+      noteFilesShow: null as DetailNote,
     }
   },
   mounted() {
-    api_request.get("/api/notes/permissions").then(resp => {this.userPermissions = resp.data})
+    api_request.get("/api/notes/permissions").then(resp => {this.userPermissions = new UserPermissions(resp.data)})
 
-    this.findNotes('rebase')
+    this.findNotes(FindNotesMode.rebase)
 
     api_request.get("/api/notes/tags")
         .then(
@@ -163,23 +166,17 @@ export default {
         .catch(reason => console.log(reason))
   },
 
-  computed: {
-    showCreateButton() {
-      return this.userPermissions.includes("create_notes")
-    }
-  },
-
   methods: {
-    autocomplete(event) {
+    autocomplete(event: any) {
       api_request.get("/api/notes/autocomplete?term=" + event.query)
           .then(
-            resp => this.titles = resp.data
+            resp => this.titles = Array.from(resp.data)
           )
           .catch(
               reason => console.log(reason)
           )
     },
-    noteClasses(note) {
+    noteClasses(note: DetailNote): string[] {
       let classes = ["border-round-2xl"]
       if (note.score > 0.9) {
         classes.push("total-match")
@@ -188,7 +185,7 @@ export default {
       }
       return classes
     },
-    badgeClasses(note) {
+    badgeClasses(note: DetailNote): string[] {
       let classes = ["absolute", "m-2"]
       if (note.score > 0.9) {
         classes.push("bg-purple-light")
@@ -198,27 +195,27 @@ export default {
       return classes
     },
 
-    showNoteFiles(note, event) {
+    showNoteFiles(note: DetailNote, event: Event) {
       const op = this.$refs.showFiles
       api_request.get("/api/notes/"+note.id+"/files").then(
           resp => {
-            note.files = resp.data;
+            note.files = getFiles(resp.data);
             this.noteFilesShow = note
           }
       )
       op.toggle(event)
     },
 
-    selectTag(tagName) {
+    selectTag(tagName: string): void {
       this.tagsSelected = [tagName]
       this.showNoteModal = false
       this.performNewSearch()
     },
 
     // Получение записей на первой странице
-    performNewSearch() {
+    performNewSearch(): void {
       this.paginator.currentPage = 1
-      this.findNotes('rebase')
+      this.findNotes(FindNotesMode.rebase)
       this.showTotalCount = true
     },
 
@@ -227,7 +224,7 @@ export default {
      * добавляет к уже имеющимся записям новые, либо переопределяет их
      * @param {String} save_mode
      */
-    findNotes(save_mode) {
+    findNotes(save_mode: FindNotesMode): void {
       let url = "/api/notes/?"
       url += "page=" + this.paginator.currentPage
       url += "&search=" + this.search
@@ -237,26 +234,36 @@ export default {
       api_request.get(url)
           .then(
               resp => {
-                if (save_mode === 'append') {
-                  this.notes.push(...resp.data.records)
+                if (save_mode === FindNotesMode.append) {
+                  this.notes.push(...this.getDetailNotes(resp.data.records))
                 } else {
-                  this.notes = resp.data.records
+                  this.notes = this.getDetailNotes(resp.data.records)
                 }
-                this.totalRecords = resp.data.totalRecords
-                this.paginator = resp.data.paginator
+                this.totalRecords = Number(resp.data.totalRecords)
+                this.paginator = new Paginator(
+                    resp.data.paginator.currentPage,
+                    resp.data.paginator.maxPages,
+                    resp.data.paginator.perPage
+                )
               }
           )
           .catch(reason => console.log(reason))
     },
 
-    addNextPage() {
+    getDetailNotes(data: any[]): Array<DetailNote> {
+      let res: Array<DetailNote> = []
+      for (const note of data) { res.push(newDetailNote(note)) }
+      return res
+    },
+
+    addNextPage(): void {
       this.paginator.currentPage++
       if (this.paginator.currentPage <= this.paginator.maxPages) {
-        this.findNotes('append')
+        this.findNotes(FindNotesMode.append)
       }
     },
 
-    showNote(note_id) {
+    showNote(note_id: string): void {
       this.showNoteID = note_id;
       this.showNoteModal = true
     },

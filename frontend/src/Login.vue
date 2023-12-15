@@ -43,7 +43,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import InputText from "primevue/inputtext";
 import Button from "primevue/button";
 
@@ -61,7 +61,7 @@ export default {
     }
   },
   mounted() {
-    const tokenItem = document.querySelector("input[name=csrfmiddlewaretoken]")
+    const tokenItem: HTMLInputElement = document.querySelector("input[name=csrfmiddlewaretoken]")
     this.csrfMiddlewareToken = tokenItem?tokenItem.value:""
   }
 }

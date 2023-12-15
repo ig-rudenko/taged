@@ -12,16 +12,16 @@
     </div>
 
     <div class="p-inputgroup p-3">
-      <InputText class="text-900" v-model.trim="noteData.title" @update:model-value="() => errors.title=null"
+      <InputText class="text-900" v-model.trim="note.title"
                  style="font-size: 1.5rem; text-align: center"
                  size="lg" placeholder="Укажите заголовок"></InputText>
-      <InlineMessage v-if="errors.title">Укажите заголовок</InlineMessage>
+      <InlineMessage v-if="!note.valid.title">Укажите заголовок</InlineMessage>
     </div>
 
     <div class="flex flex-column">
       <div class="lg:border-round p-3 flex align-items-center">
         <div class="p-inputgroup" style="width: max-content">
-          <MultiSelect v-model="noteData.tags" @change="() => errors.tags=null" display="chip"
+          <MultiSelect v-model="note.tags" display="chip"
                        :options="availableTags" filter placeholder="Выберите теги для записи"
                        scroll-height="400px"/>
           <Button v-if="hasPermissionToCreateTag && !showAddTagInput"
@@ -32,16 +32,16 @@
           </template>
         </div>
 
-        <InlineMessage v-if="errors.tags">Выберите хотя бы 1 тег</InlineMessage>
+        <InlineMessage v-if="!note.valid.tags">Выберите хотя бы 1 тег</InlineMessage>
 
       </div>
 
       <div class="lg:border-round p-3">
 
-        <div v-if="editNoteID && noteData.files.length" class="align-items-end flex flex-column">
+        <div v-if="editNoteID && note.files.length" class="align-items-end flex flex-column">
           <div class="font-bold">Существующие файлы</div>
           <div class="flex flex-wrap">
-            <div v-for="file in noteData.files" class="p-3 w-15rem">
+            <div v-for="file in note.files" class="p-3 w-15rem">
               <div class="flex align-items-end flex-column">
                 <i v-if="file.disable" @click="toggleFile(file)" class="pi pi-check border-round-2xl border-1 px-1 py-1 cursor-pointer hover:text-green-500" aria-label="Cancel" />
                 <i v-else @click="toggleFile(file)" class="pi pi-times border-round-2xl border-1 px-1 py-1 cursor-pointer hover:text-red-500" aria-label="Cancel" />
@@ -61,9 +61,8 @@
 
     <div>
 
-      <InlineMessage v-if="errors.content">Укажите содержимое</InlineMessage>
-      <ckeditor @click="() => errors.content=null" v-model="noteData.content"
-                editor-url="/static/ckeditor/ckeditor/ckeditor.js" value="Hello, World!"></ckeditor>
+      <InlineMessage v-if="!note.valid.content">Укажите содержимое</InlineMessage>
+      <ckeditor v-model="note.content" editor-url="/static/ckeditor/ckeditor/ckeditor.js" value="Hello, World!"></ckeditor>
     </div>
 
   </div>
@@ -86,8 +85,9 @@ import Toast from "primevue/toast";
 import MediaPreview from "./components/MediaPreview.vue";
 import Header from "./components/Header.vue";
 import Footer from "./components/Footer.vue";
-import api_request from "./api_request.js";
+import api_request from "./api_request.ts";
 import LoadMedia from "./components/LoadMedia.vue";
+import {createNewNote, Note} from "./note.ts";
 
 export default {
   name: "Notes",
@@ -107,21 +107,7 @@ export default {
   data() {
     return {
       files: [],
-      noteData: {
-        title: "",
-        published_at: "",
-        tags: [],
-        content: "",
-        files: [],
-      },
-      errors: {
-        title: null,
-        tags: null,
-        content: null,
-        hasErrors() {
-          return !this.title && !this.tags && !this.content
-        }
-      },
+      note: new Note(),
       availableTags: [],
       userPermissions: [],
 
@@ -161,7 +147,7 @@ export default {
     getNote() {
       let url = "/api/notes/" + this.editNoteID
       api_request.get(url)
-          .then(resp => this.noteData = resp.data)
+          .then(resp => this.note = createNewNote(resp.data))
           .catch(reason => console.log(reason))
     },
 
@@ -181,20 +167,13 @@ export default {
       console.log(this.newTag)
       if (!this.newTag.length) return;
       this.availableTags.push(this.newTag)
-      this.noteData.tags.push(this.newTag)
+      this.note.tags.push(this.newTag)
       this.newTag = ""
-    },
-
-    noteIsValid() {
-      this.errors.title = this.noteData.title.length === 0
-      this.errors.tags = this.noteData.tags.length === 0
-      this.errors.content = this.noteData.content.length === 0
-      return this.errors.hasErrors()
     },
 
     /** Подтверждаем данные заметки */
     async submit() {
-      if (!this.noteIsValid()){ return }
+      if (!this.note.isValid()){ return }
 
       let form = new FormData()
       for (const file of this.files) {
@@ -204,10 +183,10 @@ export default {
       let resp
       if (this.editNoteID) {
         // Если заметка уже существовала, то обновляем
-        resp = await api_request.put("/api/notes/"+this.editNoteID, this.noteData)
+        resp = await api_request.put("/api/notes/"+this.editNoteID, this.note)
       } else {
         // Иначе создаем новую заметку
-        resp = await api_request.post("/api/notes/", this.noteData)
+        resp = await api_request.post("/api/notes/", this.note)
       }
       const data = await resp.data
 
@@ -227,7 +206,7 @@ export default {
     async changeFiles(note_id, files_form) {
       if (this.editNoteID) {
         // Если заметка редактировалась, то проверяем файлы, которые уже существовали
-        for (const file of this.noteData.files) {
+        for (const file of this.note.files) {
           if (file.disable) {
             // Удаляем файлы, которые были отключены
             this.handleError(api_request.delete("/api/notes/" + note_id + '/files/' + file.name))

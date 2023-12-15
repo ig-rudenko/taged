@@ -36,7 +36,7 @@
 
 </template>
 
-<script>
+<script lang="ts">
 import MediaPreview from "./MediaPreview.vue";
 import Button from "primevue/button/Button.vue";
 
@@ -46,9 +46,11 @@ export default {
     Button,
     MediaPreview,
   },
+  emits: ["selectedFiles", "change"],
+
   data() {
     return {
-      files: []
+      files: [] as Array<File>
     }
   },
 
@@ -58,27 +60,27 @@ export default {
 
   methods: {
 
-    addDragAndDropListeners() {
+    addDragAndDropListeners(): void {
       let container = document.querySelector("#drag-drop-area");
       container.addEventListener("dragover", e => e.preventDefault());
-      container.addEventListener("drop", (e) => this.addByDragAndDrop(e));
+      container.addEventListener("drop", (e) => this.addByDragAndDrop(<DragEvent>e));
     },
 
-    addByDragAndDrop(e) {
+    addByDragAndDrop(e: DragEvent): void {
       e.preventDefault();
       this.addFiles(e.dataTransfer.files)
     },
 
-    handleFileChange(event) {
-      this.addFiles(event.target.files)
+    handleFileChange(event: Event): void {
+      this.addFiles((<HTMLInputElement>event.target).files)
     },
 
-    addFiles(files) {
+    addFiles(files: FileList): void {
       this.files = [...Array.from(files), ...this.files]
       this.$emit("selectedFiles", this.files)
     },
 
-    deleteFile(index){
+    deleteFile(index: number): void {
       this.files.splice(index, 1)
       this.$emit("change", this.files)
     },

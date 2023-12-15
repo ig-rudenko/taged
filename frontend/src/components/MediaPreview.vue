@@ -25,12 +25,14 @@
 
 </template>
 
-<script>
+<script lang="ts">
+import {PropType} from "vue";
 import Dialog from "primevue/dialog/Dialog.vue";
 import Image from "primevue/image/Image.vue";
 
-import format_bytes from "../helpers/format_size.js";
-import getFileFormatIconName from "../helpers/icons.js";
+import {NoteFile} from "../note";
+import format_bytes from "../helpers/format_size";
+import getFileFormatIconName from "../helpers/icons";
 
 export default {
   name: "MediaPreview",
@@ -39,14 +41,14 @@ export default {
     Image,
   },
   props: {
-    file: {required: true},
-    isFileObject: {required: true},
-    fileNoteID: {required: false, default: null},
+    file: {required: true, type: Object as PropType<NoteFile|File>},
+    isFileObject: {required: true, type: Boolean},
+    fileNoteID: {required: false, default: null, type: String},
     maxFileNameLength: {required: false, default: null},
   },
   data() {
     return {
-      currentFile: null,
+      currentFile: null as NoteFile|File,
       isImage: false,
       imageSrc: "",
       showFilePreviewModal: false,
@@ -56,6 +58,8 @@ export default {
   mounted() {
     this.checkFile()
     this.currentFile = this.file
+    console.log(this.file)
+    console.log(this.currentFile)
   },
   updated() {
     if (this.currentFile !== this.file){
@@ -66,21 +70,22 @@ export default {
   },
 
   computed: {
-    fileIconURL() {
+    fileIconURL(): string {
+      console.log(this.file, "TEST")
       const icon = getFileFormatIconName(this.file.name)
       return'/static/images/icons/' + icon + '.png'
     },
-    fileDownloadLink() {
+    fileDownloadLink(): string {
       return '/api/notes/'+this.fileNoteID+'/files/'+this.file.name
     },
-    fileOriginLink() {
+    fileOriginLink(): string {
       return '/media/'+this.fileNoteID+'/'+this.file.name
     },
 
   },
 
   methods: {
-    shortenString(str) {
+    shortenString(str: string): string {
       if (!this.maxFileNameLength) return str;
 
       // Проверяем, что строка длиннее лимита
@@ -95,13 +100,13 @@ export default {
       }
     },
 
-    enterFile() {
+    enterFile(): void {
       if (this.file.name.endsWith(".pdf")) {
         this.showFilePreviewModal = true
       }
     },
 
-    checkFile() {
+    checkFile(): void {
       if (this.isFileObject) {
         this.isImage = this.file.type.startsWith("image/");
         if (this.isImage) {
@@ -114,7 +119,7 @@ export default {
       }
     },
 
-    formatBytes(size) { return format_bytes(size) },
+    formatBytes(size: number): string { return format_bytes(size) },
   }
 }
 </script>

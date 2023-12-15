@@ -1,10 +1,10 @@
-import axios from "axios"
+import axios, {AxiosInstance} from "axios"
 
-const tokenItem = document.querySelector("input[name=csrfmiddlewaretoken]")
+const tokenItem = <HTMLInputElement>document.querySelector("input[name=csrfmiddlewaretoken]")
 
 const token = tokenItem?tokenItem.value:""
 
-const api_request = axios.create({
+const api_request: AxiosInstance = axios.create({
     headers: {
         // Добавляем токен в заголовок "X-CSRFToken"
         'X-CSRFToken': token

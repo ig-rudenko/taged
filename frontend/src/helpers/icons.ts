@@ -1,9 +1,7 @@
 /**
  * Возвращает имя иконки для формата файла.
- * @param {string} fileName Имя файла.
- * @returns {string}
  */
-export default function getFileFormatIconName(fileName) {
+export default function getFileFormatIconName(fileName: string): string {
     if (fileName.match(/.+\.(docx?|rtf)$/i)){
         return 'docx'
     }

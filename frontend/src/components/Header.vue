@@ -34,9 +34,9 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import Button from "primevue/button/Button.vue";
-import api_request from "../api_request.js";
+import api_request from "../api_request";
 
 export default {
   name: "Header",
@@ -44,10 +44,10 @@ export default {
     Button,
   },
   props: {
-    showCount: {required: false, default: true},
-    sectionName: {required: true},
-    sectionDescription: {required: false, default: ""},
-    showCreateButton: {required: false, default: false},
+    showCount: {required: false, default: true, type: Boolean},
+    sectionName: {required: true, type: String},
+    sectionDescription: {required: false, default: "", type: String},
+    showCreateButton: {required: false, default: false, type: Boolean},
   },
   data() {
     return {
@@ -55,18 +55,18 @@ export default {
     }
   },
   mounted() {
-    if (this.showCount){
+    if (this.showCount) {
       this.getTotalRecordsCount()
     }
   },
   methods: {
-    getTotalRecordsCount() {
+    getTotalRecordsCount(): void {
       api_request.get("/api/notes/count").then(resp => this.totalCount = resp.data.totalCount)
     },
-    goToCreateNoteURL() {
+    goToCreateNoteURL(): void {
       window.location.href = "/notes/create"
     },
-    getRandomInt(min, max) {
+    getRandomInt(min: number, max: number): number {
       min = Math.ceil(min);
       max = Math.floor(max);
       return Math.floor(Math.random() * (max - min + 1)) + min;

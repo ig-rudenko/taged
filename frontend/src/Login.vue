@@ -61,7 +61,7 @@ export default {
     }
   },
   mounted() {
-    const tokenItem: HTMLInputElement = document.querySelector("input[name=csrfmiddlewaretoken]")
+    const tokenItem: HTMLInputElement | null = document.querySelector("input[name=csrfmiddlewaretoken]")
     this.csrfMiddlewareToken = tokenItem?tokenItem.value:""
   }
 }

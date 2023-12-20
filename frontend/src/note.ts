@@ -1,5 +1,3 @@
-import format_bytes from "./helpers/format_size";
-
 class NoteValidator {
     constructor(
         public title: boolean = true,
@@ -58,7 +56,7 @@ class DetailNote extends Note {
         public filesCount: number,
         public published_at: string = "",
         public previewImage: string = "",
-        public score: number = null,
+        public score: number = 0,
     ) {
         super();
     }

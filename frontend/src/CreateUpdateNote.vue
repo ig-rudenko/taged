@@ -1,4 +1,5 @@
 <template>
+  <Snow/>
   <Header :section-name="editNoteID?'Редактирование записи':'Создание новой записи'"
           :show-count="false"/>
 
@@ -88,10 +89,12 @@ import Footer from "./components/Footer.vue";
 import api_request from "./api_request.ts";
 import LoadMedia from "./components/LoadMedia.vue";
 import {createNewNote, Note} from "./note.ts";
+import Snow from "./components/Snow.vue";
 
 export default {
   name: "Notes",
   components: {
+    Snow,
     LoadMedia,
     InlineMessage,
     Header,

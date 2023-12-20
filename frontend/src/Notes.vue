@@ -1,4 +1,5 @@
 <template>
+  <Snow/>
   <Header section-name="База знаний" section-description="Здесь вы можете найти необходимую для вас информацию"
           :show-create-button="userPermissions.hasPermissionToCreateNote"/>
   <div class="md:px-6 lg:px-8">
@@ -116,6 +117,7 @@ import api_request from "./api_request";
 import {Paginator} from "./paginator";
 import {DetailNote, getFiles, newDetailNote} from "./note";
 import {UserPermissions} from "./permissions";
+import Snow from "./components/Snow.vue";
 
 enum FindNotesMode {
   rebase = "rebase",
@@ -125,6 +127,7 @@ enum FindNotesMode {
 export default {
   name: "Notes",
   components: {
+    Snow,
     MediaPreview,
     AutoComplete,
     Badge,

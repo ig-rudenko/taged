@@ -1,4 +1,5 @@
 <template>
+  <Snow/>
   <Header section-name=""
           :show-count="false"
           :show-create-button="false"/>
@@ -13,10 +14,12 @@
 import Header from "./components/Header.vue";
 import ViewNote from "./components/ViewNote.vue";
 import Footer from "./components/Footer.vue";
+import Snow from "./components/Snow.vue";
 
 export default {
   name: "DetailViewNote",
   components: {
+    Snow,
     Header,
     ViewNote,
     Footer,

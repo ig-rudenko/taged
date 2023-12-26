@@ -39,7 +39,7 @@ services:
           memory: "100Mb"
     volumes:
       # Медиа - картинки, книги
-      - ./media:/var/www/media
+      - ./media:/var/www/media:ro
       # Статика - CSS, JS
       - ./static:/var/www/static:ro
 
@@ -72,6 +72,7 @@ services:
     volumes:
       # Чтобы добавлять новые изображения и книги
       - ./media:/app/media
+      - ./static:/app/static
       # База данных
       - ./db.sqlite3:/app/db.sqlite3
     depends_on:

@@ -9,3 +9,4 @@ redis
 beautifulsoup4
 djangorestframework
 gunicorn
+Pillow

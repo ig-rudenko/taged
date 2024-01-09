@@ -63,7 +63,7 @@
     <div>
 
       <InlineMessage v-if="!note.valid.content">Укажите содержимое</InlineMessage>
-      <ckeditor v-model="note.content" editor-url="/static/ckeditor/ckeditor/ckeditor.js" value="Hello, World!"></ckeditor>
+      <ckeditor v-model="note.content" :config="config" editor-url="/static/ckeditor/ckeditor/ckeditor.js" value="Hello, World!"></ckeditor>
     </div>
 
   </div>
@@ -117,6 +117,9 @@ export default {
       showAddTagInput: false,
       editNoteID: null,
       newTag: "",
+      config: {
+        filebrowserUploadUrl: "/ckeditor/upload/"
+      }
     }
   },
   mounted() {
@@ -259,12 +262,6 @@ export default {
 <style scoped>
 html, body {
   margin: 0!important;
-}
-
-@media (max-height > 100px) {
-  .cke_1_contents {
-    //height: 500px!important;
-  }
 }
 
 .bg-orange-light {

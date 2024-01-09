@@ -21,7 +21,6 @@ from taged_web.api.serializers import (
     NoteSerializerTagsValidation,
 )
 from taged_web.es_index import PostIndex, T_Values
-from taged_web.image_decoder import ReplaceImagesInHtml
 from taged_web.models import User, Tags
 
 
@@ -217,30 +216,7 @@ class NotesListCreateAPIView(GenericAPIView):
         }
 
         add_tags_to_user_if_not_exist(data["tags"], request.user)
-
-        # Ищем закодированные изображения (base64) в содержимом заметки.
-        image_formatter = ReplaceImagesInHtml(data["content"])
-
-        if not image_formatter.has_base64_encoded_images:
-            # У содержимого заметки нет изображений закодированных с помощью base64,
-            # то сохраняем как есть
-            post = PostIndex.create(**data)
-        else:
-            # Если есть закодированные изображения.
-            # Создаем запись в базе данных elasticsearch без содержимого.
-            data["content"] = ""
-            # Его мы обновим далее, заменив base64 изображения на ссылки.
-            post = PostIndex.create(**data)
-
-            # Сохраняем закодированные изображения как файлы
-            # и заменяем у них атрибут src на ссылку файла.
-            image_formatter.save_images_and_update_src(
-                image_prefix="image",
-                folder=f"{post.id}/content_images",
-            )
-            # Обновляем содержимое с измененными изображениями
-            post.content = image_formatter.html
-            post.save(values=["content"])
+        post = PostIndex.create(**data)
 
         # Обнуляем кеш
         clear_cache()
@@ -310,16 +286,6 @@ class NoteDetailUpdateAPIView(GenericAPIView):
             note.title = new_title
             updated_fields.append("title")
         if new_content != note.content:
-            # Ищем закодированные изображения (base64) в содержимом заметки.
-            image_formatter = ReplaceImagesInHtml(new_content)
-            if image_formatter.has_base64_encoded_images:
-                # Сохраняем закодированные изображения как файлы и заменяем у них атрибут src на ссылку файла.
-                image_formatter.save_images_and_update_src(
-                    image_prefix="image", folder=f"{note.id}/content_images"
-                )
-                # Обновляем содержимое с измененными изображениями
-                new_content = image_formatter.html
-
             note.content = new_content
             updated_fields.append("content")
         if new_tags != note.tags_list:

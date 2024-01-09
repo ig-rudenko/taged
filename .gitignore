@@ -3,9 +3,10 @@ esdata
 media
 test*
 logs
-db.sqlite3
+db.sqlite3*
 static/debug_toolbar
 static/ckeditor
 static/admin
+static/rest_framework
 .idea
 .obsidian

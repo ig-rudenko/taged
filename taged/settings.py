@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 import logging
 import os
 import time
+import uuid
 from pathlib import Path
 
 from elasticsearch import Elasticsearch
@@ -53,6 +54,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     "ckeditor",
+    "ckeditor_uploader",
     "rest_framework",
     "taged_web.apps.TagedWebConfig",
     "books",
@@ -175,6 +177,12 @@ REST_FRAMEWORK = {
     ]
 }
 
+def get_filename(file_name: str, request) -> str:
+    return str(uuid.uuid4()) + "-" + file_name
+
+CKEDITOR_BROWSE_SHOW_DIRS = True
+CKEDITOR_RESTRICT_BY_USER = True
+CKEDITOR_FILENAME_GENERATOR = 'taged.settings.get_filename'
 CKEDITOR_UPLOAD_PATH = "notes/"
 
 logging.basicConfig(filename="logs", level=logging.INFO)

@@ -118,7 +118,11 @@ export default {
       editNoteID: null,
       newTag: "",
       config: {
-        filebrowserUploadUrl: "/ckeditor/upload/"
+        filebrowserUploadUrl: "/ckeditor/upload/",
+        iframe_attributes: {
+          sandbox: 'allow-scripts allow-same-origin',
+          allow: 'autoplay'
+        }
       }
     }
   },

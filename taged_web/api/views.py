@@ -175,6 +175,8 @@ class NotesListCreateAPIView(GenericAPIView):
 
     @staticmethod
     def search_translate(search: str) -> str:
+        if not search:
+            return ""
         ru = "йцукенгшщзхъфывапролджэячсмитьбю.ёЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,Ё"
         eng = "qwertyuiop[]asdfghjkl;'zxcvbnm,./`WERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?~"
         eng_ru_layout = dict(zip(map(ord, eng), ru))

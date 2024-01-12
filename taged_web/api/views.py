@@ -175,13 +175,11 @@ class NotesListCreateAPIView(GenericAPIView):
 
     @staticmethod
     def search_translate(search: str) -> str:
-        if not search:
-            return ""
         ru = "йцукенгшщзхъфывапролджэячсмитьбю.ёЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,Ё"
         eng = "qwertyuiop[]asdfghjkl;'zxcvbnm,./`WERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?~"
         eng_ru_layout = dict(zip(map(ord, eng), ru))
         ru_eng_layout = dict(zip(map(ord, ru), eng))
-        return search + " " + search.translate(eng_ru_layout) + " " + search.translate(ru_eng_layout)
+        return (search + " " + search.translate(eng_ru_layout) + " " + search.translate(ru_eng_layout)).strip()
 
     @staticmethod
     def add_file_mark(objects: list[dict]):

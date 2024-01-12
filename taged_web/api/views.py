@@ -140,7 +140,7 @@ class NotesListCreateAPIView(GenericAPIView):
         paginator = PostIndex.filter(
             tags_off=request.user.unavailable_tags,
             tags_in=tags_in,
-            string=search,
+            string=self.search_translate(search),
             sort=sorted_by,
             sort_desc=True,
         )
@@ -172,6 +172,14 @@ class NotesListCreateAPIView(GenericAPIView):
                 },
             }
         )
+
+    @staticmethod
+    def search_translate(search: str) -> str:
+        ru = "йцукенгшщзхъфывапролджэячсмитьбю.ёЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,Ё"
+        eng = "qwertyuiop[]asdfghjkl;'zxcvbnm,./`WERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?~"
+        eng_ru_layout = dict(zip(map(ord, eng), ru))
+        ru_eng_layout = dict(zip(map(ord, ru), eng))
+        return search + " " + search.translate(eng_ru_layout) + " " + search.translate(ru_eng_layout)
 
     @staticmethod
     def add_file_mark(objects: list[dict]):

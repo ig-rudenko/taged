@@ -16,7 +16,7 @@
     "@mayasabha/ckeditor4-vue3": "^1.0.5",
     "axios": "^1.6.2",
     "primeicons": "^6.0.1",
-    "primevue": "^3.44.0",
+    "primevue": "^3.46.0",
     "vue": "^3.3.11",
     "vue-loader": "^17.3.1"
   },

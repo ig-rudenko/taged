@@ -1,4 +1,3 @@
-import re
 from datetime import datetime
 
 from django.conf import settings
@@ -157,7 +156,6 @@ class NotesListCreateAPIView(GenericAPIView):
             records = paginator.get_page(page)
 
         self.add_file_mark(records)
-        self.add_preview_image(records)
         self.humanize_datetime(records)
 
         return Response(
@@ -194,19 +192,6 @@ class NotesListCreateAPIView(GenericAPIView):
             for file in (settings.MEDIA_ROOT / f'{post["id"]}').glob("*"):
                 if file.is_file():
                     post["filesCount"] += 1
-
-    @staticmethod
-    def add_preview_image(objects: list[dict]):
-        for post in objects:
-            if not post.get("preview_image"):
-                post["preview_image"] = None
-                p = PostIndex.get(post["id"])
-                first_image = re.search(r'<img .*?src="(\S+)"', p.content)
-                if first_image:
-                    post["preview_image"] = first_image.group(1)
-
-                p.preview_image = post["preview_image"]
-                p.save(values=["preview_image"])
 
     @staticmethod
     def humanize_datetime(objects: list[dict], width: int = 70):

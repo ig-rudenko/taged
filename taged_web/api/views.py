@@ -200,12 +200,11 @@ class NotesListCreateAPIView(GenericAPIView):
         for post in objects:
             if not post.get("preview_image"):
                 post["preview_image"] = None
-                first_image = re.search(r'<img .*?src="(\S+)"', post["content"])
+                p = PostIndex.get(post["id"])
+                first_image = re.search(r'<img .*?src="(\S+)"', p.content)
                 if first_image:
                     post["preview_image"] = first_image.group(1)
 
-                # Создание превью картинки
-                p = PostIndex.get(post["id"])
                 p.preview_image = post["preview_image"]
                 p.save(values=["preview_image"])
 

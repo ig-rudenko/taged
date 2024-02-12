@@ -12,7 +12,7 @@ module.exports = {
     output: {
         path: path.resolve(__dirname, '../static/'),
         publicPath: '/static/',
-        filename: '[name].js'
+        filename: '[name]_v1.1.0.js'
     },
     module: {
         rules: [

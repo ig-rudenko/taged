@@ -6,13 +6,11 @@ from .api.views import get_note_or_404
 
 
 @login_required
-@elasticsearch_check_available
 def main(request):
     return render(request, "notes/main.html")
 
 
 @login_required
-@elasticsearch_check_available
 @permission_required(perm="taged_web.create_notes", raise_exception=True)
 def create_note(request):
     return render(

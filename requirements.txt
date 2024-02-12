@@ -1,9 +1,7 @@
-pip>=23.3
 Django>=4.2
 requests
 dateconverter~=0.1
 elasticsearch==7.15.2
-PyMuPdf
 django-ckeditor
 redis
 beautifulsoup4

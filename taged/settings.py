@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
+
 import logging
 import os
 import time
@@ -18,7 +19,6 @@ from pathlib import Path
 from elasticsearch import Elasticsearch
 from requests.exceptions import ConnectionError as ElasticConnectionError
 
-from books.es_index import BookIndex
 from elasticsearch_control import IndexRegister
 from elasticsearch_control.transport import elasticsearch_connector
 from taged_web.es_index import PostIndex
@@ -31,7 +31,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-o$84xxrt-ip(b7&)wy)ka(@s@7tq()0vs0u(hu*mo7-^uvc_54")
+SECRET_KEY = os.getenv(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-o$84xxrt-ip(b7&)wy)ka(@s@7tq()0vs0u(hu*mo7-^uvc_54",
+)
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -57,7 +60,6 @@ INSTALLED_APPS = [
     "ckeditor_uploader",
     "rest_framework",
     "taged_web.apps.TagedWebConfig",
-    "books",
 ]
 
 MIDDLEWARE = [
@@ -172,17 +174,19 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
-    ]
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ],
 }
+
 
 def get_filename(file_name: str, request) -> str:
     return str(uuid.uuid4()) + "-" + file_name
 
+
 CKEDITOR_BROWSE_SHOW_DIRS = True
 CKEDITOR_RESTRICT_BY_USER = True
-CKEDITOR_FILENAME_GENERATOR = 'taged.settings.get_filename'
+CKEDITOR_FILENAME_GENERATOR = "taged.settings.get_filename"
 CKEDITOR_UPLOAD_PATH = "notes/"
 
 logging.basicConfig(filename="logs", level=logging.INFO)
@@ -213,8 +217,6 @@ if ELASTICSEARCH_HOSTS_raw_str:
             # Создаем индексы
             es_index_register.register_index(PostIndex)
             print("Registered PostIndex")
-            es_index_register.register_index(BookIndex)
-            print("Registered BookIndex")
             break
         except ElasticConnectionError as error:
             print(error)

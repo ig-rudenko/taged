@@ -1,3 +1,4 @@
+import re
 import shutil
 import uuid
 from datetime import datetime
@@ -13,7 +14,7 @@ from elasticsearch_control import (
 )
 from elasticsearch_control.transport import elasticsearch_connector
 
-T_Values = Literal["title", "content", "tags", "published_at"]
+T_Values = Literal["title", "content", "tags", "published_at", "preview_image"]
 
 
 class PostFile(NamedTuple):
@@ -32,6 +33,7 @@ class PostIndex(AbstractIndex):
     content: str
     tags: str
     published_at: datetime
+    preview_image: str
 
     class Meta:
         index_name = "company"
@@ -52,6 +54,12 @@ class PostIndex(AbstractIndex):
             }
         }
 
+    @staticmethod
+    def get_first_image_url(content: str) -> str | None:
+        first_image = re.search(r'<img .*?src="(\S+)"', content)
+        if first_image:
+            return first_image.group(1)
+
     @property
     def tags_list(self) -> list[str]:
         if isinstance(self.tags, str):
@@ -65,6 +73,7 @@ class PostIndex(AbstractIndex):
             "tags": self.tags_list,
             "published_at": self.published_at,
             "content": self.content,
+            "preview_image": self.preview_image,
         }
 
     @classmethod
@@ -84,7 +93,7 @@ class PostIndex(AbstractIndex):
         response = super().get(id_=id_, **extra, **kwargs)
 
         if response is not None and response.get("_source"):  # Если получили ответ
-            post = PostIndex()
+            post = cls()
             data: dict = response["_source"]
 
             # Если теги были получены и они в виде list, то переводим их в строку тегов, разделенную `, `
@@ -123,6 +132,7 @@ class PostIndex(AbstractIndex):
         post.tags = ", ".join(tags)
         post.content = content
         post.published_at = datetime.now()
+        post.preview_image = cls.get_first_image_url(content)
         try:
             result = cls.Meta.connector.es.index(
                 index=cls.Meta.index_name,
@@ -174,7 +184,7 @@ class PostIndex(AbstractIndex):
 
         # Теги всегда требуется возвращать
         if values is None:
-            values = ["title", "content", "tags", "published_at"]
+            values = ["title", "content", "tags", "published_at", "preview_image"]
         if "tags" not in values:
             values.append("tags")
 
@@ -254,6 +264,7 @@ class PostIndex(AbstractIndex):
                             "tags": post["_source"].get("tags"),
                             "published_at": post["_source"].get("published_at"),
                             "content": post["_source"].get("content"),
+                            "preview_image": post["_source"].get("preview_image"),
                             "score": round(float(post["_score"] or 0) / max_score, 3),
                         }
                     )

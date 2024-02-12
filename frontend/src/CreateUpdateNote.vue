@@ -8,7 +8,9 @@
   <div class="lg:px-8">
 
     <div class="px-3">
-      <Button @click="submit" severity="success" icon="pi pi-check"
+      <Button v-if="submitInProcess" severity="success" icon="pi pi-spin pi-spinner"
+              :label="editNoteID?'Обновляется':'Создается'"/>
+      <Button v-else @click="submit" severity="success" icon="pi pi-check"
               :label="editNoteID?'Обновить':'Создать'"/>
     </div>
 
@@ -75,7 +77,7 @@
 </template>
 
 <script>
-import { component as ckeditor } from '@mayasabha/ckeditor4-vue3'
+import {component as ckeditor} from '@mayasabha/ckeditor4-vue3'
 import InputText from "primevue/inputtext/InputText.vue";
 import InlineMessage from "primevue/inlinemessage/InlineMessage.vue";
 import MultiSelect from "primevue/multiselect/MultiSelect.vue";
@@ -113,6 +115,7 @@ export default {
       note: new Note(),
       availableTags: [],
       userPermissions: [],
+      submitInProcess: false,
 
       showAddTagInput: false,
       editNoteID: null,
@@ -183,8 +186,9 @@ export default {
 
     /** Подтверждаем данные заметки */
     async submit() {
-      if (!this.note.isValid()){ return }
+      if (!this.note.isValid() || this.submitInProcess){ return }
 
+      this.submitInProcess = true
       let form = new FormData()
       for (const file of this.files) {
         form.append("files", file)
@@ -205,6 +209,7 @@ export default {
       } else {
         this.showError(resp.status, data)
       }
+      this.submitInProcess = false
 
     },
 

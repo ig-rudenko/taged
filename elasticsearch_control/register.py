@@ -24,9 +24,18 @@ class IndexRegister:
 
         if self._es.ping():
             # Создаем индекс в Elasticsearch
-            self._es.indices.create(
-                index=index.Meta.index_name, body=index.get_index_settings(), ignore=400
-            )
+            if self._es.indices.exists(index=index.Meta.index_name):
+                res = self._es.indices.put_mapping(
+                    index=index.Meta.index_name,
+                    body=index.get_index_settings()["mappings"],
+                    ignore=400,
+                )
+            else:
+                self._es.indices.create(
+                    index=index.Meta.index_name,
+                    body=index.get_index_settings(),
+                    ignore=400,
+                )
         else:
             raise ConnectionError("Elasticsearch недоступен!")
 

@@ -174,7 +174,7 @@ class AbstractIndex(metaclass=MetaIndex):
         return {
             "settings": cls.Meta.settings,
             "mappings": {
-                "dynamic": "strict",
+                "dynamic": "true",
                 "properties": cls.Meta.mappings,
             },
         }

@@ -1,17 +1,15 @@
-import re
 from datetime import datetime
 
+from django.conf import settings
 from django.contrib.humanize.templatetags import humanize
 from django.core.cache import cache
-from django.http import Http404, HttpResponse
 from django.core.files.uploadedfile import UploadedFile
+from django.http import Http404, HttpResponse
 from django.utils.decorators import method_decorator
-from django.conf import settings
+from elasticsearch import exceptions as es_exceptions
 from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
-
-from elasticsearch import exceptions as es_exceptions
 
 from elasticsearch_control.cache import get_or_cache
 from elasticsearch_control.decorators import api_elasticsearch_check_available
@@ -143,6 +141,7 @@ class NotesListCreateAPIView(GenericAPIView):
             string=self.search_translate(search),
             sort=sorted_by,
             sort_desc=True,
+            values=["title", "tags", "published_at", "preview_image"],
         )
 
         if not search and not tags_in and page == "1":
@@ -157,8 +156,6 @@ class NotesListCreateAPIView(GenericAPIView):
             records = paginator.get_page(page)
 
         self.add_file_mark(records)
-        self.add_preview_image(records)
-        self.remove_content(records)
         self.humanize_datetime(records)
 
         return Response(
@@ -179,7 +176,13 @@ class NotesListCreateAPIView(GenericAPIView):
         eng = "qwertyuiop[]asdfghjkl;'zxcvbnm,./`WERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?~"
         eng_ru_layout = dict(zip(map(ord, eng), ru))
         ru_eng_layout = dict(zip(map(ord, ru), eng))
-        return (search + " " + search.translate(eng_ru_layout) + " " + search.translate(ru_eng_layout)).strip()
+        return (
+            search
+            + " "
+            + search.translate(eng_ru_layout)
+            + " "
+            + search.translate(ru_eng_layout)
+        ).strip()
 
     @staticmethod
     def add_file_mark(objects: list[dict]):
@@ -189,19 +192,6 @@ class NotesListCreateAPIView(GenericAPIView):
             for file in (settings.MEDIA_ROOT / f'{post["id"]}').glob("*"):
                 if file.is_file():
                     post["filesCount"] += 1
-
-    @staticmethod
-    def add_preview_image(objects: list[dict]):
-        for post in objects:
-            post["previewImage"] = None
-            first_image = re.search('<img .*?src="(\S+)"', post["content"])
-            if first_image:
-                post["previewImage"] = first_image.group(1)
-
-    @staticmethod
-    def remove_content(objects: list[dict], width: int = 70):
-        for post in objects:
-            del post["content"]
 
     @staticmethod
     def humanize_datetime(objects: list[dict], width: int = 70):
@@ -295,7 +285,8 @@ class NoteDetailUpdateAPIView(GenericAPIView):
             updated_fields.append("title")
         if new_content != note.content:
             note.content = new_content
-            updated_fields.append("content")
+            note.preview_image = note.get_first_image_url(new_content)
+            updated_fields += ["content", "preview_image"]
         if new_tags != note.tags_list:
             note.tags = new_tags
             updated_fields.append("tags")

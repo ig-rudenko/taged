@@ -83,7 +83,7 @@ function createNewNote(data: any): Note {
 function newDetailNote(data: any): DetailNote {
     return new DetailNote(
         data.id, data.title, data.content, data.tags, getFiles(data.files || []), data.filesCount,
-        data.published_at, data.previewImage, data.score
+        data.published_at, data.preview_image, data.score
     )
 }
 

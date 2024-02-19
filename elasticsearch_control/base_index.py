@@ -77,6 +77,12 @@ class MetaIndex(type):
             # Добавляем mappings поля
             attrs["Meta"].mappings[field_name] = {"type": mtype}
 
+            # Добавляем extra параметры, если указаны
+            if hasattr(attrs["Meta"], "extra_field_props"):
+                extra = attrs["Meta"].extra_field_props.get(field_name)
+                if isinstance(extra, dict):
+                    attrs["Meta"].mappings[field_name].update(extra)
+
         return super().__new__(cls, cls_name, bases, attrs)
 
 
@@ -187,6 +193,7 @@ class AbstractIndex(metaclass=MetaIndex):
         connector: ElasticsearchConnection
         index_name: str
         settings: dict[str, Any]
+        extra_field_props: dict[str, dict[str, Any]] = {}
 
         # Создается автоматически, не трогать
         mappings: dict[str, dict[str, Any]]

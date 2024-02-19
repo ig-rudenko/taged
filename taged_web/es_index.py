@@ -49,7 +49,11 @@ class PostIndex(AbstractIndex):
                         "char_filter": ["html_strip"],
                         "tokenizer": "standard",
                         "filter": ["lowercase", "ru_stop", "ru_stemmer"],
-                    }
+                    },
+                    "without_stemming": {
+                        "tokenizer": "standard",
+                        "filter": ["lowercase", "ru_stop"],
+                    },
                 },
             }
         }
@@ -207,16 +211,21 @@ class PostIndex(AbstractIndex):
                 }
             )
 
-        # Поиск по строке в title и content
+        # Поиск по строке в title и content с возможностью допущения ошибок в словах.
         if string:
-            query_params.query["bool"]["must"].append(
+            query_params.query["bool"]["should"] = [
                 {
-                    "simple_query_string": {
-                        "query": string,
-                        "fields": ["title^2", "content"],
-                    }
-                }
-            )
+                    "match": {
+                        "title": {"query": string, "fuzziness": "auto"},
+                    },
+                },
+                {
+                    "match": {
+                        "content": {"query": string, "fuzziness": "auto"},
+                    },
+                },
+            ]
+            query_params.query["bool"]["minimum_should_match"] = 1
 
         if tags_off:
             query_params.query["bool"]["must_not"] = [
@@ -288,11 +297,10 @@ class PostIndex(AbstractIndex):
                 "bool": {
                     "must": [
                         {
-                            "simple_query_string": {
-                                "query": string,
-                                "fields": ["title^2"],
-                            }
-                        }
+                            "match": {
+                                "title": {"query": string, "fuzziness": "auto"},
+                            },
+                        },
                     ],
                     "must_not": [
                         {"match": {"tags": " ".join(unavailable_tags)}},

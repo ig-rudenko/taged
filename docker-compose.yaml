@@ -27,7 +27,7 @@ services:
       - knowledge-base-elasticsearch-network
 
   web:
-    image: nginx
+    image: nginx:1.25.4-alpine
     ports:
       - "443:443"
       - "80:80"

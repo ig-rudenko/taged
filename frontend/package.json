@@ -13,7 +13,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@mayasabha/ckeditor4-vue3": "^1.0.5",
+    "@mayasabha/ckeditor4-vue3": "^1.5.1",
     "axios": "^1.6.2",
     "primeicons": "^6.0.1",
     "primevue": "^3.44.0",

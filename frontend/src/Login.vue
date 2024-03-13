@@ -23,7 +23,7 @@
         </form>
 
         <div class="end-block">
-          <div style="margin-right: 0.25rem;">ig-rudenko &copy; 2021-2023</div>
+          <div style="margin-right: 0.25rem;">ig-rudenko &copy; 2021-{{ (new Date()).getFullYear() }}</div>
           <div>
             <a href="https://www.elastic.co/elasticsearch/" target="_blank" title="Elasticsearch">
               <img src="https://static-www.elastic.co/v3/assets/bltefdd0b53724fa2ce/blt36f2da8d650732a0/5d0823c3d8ff351753cbc99f/logo-elasticsearch-32-color.svg"

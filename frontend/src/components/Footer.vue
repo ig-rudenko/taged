@@ -16,8 +16,8 @@
         </a>
       </div>
       <div class="text-center">
-        <p class="mr-5 text-sm text-600 cursor-pointer">ig-rudenko &copy; 2021-2023</p>
-      </div>
+        <p class="mr-5 text-sm text-600 cursor-pointer">ig-rudenko &copy; 2021-{{ (new Date()).getFullYear() }}</p>
+      </div>Go&JS&TS&Rust
     </div>
   </div>
 </template>

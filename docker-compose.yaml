@@ -1,4 +1,4 @@
-version: '3.3'
+version: '2.2'
 
 services:
   elasticsearch:
@@ -12,12 +12,7 @@ services:
     environment:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms750m -Xmx750m
-    deploy:
-      resources:
-        limits:
-          memory: "3G"
-        reservations:
-          memory: "2G"
+    mem_limit: 1500m
     healthcheck:
       test: "curl -s localhost:9200 > /dev/null || exit 1"
       interval: 10s
@@ -32,12 +27,7 @@ services:
       - "443:443"
       - "80:80"
     restart: always
-    deploy:
-      resources:
-        limits:
-          memory: "200Mb"
-        reservations:
-          memory: "100Mb"
+    mem_limit: 200m
     volumes:
       # Медиа - картинки, книги
       - ./media:/var/www/media:ro
@@ -62,13 +52,7 @@ services:
     command: /bin/bash /app/run.sh
     env_file:
       - /etc/sysconfig/taged
-
-    deploy:
-      resources:
-        limits:
-          memory: "300M"
-        reservations:
-          memory: "200M"
+    mem_limit: 300m
 
     volumes:
       # Чтобы добавлять новые изображения и книги
@@ -88,12 +72,7 @@ services:
     restart: always
     networks:
       - knowledge-base-elasticsearch-network
-    deploy:
-      resources:
-        limits:
-          memory: "100M"
-        reservations:
-          memory: "50M"
+    mem_limit: 100m
 
 networks:
   # Создаем свою сеть, чтобы не было конфликтов с уже существующей

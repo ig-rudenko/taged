@@ -13,6 +13,8 @@ services:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms750m -Xmx750m
     mem_limit: 1500m
+    cpuset: "2-3"
+    cpus: 0.8
     healthcheck:
       test: "curl -s localhost:9200 > /dev/null || exit 1"
       interval: 10s
@@ -28,6 +30,8 @@ services:
       - "80:80"
     restart: always
     mem_limit: 200m
+    cpuset: "2-3"
+    cpus: 0.2
     volumes:
       # Медиа - картинки, книги
       - ./media:/var/www/media:ro
@@ -53,7 +57,8 @@ services:
     env_file:
       - /etc/sysconfig/taged
     mem_limit: 300m
-
+    cpuset: "2-3"
+    cpus: 0.8
     volumes:
       # Чтобы добавлять новые изображения и книги
       - ./media:/app/media
@@ -73,6 +78,8 @@ services:
     networks:
       - knowledge-base-elasticsearch-network
     mem_limit: 100m
+    cpuset: "2-3"
+    cpus: 0.2
 
 networks:
   # Создаем свою сеть, чтобы не было конфликтов с уже существующей

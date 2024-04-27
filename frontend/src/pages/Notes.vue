@@ -31,12 +31,12 @@
     </div>
 
 
-    <Dialog style="max-height: 100%" v-model:visible="showNoteModal" modal :show-header="true" :style="{ width: '100vw', height: '100%' }">
+    <Dialog v-if="showNoteID" style="max-height: 100%" v-model:visible="showNoteModal" modal :show-header="true" :style="{ width: '100vw', height: '100%' }">
       <ViewNote @selected-tag="selectTag" :note-id="showNoteID"/>
     </Dialog>
 
     <OverlayPanel ref="showFiles">
-      <div class="flex flex-column">
+      <div v-if="noteFilesShow" class="flex flex-column">
         <p v-for="file in noteFilesShow.files" class="mr-3 flex align-items-center">
           <MediaPreview :file="file" :is-file-object="false" :fileNoteID="noteFilesShow.id"/>
         </p>
@@ -47,9 +47,9 @@
     <div class="flex flex-wrap justify-content-center">
         <div class="w-30rem p-3" v-for="note in notes">
 
-          <Badge v-if="note.score>0.05" :class="badgeClasses(note)" :value="'match: '+note.scorePercents+'%'" />
+          <Badge v-if="note.score>0.05" :class="badgeClasses((<DetailNote>note))" :value="'match: '+note.scorePercents+'%'" />
 
-          <div :class="noteClasses(note)" style="height: 100%">
+          <div :class="noteClasses((<DetailNote>note))" style="height: 100%">
             <a :href="'/notes/' + note.id" class=" flex justify-content-center align-content-center align-items-center cursor-pointer" style="min-height: 230px;">
               <img v-if="note.previewImage" :src="note.previewImage"
                    class="border-round-2xl p-2 border-round-2xl" style="max-height: 230px; max-width: 100%;" alt="preview">
@@ -67,7 +67,7 @@
                   <Tag @click="selectTag(tag)" v-for="tag in note.tags" :value="tag"
                        class="bg-orange-light hover:bg-indigo-500 hover:shadow-4 mr-2 font-normal cursor-pointer" />
                 </div>
-                <i v-if="note.filesCount>0" @click="(e) => showNoteFiles(note, e)"
+                <i v-if="note.filesCount>0" @click="(e) => showNoteFiles((<DetailNote>note), e)"
                    v-badge="note.filesCount" class="pi pi-file p-overlay-badge cursor-pointer" style="font-size: 2rem" />
               </div>
 
@@ -108,14 +108,14 @@ import OverlayPanel from "primevue/overlaypanel";
 import Tag from "primevue/tag/Tag.vue";
 import ScrollTop from 'primevue/scrolltop';
 
-import Header from "./components/Header.vue";
-import MediaPreview from "./components/MediaPreview.vue";
-import Footer from "./components/Footer.vue";
-import ViewNote from "./components/ViewNote.vue";
-import api_request from "./api_request";
-import {Paginator} from "./paginator";
-import {DetailNote, getFiles, newDetailNote} from "./note";
-import {UserPermissions} from "./permissions";
+import Header from "../components/Header.vue";
+import MediaPreview from "../components/MediaPreview.vue";
+import Footer from "../components/Footer.vue";
+import ViewNote from "../components/ViewNote.vue";
+import api_request from "../services/api.ts";
+import {Paginator} from "../paginator.ts";
+import {DetailNote, getFiles, newDetailNote} from "../note.ts";
+import {UserPermissions} from "../permissions.ts";
 
 enum FindNotesMode {
   rebase = "rebase",
@@ -140,26 +140,26 @@ export default {
   },
   data() {
     return {
-      showNoteID: null as string,
+      showNoteID: null as string|null,
       showNoteModal: false,
       search: "",
-      tagsSelected: [] as Array<string>,
-      titles: [] as Array<string>,
-      notes: [] as Array<DetailNote>,
-      tags: [] as Array<string>,
+      tagsSelected: [] as string[],
+      titles: [] as string[],
+      notes: [] as DetailNote[],
+      tags: [] as string[],
       totalRecords: 0,
       paginator: new Paginator(),
       userPermissions: new UserPermissions([]),
       showTotalCount: false,
-      noteFilesShow: null as DetailNote,
+      noteFilesShow: null as DetailNote|null,
     }
   },
   mounted() {
-    api_request.get("/api/notes/permissions").then(resp => {this.userPermissions = new UserPermissions(resp.data)})
+    api_request.get("/notes/permissions").then(resp => {this.userPermissions = new UserPermissions(resp.data)})
 
     this.findNotes(FindNotesMode.rebase)
 
-    api_request.get("/api/notes/tags")
+    api_request.get("/notes/tags")
         .then(
             resp => this.tags = resp.data
         )
@@ -168,7 +168,7 @@ export default {
 
   methods: {
     autocomplete(event: any) {
-      api_request.get("/api/notes/autocomplete?term=" + event.query)
+      api_request.get("/notes/autocomplete?term=" + event.query)
           .then(
             resp => this.titles = Array.from(resp.data)
           )
@@ -196,14 +196,13 @@ export default {
     },
 
     showNoteFiles(note: DetailNote, event: Event) {
-      const op = this.$refs.showFiles
-      api_request.get("/api/notes/"+note.id+"/files").then(
+      api_request.get("/notes/"+note.id+"/files").then(
           resp => {
             note.files = getFiles(resp.data);
-            this.noteFilesShow = note
+            this.noteFilesShow = note;
+            (<OverlayPanel>this.$refs.showFiles).toggle(event)
           }
       )
-      op.toggle(event)
     },
 
     selectTag(tagName: string): void {
@@ -225,7 +224,7 @@ export default {
      * @param {String} save_mode
      */
     findNotes(save_mode: FindNotesMode): void {
-      let url = "/api/notes/?"
+      let url = "/notes/?"
       url += "page=" + this.paginator.currentPage
       url += "&search=" + this.search
       for (const tag of this.tagsSelected) {

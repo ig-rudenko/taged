@@ -39,7 +39,7 @@ SECRET_KEY = os.getenv(
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.environ.get("DJANGO_DEBUG", "False") in ["1", "True", "true"]
 
 ALLOWED_HOSTS = ["*"]
 
@@ -176,11 +176,17 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.FormParser",
+        "rest_framework.parsers.MultiPartParser",
+    ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ],
 }
 
@@ -209,9 +215,7 @@ if ELASTICSEARCH_HOSTS_raw_str:
     print("ELASTICSEARCH_HOSTS:", ELASTICSEARCH_HOSTS)
 
     # Инициализируем подключение к Elasticsearch
-    elasticsearch_connector.init(
-        es=Elasticsearch(ELASTICSEARCH_HOSTS), timeout=ELASTICSEARCH_TIMEOUT
-    )
+    elasticsearch_connector.init(es=Elasticsearch(ELASTICSEARCH_HOSTS), timeout=ELASTICSEARCH_TIMEOUT)
 
     # Регистратор индексов в Elasticsearch
     es_index_register = IndexRegister()

@@ -31,7 +31,6 @@ class Note {
     ) { }
 
     public get valid() {
-        this.isValid()
         return this._valid
     }
 

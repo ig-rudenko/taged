@@ -68,7 +68,7 @@ import ScrollTop from "primevue/scrolltop/ScrollTop.vue";
 import Tag from "primevue/tag/Tag.vue";
 import Toast from "primevue/toast";
 
-import api_request from "../api_request";
+import api_request from "../services/api";
 import {newDetailNote, DetailNote} from "../note";
 import {UserPermissions} from "../permissions";
 import MediaPreview from "./MediaPreview.vue";

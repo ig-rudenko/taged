@@ -14,8 +14,5 @@ urlpatterns = [
     path("tags", views.TagsListAPIView.as_view()),
     path("<str:note_id>", views.NoteDetailUpdateAPIView.as_view()),
     path("<str:note_id>/files", views.NoteFilesListCreateAPIView.as_view()),
-    path(
-        "<str:note_id>/files/<str:file_name>",
-        views.NoteFileDetailDeleteAPIView.as_view(),
-    ),
+    path("<str:note_id>/files/<str:file_name>", views.NoteFileDetailDeleteAPIView.as_view()),
 ]

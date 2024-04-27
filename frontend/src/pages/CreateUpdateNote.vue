@@ -13,15 +13,17 @@
               :label="editNoteID?'Обновить':'Создать'"/>
     </div>
 
-    <div class="p-inputgroup p-3">
-      <InputText class="text-900" v-model.trim="note.title"
+    <div class="p-3 flex flex-column">
+      <InlineMessage v-if="!note.valid.title" class="w-fit">Укажите заголовок</InlineMessage>
+      <InputText class="text-900 w-full" v-model.trim="note.title"
                  style="font-size: 1.5rem; text-align: center"
                  size="lg" placeholder="Укажите заголовок"></InputText>
-      <InlineMessage v-if="!note.valid.title">Укажите заголовок</InlineMessage>
     </div>
 
     <div class="flex flex-column">
-      <div class="lg:border-round p-3 flex align-items-center">
+      <div class="lg:border-round p-3 flex flex-column">
+        <InlineMessage v-if="!note.valid.tags" class="w-fit">Выберите хотя бы 1 тег</InlineMessage>
+
         <div class="p-inputgroup" style="width: max-content">
           <MultiSelect v-model="note.tags" display="chip"
                        :options="availableTags" filter placeholder="Выберите теги для записи"
@@ -33,8 +35,6 @@
             <Button @click="showAddTagInput=false" icon="pi pi-times" severity="warning" />
           </template>
         </div>
-
-        <InlineMessage v-if="!note.valid.tags">Выберите хотя бы 1 тег</InlineMessage>
 
       </div>
 
@@ -64,7 +64,8 @@
     <div>
 
       <InlineMessage v-if="!note.valid.content">Укажите содержимое</InlineMessage>
-      <ckeditor v-model="note.content" :config="config" editor-url="/static/ckeditor/ckeditor/ckeditor.js" value="Hello, World!"></ckeditor>
+      <ckeditor v-if="accessToken" v-model="note.content"
+                :config="ckeditorConfig" editor-url="/static/ckeditor/ckeditor/ckeditor.js" value="Hello, World!"></ckeditor>
     </div>
 
   </div>
@@ -84,12 +85,13 @@ import ScrollTop from "primevue/scrolltop/ScrollTop.vue";
 import Button from "primevue/button/Button.vue";
 import Toast from "primevue/toast";
 
-import MediaPreview from "./components/MediaPreview.vue";
-import Header from "./components/Header.vue";
-import Footer from "./components/Footer.vue";
-import api_request from "./api_request.ts";
-import LoadMedia from "./components/LoadMedia.vue";
-import {createNewNote, Note} from "./note.ts";
+import MediaPreview from "../components/MediaPreview.vue";
+import Header from "../components/Header.vue";
+import Footer from "../components/Footer.vue";
+import api from "../services/api";
+import LoadMedia from "../components/LoadMedia.vue";
+import {createNewNote, Note} from "../note";
+import {mapState} from "vuex";
 
 export default {
   name: "Notes",
@@ -117,28 +119,20 @@ export default {
       showAddTagInput: false,
       editNoteID: null,
       newTag: "",
-      config: {
-        filebrowserUploadUrl: "/ckeditor/upload/",
-        iframe_attributes: {
-          sandbox: 'allow-scripts allow-same-origin',
-          allow: 'autoplay'
-        }
-      }
     }
   },
   mounted() {
-    api_request.get("/api/notes/permissions").then(resp => {this.userPermissions = resp.data})
+    api.get("/notes/permissions").then(resp => {this.userPermissions = resp.data})
 
     // Проверяем, не является ли данная ссылка редактированием существующей записи
-    const match = window.location.href.match(/notes\/(\S+)\/edit\/$/)
-    if (match) {
+    this.editNoteID = this.$route.params.id
+    if (this.editNoteID) {
       // В таком случае получаем её данные
-      this.editNoteID = match[1]
       this.getNote()
     }
 
     // Получаем доступные пользователем теги
-    api_request.get("/api/notes/tags")
+    api.get("/notes/tags")
         .then(resp => this.availableTags = resp.data)
         .catch(reason => console.log(reason))
 
@@ -150,13 +144,28 @@ export default {
     hasPermissionToCreateTag() {
       return this.userPermissions.includes("add_tags")
     },
+    ...mapState({
+      accessToken: (state) => state.auth.userTokens.accessToken,
+    }),
+    ckeditorConfig() {
+      return {
+        filebrowserUploadUrl: "/api/ckeditor/upload/",
+        fileTools_requestHeaders: {
+          'Authorization': 'Bearer ' + this.accessToken
+        },
+        iframe_attributes: {
+          sandbox: 'allow-scripts allow-same-origin',
+          allow: 'autoplay'
+        }
+      }
+    }
   },
 
 
   methods: {
     getNote() {
-      let url = "/api/notes/" + this.editNoteID
-      api_request.get(url)
+      let url = "/notes/" + this.editNoteID
+      api.get(url)
           .then(resp => this.note = createNewNote(resp.data))
           .catch(reason => console.log(reason))
     },
@@ -174,7 +183,6 @@ export default {
     toggleFile(file) { file.disable = !file.disable },
 
     addNewTag() {
-      console.log(this.newTag)
       if (!this.newTag.length) return;
       this.availableTags.push(this.newTag)
       this.note.tags.push(this.newTag)
@@ -192,19 +200,23 @@ export default {
       }
 
       let resp
-      if (this.editNoteID) {
-        // Если заметка уже существовала, то обновляем
-        resp = await api_request.put("/api/notes/"+this.editNoteID, this.note)
-      } else {
-        // Иначе создаем новую заметку
-        resp = await api_request.post("/api/notes/", this.note)
-      }
-      const data = await resp.data
+      try {
+        if (this.editNoteID) {
+          // Если заметка уже существовала, то обновляем
+          resp = await api.put("/notes/"+this.editNoteID, this.note)
+        } else {
+          // Иначе создаем новую заметку
+          resp = await api.post("/notes/", this.note)
+        }
+        const data = await resp.data
 
-      if (resp.status === 200 || resp.status === 201){
-        await this.changeFiles(data.id, form)
-      } else {
-        this.showError(resp.status, data)
+        if (resp.status === 200 || resp.status === 201){
+          await this.changeFiles(data.id, form)
+        } else {
+          this.showError(resp.status, data)
+        }
+      } catch (err) {
+        this.showError(err.response.status, err.response.data)
       }
       this.submitInProcess = false
 
@@ -221,12 +233,12 @@ export default {
         for (const file of this.note.files) {
           if (file.disable) {
             // Удаляем файлы, которые были отключены
-            this.handleError(api_request.delete("/api/notes/" + note_id + '/files/' + file.name))
+            this.handleError(api.delete("/notes/" + note_id + '/files/' + file.name))
           }
         }
       }
       // Загружаем новые добавленные файлы
-      const resp = await api_request.post("/api/notes/" + note_id + '/files', files_form)
+      const resp = await api.post("/notes/" + note_id + '/files', files_form)
       const data = await resp.data
 
       if (resp.status === 201) {
@@ -258,7 +270,7 @@ export default {
     },
 
     goToNoteViewURL(note_id) {
-      window.location.href = "/notes/" + note_id
+      this.$router.push("/notes/" + note_id)
     }
 
   }

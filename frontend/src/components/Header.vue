@@ -7,10 +7,10 @@
           <div class="menu-card">
             <div class="flex lg:align-items-center">
               <a href="/" class="mb-3 mr-2 flex align-items-center justify-content-center knowledge-button cursor-pointer">
-                <img class="knowledge-button" src="/static/img/note.svg" alt="Image">
+                <img class="knowledge-button" src="/img/note.svg" alt="Image">
               </a>
               <div class="align-items-center border-round-2xl flex justify-content-center library-button mb-3">
-                  <img :src="'/static/images/cat'+getRandomInt(0, 8)+'.gif'" alt="Image" width="120" height="120">
+                  <img :src="'/img/cats/cat'+getRandomInt(0, 8)+'.gif'" alt="Image" width="120" height="120">
               </div>
             </div>
 
@@ -36,7 +36,7 @@
 
 <script lang="ts">
 import Button from "primevue/button/Button.vue";
-import api_request from "../api_request";
+import api from "../services/api";
 
 export default {
   name: "Header",
@@ -61,7 +61,7 @@ export default {
   },
   methods: {
     getTotalRecordsCount(): void {
-      api_request.get("/api/notes/count").then(resp => this.totalCount = resp.data.totalCount)
+      api.get("/notes/count").then(resp => this.totalCount = resp.data.totalCount)
     },
     goToCreateNoteURL(): void {
       window.location.href = "/notes/create"

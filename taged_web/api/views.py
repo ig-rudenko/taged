@@ -19,14 +19,18 @@ from taged_web.api.serializers import (
     NoteSerializerTagsValidation,
 )
 from taged_web.es_index import PostIndex, T_Values
+from taged_web.filters import notes_records_filter
 from taged_web.models import User, Tags
+from taged_web.repo.exc import NotFoundError
+from taged_web.repo.notes import get_repository
 
 
-def get_note_or_404(
-    note_id: str, user: User, values: list[T_Values] = None
-) -> PostIndex:
-    note = PostIndex.get(id_=note_id, values=values)
-    if note is None or set(user.unavailable_tags) & set(note.tags_list):
+def get_note_or_404(note_id: str, user: User, values: list[T_Values] = None) -> PostIndex:
+    try:
+        note = get_repository().get(id_=note_id, values=values)
+    except NotFoundError:
+        raise Http404()
+    if set(user.unavailable_tags) & set(note.tags_list):
         # Если нет такой записи, либо пользователь не имеет к ней доступа
         raise Http404()
     return note
@@ -35,9 +39,7 @@ def get_note_or_404(
 def clear_cache() -> None:
     all_usernames = User.objects.all().values_list("username", flat=True)
     keys = [f"{NotesCount.cache_key}.{username}" for username in all_usernames]
-    keys += [
-        f"{NotesListCreateAPIView.cache_key}.{username}" for username in all_usernames
-    ]
+    keys += [f"{NotesListCreateAPIView.cache_key}.{username}" for username in all_usernames]
     cache.delete_many(keys)
 
 
@@ -76,7 +78,7 @@ class AutocompleteAPIView(GenericAPIView):
 
     def get(self, request: Request):
         try:
-            titles = PostIndex.get_titles(
+            titles = get_repository().get_titles(
                 string=request.GET.get("term"),
                 unavailable_tags=request.user.unavailable_tags,
             )
@@ -94,18 +96,13 @@ class NotesCount(GenericAPIView):
     cache_timeout = 60 * 10
 
     def get(self, request: Request):
-        total_count = cache.get(f"{self.cache_key}.{request.user.username}")
+        user_cache_key: str = f"{self.cache_key}.{request.user.username}"
+        total_count: int = cache.get(user_cache_key, 0)
 
         if not total_count:
-            paginator = PostIndex.filter(
-                tags_off=request.user.unavailable_tags,
-            )
+            paginator = get_repository().filter(tags_off=request.user.unavailable_tags)
             total_count = paginator.count
-            cache.set(
-                f"{self.cache_key}.{request.user.username}",
-                total_count,
-                self.cache_timeout,
-            )
+            cache.set(user_cache_key, total_count, self.cache_timeout)
 
         return Response({"totalCount": total_count})
 
@@ -135,13 +132,14 @@ class NotesListCreateAPIView(GenericAPIView):
         sorted_by = None if search else "published_at"
 
         # Получает записи от Elasticsearch.
-        paginator = PostIndex.filter(
+        paginator = get_repository().filter(
             tags_off=request.user.unavailable_tags,
             tags_in=tags_in,
             string=self.search_translate(search),
             sort=sorted_by,
             sort_desc=True,
             values=["title", "tags", "published_at", "preview_image"],
+            convert_result=notes_records_filter,
         )
 
         if not search and not tags_in and page == "1":
@@ -154,6 +152,8 @@ class NotesListCreateAPIView(GenericAPIView):
             )
         else:
             records = paginator.get_page(page)
+
+        print(records)
 
         self.add_file_mark(records)
         self.humanize_datetime(records)
@@ -177,11 +177,7 @@ class NotesListCreateAPIView(GenericAPIView):
         eng_ru_layout = dict(zip(map(ord, eng), ru))
         ru_eng_layout = dict(zip(map(ord, ru), eng))
         return (
-            search
-            + " "
-            + search.translate(eng_ru_layout)
-            + " "
-            + search.translate(ru_eng_layout)
+            search + " " + search.translate(eng_ru_layout) + " " + search.translate(ru_eng_layout)
         ).strip()
 
     @staticmethod
@@ -211,23 +207,16 @@ class NotesListCreateAPIView(GenericAPIView):
             "title": serializer.validated_data["title"],
             "tags": serializer.validated_data["tags"],
             "content": serializer.validated_data["content"],
+            "preview_image": PostIndex.get_first_image_url(serializer.validated_data["content"]),
         }
-
         add_tags_to_user_if_not_exist(data["tags"], request.user)
-        post = PostIndex.create(**data)
+
+        post = get_repository().create(**data)
 
         # Обнуляем кеш
         clear_cache()
 
         return Response({"id": post.id}, status=201)
-
-    @staticmethod
-    def clear_cache():
-        keys = [
-            f"{NotesCount.cache_key}.{username}"
-            for username in User.objects.all().values_list("username", flat=True)
-        ]
-        cache.delete_many(keys)
 
 
 @method_decorator(api_elasticsearch_check_available, name="dispatch")
@@ -247,11 +236,10 @@ class NoteDetailUpdateAPIView(GenericAPIView):
     def get(self, request: Request, note_id: str):
         note = get_note_or_404(note_id, request.user)
         note_json_data = note.json()
+        repository = get_repository()
 
-        note_json_data["published_at"] = humanize.naturaltime(
-            note_json_data["published_at"]
-        )
-        note_json_data["files"] = [file.json() for file in note.get_files()]
+        note_json_data["published_at"] = humanize.naturaltime(note_json_data["published_at"])
+        note_json_data["files"] = [file.json() for file in repository.get_files(note.id)]
         return Response(note_json_data)
 
     def put(self, request: Request, note_id: str):
@@ -264,7 +252,7 @@ class NoteDetailUpdateAPIView(GenericAPIView):
 
     def delete(self, request: Request, note_id: str):
         note = get_note_or_404(note_id, request.user)
-        note.delete()
+        get_repository().delete(note.id)
         clear_cache()
         return Response(status=204)
 
@@ -292,13 +280,13 @@ class NoteDetailUpdateAPIView(GenericAPIView):
             updated_fields.append("tags")
             add_tags_to_user_if_not_exist(new_tags, self.request.user)
 
-        note.save(values=updated_fields)
+        get_repository().update(note.id, note.json(), values=updated_fields)
 
 
 class NoteFilesListCreateAPIView(GenericAPIView):
     def get(self, request: Request, note_id: str):
         note = get_note_or_404(note_id, request.user, values=["tags"])
-        return Response([file.json() for file in note.get_files()])
+        return Response([file.json() for file in get_repository().get_files(note.id)])
 
     def post(self, request: Request, note_id: str):
         # Проверяем, имеет ли пользователь доступ к текущей записи
@@ -309,9 +297,7 @@ class NoteFilesListCreateAPIView(GenericAPIView):
             (settings.MEDIA_ROOT / note_id).mkdir(parents=True, exist_ok=True)
             # Создаем папку для текущей заметки
             for uploaded_file in files["files"]:  # Для каждого файла
-                with open(
-                    settings.MEDIA_ROOT / f"{note_id}/{uploaded_file.name}", "wb+"
-                ) as file:
+                with open(settings.MEDIA_ROOT / f"{note_id}/{uploaded_file.name}", "wb+") as file:
                     for chunk_ in uploaded_file.chunks():
                         file.write(chunk_)  # Записываем файл
         return Response({"filesCount": len(files)}, status=201)
@@ -326,9 +312,7 @@ class NoteFileDetailDeleteAPIView(GenericAPIView):
         file_path = settings.MEDIA_ROOT / note_id / file_name
         if file_path.exists():
             with file_path.open("rb") as file:
-                response = HttpResponse(
-                    file.read(), content_type="application/vnd.ms-excel"
-                )
+                response = HttpResponse(file.read(), content_type="application/vnd.ms-excel")
             response["Content-Disposition"] = f"inline; filename={file_name}"
             return response
         else:

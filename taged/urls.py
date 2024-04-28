@@ -13,6 +13,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.http.response import HttpResponseRedirect
 from django.urls import path, include, re_path
@@ -24,7 +25,6 @@ from rest_framework_simplejwt.views import (
 )
 
 from taged import settings
-
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -40,13 +40,8 @@ urlpatterns = [
     # BOOKS
     # path("books/", include("books.urls")),
     # STATIC
-    re_path(
-        r"^static/(?P<path>.*)$", serve, {"document_root": settings.STATICFILES_DIRS[0]}
-    ),
+    re_path(r"^static/(?P<path>.*)$", serve, {"document_root": settings.STATICFILES_DIRS[0]}),
     re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
     # CKEDITOR
     path("ckeditor/", include("ckeditor_uploader.urls")),
 ]
-
-handler404 = "taged_web.errors_views.page404"
-handler500 = "taged_web.errors_views.page500"

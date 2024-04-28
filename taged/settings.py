@@ -21,7 +21,7 @@ from elasticsearch import Elasticsearch
 from requests.exceptions import ConnectionError as ElasticConnectionError
 
 from elasticsearch_control import IndexRegister
-from elasticsearch_control.transport import elasticsearch_connector
+from elasticsearch_control.transport import es_connector
 from taged_web.es_index import PostIndex
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -39,7 +39,7 @@ SECRET_KEY = os.getenv(
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -181,6 +181,7 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ],
 }
 
@@ -209,9 +210,7 @@ if ELASTICSEARCH_HOSTS_raw_str:
     print("ELASTICSEARCH_HOSTS:", ELASTICSEARCH_HOSTS)
 
     # Инициализируем подключение к Elasticsearch
-    elasticsearch_connector.init(
-        es=Elasticsearch(ELASTICSEARCH_HOSTS), timeout=ELASTICSEARCH_TIMEOUT
-    )
+    es_connector.init(es=Elasticsearch(ELASTICSEARCH_HOSTS), timeout=ELASTICSEARCH_TIMEOUT)
 
     # Регистратор индексов в Elasticsearch
     es_index_register = IndexRegister()

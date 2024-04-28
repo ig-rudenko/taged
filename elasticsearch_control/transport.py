@@ -1,4 +1,4 @@
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, TransportError
 
 
 class ElasticsearchConnection:
@@ -7,8 +7,14 @@ class ElasticsearchConnection:
     """
 
     def __init__(self):
-        self.es: Elasticsearch | None = None
-        self.timeout: int | None = None
+        self._es: Elasticsearch | None = None
+        self.timeout: int = 5
+
+    @property
+    def es(self) -> Elasticsearch:
+        if self._es is None:
+            raise TransportError("Elasticsearch is not connected")
+        return self._es
 
     def init(self, es: Elasticsearch, timeout: int) -> None:
         """
@@ -17,8 +23,8 @@ class ElasticsearchConnection:
         :param timeout: Таймаут запросов.
         """
 
-        self.es = es
+        self._es = es
         self.timeout = timeout
 
 
-elasticsearch_connector = ElasticsearchConnection()
+es_connector: ElasticsearchConnection = ElasticsearchConnection()

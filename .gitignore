@@ -1,7 +1,6 @@
 venv*
 esdata
 media
-test*
 logs
 db.sqlite3*
 static/debug_toolbar

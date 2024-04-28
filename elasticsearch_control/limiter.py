@@ -38,13 +38,7 @@ class ElasticsearchPaginator:
 
     per_page = 24
 
-    def __init__(
-        self,
-        es: Elasticsearch,
-        params: QueryLimitParams,
-        convert_result: Callable = None,
-        **extra
-    ):
+    def __init__(self, es: Elasticsearch, params: QueryLimitParams, convert_result: Callable = None, **extra):
         """
         Инициализируем пагинатор запросов.
 

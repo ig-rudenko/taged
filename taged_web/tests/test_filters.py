@@ -1,13 +1,13 @@
 from django.test import SimpleTestCase
 
 from elasticsearch_control import QueryLimitParams
-from taged_web.filters import create_notes_filter, notes_records_filter
+from taged_web.filters import create_notes_query_params, notes_records_filter
 
 
 class TestQueryParams(SimpleTestCase):
 
     def test_filter_with_tags_in(self):
-        query_params = create_notes_filter("test_index", tags_in=["tag1", "tag2"])
+        query_params = create_notes_query_params("test_index", tags_in=["tag1", "tag2"], tags_off=[])
         valid_query_params = QueryLimitParams(
             index="test_index",
             source=["title", "content", "tags", "published_at", "preview_image"],
@@ -18,7 +18,7 @@ class TestQueryParams(SimpleTestCase):
         self.assertEqual(valid_query_params, query_params)
 
     def test_filter_with_tags_off(self):
-        query_params = create_notes_filter("test_index", tags_off=["tag1", "tag2"])
+        query_params = create_notes_query_params("test_index", tags_in=[], tags_off=["tag1", "tag2"])
         valid_query_params = QueryLimitParams(
             index="test_index",
             source=["title", "content", "tags", "published_at", "preview_image"],
@@ -29,7 +29,9 @@ class TestQueryParams(SimpleTestCase):
         self.assertEqual(valid_query_params, query_params)
 
     def test_filter_with_tags_in_off(self):
-        query_params = create_notes_filter("test_index", tags_in=["tag1", "tag2"], tags_off=["tag3", "tag4"])
+        query_params = create_notes_query_params(
+            "test_index", tags_in=["tag1", "tag2"], tags_off=["tag3", "tag4"]
+        )
         valid_query_params = QueryLimitParams(
             index="test_index",
             source=["title", "content", "tags", "published_at", "preview_image"],
@@ -45,7 +47,7 @@ class TestQueryParams(SimpleTestCase):
         self.assertEqual(valid_query_params, query_params)
 
     def test_filter_with_tags_in_off_search(self):
-        query_params = create_notes_filter(
+        query_params = create_notes_query_params(
             "test_index", tags_in=["tag1", "tag2"], tags_off=["tag3", "tag4"], string="Search String"
         )
         valid_query_params = QueryLimitParams(
@@ -68,7 +70,9 @@ class TestQueryParams(SimpleTestCase):
         self.assertEqual(valid_query_params, query_params)
 
     def test_filter_with_tags_in_search(self):
-        query_params = create_notes_filter("test_index", tags_in=["tag1", "tag2"], string="Search String")
+        query_params = create_notes_query_params(
+            "test_index", tags_in=["tag1", "tag2"], string="Search String"
+        )
         valid_query_params = QueryLimitParams(
             index="test_index",
             source=["title", "content", "tags", "published_at", "preview_image"],
@@ -88,7 +92,7 @@ class TestQueryParams(SimpleTestCase):
         self.assertEqual(valid_query_params, query_params)
 
     def test_filter_with_tags_in_off_search_sort(self):
-        query_params = create_notes_filter(
+        query_params = create_notes_query_params(
             "test_index",
             tags_in=["tag1", "tag2"],
             tags_off=["tag3", "tag4"],
@@ -115,7 +119,7 @@ class TestQueryParams(SimpleTestCase):
         self.assertEqual(valid_query_params, query_params)
 
     def test_filter_with_tags_in_off_search_sort_desc(self):
-        query_params = create_notes_filter(
+        query_params = create_notes_query_params(
             "test_index",
             tags_in=["tag1", "tag2"],
             tags_off=["tag3", "tag4"],

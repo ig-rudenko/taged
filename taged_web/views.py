@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import render
 
 from elasticsearch_control.decorators import elasticsearch_check_available
-from .api.views import get_note_or_404
+from .services.notes import get_note_or_404
 
 
 @login_required

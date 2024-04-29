@@ -1,14 +1,14 @@
 from typing import Any
 
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, NotFoundError
 
 
 class FakeElasticsearch(Elasticsearch):
 
     def __init__(self, **kwargs: Any):
         super().__init__(**kwargs)
-        self.index_docs = []
-        self.delete_ids = []
+        self.index_docs: list[dict] = []
+        self.delete_ids: list[str] = []
 
     def clear_fake_data(self):
         self.index_docs = []
@@ -43,10 +43,13 @@ class FakeElasticsearch(Elasticsearch):
         params=...,
         headers=...,
     ):
+        if not id:  # Если пустой ID.
+            raise NotFoundError()
         return {
             "_source": {
                 "title": "title",
                 "content": "content",
+                "preview_image": "//image.png",
                 "tags": ["tag1", "tag2"],
                 "published_at": "2024-04-28T00:00:00.866799",
             }

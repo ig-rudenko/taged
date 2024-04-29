@@ -1,6 +1,5 @@
 import uuid
 from datetime import datetime
-from typing import Sequence
 
 from django.conf import settings
 from elasticsearch import Elasticsearch, exceptions
@@ -9,7 +8,7 @@ from elasticsearch_control import ElasticsearchPaginator
 from elasticsearch_control.transport import es_connector
 from .exc import NotFoundError, RepositoryException
 from ..es_index import PostFile, PostIndex, T_Values
-from ..filters import create_notes_filter
+from ..filters import create_notes_query_params
 
 
 class NotesRepository:
@@ -19,7 +18,7 @@ class NotesRepository:
         self._timeout = timeout
         self.index = index
 
-    def get(self, id_: str, values: Sequence[T_Values] = None) -> PostIndex:
+    def get(self, id_: str, values: list[T_Values] | None = None) -> PostIndex:
         """
         Возвращает заметку, если была найдена
 
@@ -27,9 +26,13 @@ class NotesRepository:
         :param values: Список полей, значения которых необходимы для возвращаемой заметки.
         :raises NotFoundError: Если заметка не найдена.
         """
-        extra = {"_source": values} if values else {}
         try:
-            response = self._es.get(index=self.index, id=id_, request_timeout=self._timeout, **extra)
+            response = self._es.get(
+                index=self.index,
+                id=id_,
+                request_timeout=self._timeout,
+                _source=list(values) if values else None,
+            )
         except exceptions.ElasticsearchException:
             raise NotFoundError
 
@@ -43,6 +46,7 @@ class NotesRepository:
         post.id = id_
         post.title = data.get("title", "")
         post.content = data.get("content", "")
+        post.preview_image = data.get("preview_image", "")
         post.tags = data.get("tags", "")
 
         if data.get("published_at"):
@@ -87,13 +91,13 @@ class NotesRepository:
             return False
         return result["_shards"].get("failed") == 0
 
-    def update(self, id_: str, instance: dict, values: list[str] = None):
+    def update(self, id_: str, instance: dict, values: list[T_Values] | None = None):
         """
         Сохраняет переданные в списке `values` поля для текущей записи.
         Если `values` не были переданы, то сохраняет все поля.
         """
 
-        if not values:
+        if values is None:
             data = instance
         else:
             data = {k: v for k, v in instance.items() if k in values}
@@ -106,11 +110,11 @@ class NotesRepository:
 
     def filter(
         self,
-        tags_in: list[str] = None,
-        tags_off: list[str] = None,
+        tags_in: list[str] | None = None,
+        tags_off: list[str] | None = None,
         string: str = "",
-        values: Sequence[T_Values] = None,
-        sort: T_Values = None,
+        values: list[T_Values] | None = None,
+        sort: T_Values | None = None,
         sort_desc: bool = False,
         convert_result=None,
     ):
@@ -126,10 +130,16 @@ class NotesRepository:
         :param convert_result: Функция, которая будет преобразовывать результат запроса в объект.
         :return: `ElasticsearchPaginator`.
         """
-        query_params = create_notes_filter(
-            self.index, tags_in, tags_off, string, values, sort, sort_desc, self._timeout
+        query_params = create_notes_query_params(
+            self.index,
+            tags_in=tags_in or [],
+            tags_off=tags_off or [],
+            string=string,
+            values=values,
+            sort=sort,
+            sort_desc=sort_desc,
+            timeout=self._timeout,
         )
-        print(query_params)
         return ElasticsearchPaginator(
             es=self._es,
             params=query_params,

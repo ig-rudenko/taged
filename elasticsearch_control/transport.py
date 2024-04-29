@@ -6,7 +6,7 @@ class ElasticsearchConnection:
     Связь с Elasticsearch.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._es: Elasticsearch | None = None
         self.timeout: int = 5
 

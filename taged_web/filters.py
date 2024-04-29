@@ -1,16 +1,17 @@
-from typing import Sequence
+from typing import Literal
 
 from elasticsearch_control import QueryLimitParams
 from .es_index import T_Values
 
 
-def create_notes_filter(
+def create_notes_query_params(
     index_name: str,
-    tags_in: list[str] = None,
-    tags_off: list[str] = None,
+    *,
+    tags_in: list[str],
+    tags_off: list[str],
     string: str = "",
-    values: Sequence[T_Values] = None,
-    sort: T_Values = None,
+    values: list[T_Values] | None = None,
+    sort: T_Values | None = None,
     sort_desc: bool = False,
     timeout: int = 5,
 ) -> QueryLimitParams:
@@ -34,17 +35,22 @@ def create_notes_filter(
     tags_in = tags_in if tags_in else []
 
     # Теги всегда требуется возвращать
+    source_values: list[str]
     if values is None:
-        values = ["title", "content", "tags", "published_at", "preview_image"]
-    if "tags" not in values:
-        values.append("tags")
+        source_values = ["title", "content", "tags", "published_at", "preview_image"]
+    else:
+        source_values = list(values)
+    if "tags" not in source_values:
+        source_values.append("tags")
 
     # Определяем параметр сортировки, если был указан
-    sort_parameter = {sort: "desc" if sort_desc else "asc"} if sort else None
+    sort_parameter: dict[str, Literal["desc", "asc"]] | None = (
+        {sort: "desc" if sort_desc else "asc"} if sort else None
+    )
 
     query_params = QueryLimitParams(
         index=index_name,
-        source=values,
+        source=source_values,
         query={"bool": {"must": []}},
         sort=sort_parameter,
         request_timeout=timeout,

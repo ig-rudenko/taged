@@ -1,0 +1,127 @@
+from datetime import datetime
+from typing import TypeVar
+
+from django.conf import settings
+from django.contrib.humanize.templatetags import humanize
+from django.core.cache import cache
+from django.http import Http404
+from rest_framework.response import Response
+
+from elasticsearch_control.cache import get_or_cache
+from taged_web.es_index import T_Values, PostIndex
+from taged_web.filters import notes_records_filter
+from taged_web.models import User
+from taged_web.repo.exc import NotFoundError
+from taged_web.repo.notes import get_repository
+from taged_web.services.tags import get_unavailable_tags, add_tags_to_user_if_not_exist
+
+
+def get_note_or_404(note_id: str, user: User, values: list[T_Values] | None = None) -> PostIndex:
+    try:
+        note = get_repository().get(id_=note_id, values=values)
+    except NotFoundError:
+        raise Http404()
+    if set(get_unavailable_tags(user)) & set(note.tags_list):
+        # Если нет такой записи, либо пользователь не имеет к ней доступа
+        raise Http404()
+    return note
+
+
+def clear_notes_cache() -> None:
+    all_usernames = User.objects.all().values_list("username", flat=True)
+    keys = [f"NotesCount.{username}" for username in all_usernames]
+    keys += [f"last_updated_posts.{username}" for username in all_usernames]
+    cache.delete_many(keys)
+
+
+def update_note(note: PostIndex, title: str, content: str, tags: list[str], user: User) -> PostIndex:
+    """
+    Обновляем существующую в elasticsearch запись.
+    Смотрим какие именно поля изменились и обновляем только их.
+    """
+    updated_fields: list[T_Values] = ["published_at"]
+    note.published_at = datetime.now()
+
+    if title != note.title:
+        note.title = title
+        updated_fields.append("title")
+    if content != note.content:
+        note.content = content
+        note.preview_image = note.get_first_image_url(content)
+        updated_fields += ["content", "preview_image"]
+    if tags != note.tags_list:
+        note.tags = tags  # type: ignore
+        updated_fields.append("tags")
+        add_tags_to_user_if_not_exist(tags, user)
+
+    get_repository().update(note.id, note.json(), values=updated_fields)
+    return note
+
+
+def get_notes(search: str, tags_in: list[str], page: str, user: User) -> Response:
+    # Если не указана строка поиска, то сортируем по времени создания
+    sorted_by: T_Values | None = None if search else "published_at"
+
+    # Получает записи от Elasticsearch.
+    paginator = get_repository().filter(
+        tags_off=get_unavailable_tags(user),
+        tags_in=tags_in,
+        string=search_translate(search),
+        sort=sorted_by,
+        sort_desc=True,
+        values=["title", "tags", "published_at", "preview_image"],
+        convert_result=notes_records_filter,
+    )
+
+    if not search and not tags_in and page == "1":
+        # Получаем записи из кэша или они будут созданы по функции
+        records: list = get_or_cache(
+            function=paginator.get_page,
+            kwargs={"page": page},
+            unique_name=f"last_updated_posts:{user.username}",
+            cache_period=1,
+        )
+    else:
+        records = paginator.get_page(page)
+
+    records = add_file_mark(records)
+    records = humanize_datetime(records)
+
+    return Response(
+        {
+            "records": records,
+            "totalRecords": paginator.count,
+            "paginator": {
+                "maxPages": paginator.max_pages,
+                "perPage": paginator.per_page,
+                "currentPage": paginator.page,
+            },
+        }
+    )
+
+
+def search_translate(search: str) -> str:
+    ru = "йцукенгшщзхъфывапролджэячсмитьбю.ёЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,Ё"
+    eng = "qwertyuiop[]asdfghjkl;'zxcvbnm,./`WERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?~"
+    eng_ru_layout = dict(zip(map(ord, eng), ru))
+    ru_eng_layout = dict(zip(map(ord, ru), eng))
+    return (search + " " + search.translate(eng_ru_layout) + " " + search.translate(ru_eng_layout)).strip()
+
+
+_N = TypeVar("_N", bound=dict)
+
+
+def add_file_mark(objects: list[_N]) -> list[_N]:
+    for post in objects:
+        post["filesCount"] = 0
+        # Проверяем, существуют ли у записей прикрепленные файлы.
+        for file in (settings.MEDIA_ROOT / f'{post["id"]}').glob("*"):
+            if file.is_file():
+                post["filesCount"] += 1
+    return objects
+
+
+def humanize_datetime(objects: list[_N]) -> list[_N]:
+    for post in objects:
+        post["published_at"] = humanize.naturaltime(datetime.strptime(post["published_at"], "%Y-%m-%dT%X.%f"))
+    return objects

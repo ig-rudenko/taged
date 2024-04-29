@@ -48,10 +48,11 @@ class PostIndex(AbstractIndex):
         }
 
     @staticmethod
-    def get_first_image_url(content: str) -> str | None:
+    def get_first_image_url(content: str) -> str:
         first_image = re.search(r'<img .*?src="(\S+)"', content)
         if first_image:
             return first_image.group(1)
+        return ""
 
     @property
     def tags_list(self) -> list[str]:

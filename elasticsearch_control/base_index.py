@@ -40,7 +40,7 @@ class MetaIndex(type):
     Метакласс для декларативного создания класса для индекса Elasticsearch
     """
 
-    def __new__(cls, cls_name, bases, attrs):
+    def __new__(cls, cls_name, bases, attrs) -> type:
         annotations: dict = attrs.get("__annotations__", {})
         if annotations:
             # Если имеются аннотации типов в классе
@@ -82,7 +82,7 @@ class AbstractIndex(metaclass=MetaIndex):
     Абстрактный класс, для управления индексом в Elasticsearch
     """
 
-    id: str | None = None
+    id: str = ""
 
     @abstractmethod
     def json(self) -> dict:

@@ -16,20 +16,6 @@ class Tags(models.Model):
 
 
 class User(AbstractUser):
-    def get_tags(self) -> list[str]:
-        # Проверка, является ли пользователь суперпользователем или нет.
-        # Если пользователь является суперпользователем, он вернет все теги.
-        # Если пользователь не является суперпользователем, он вернет теги, связанные с пользователем.
-        return (
-            Tags.objects.all().values_list("tag_name", flat=True)
-            if self.is_superuser
-            else self.tags_set.values_list("tag_name", flat=True)
-        )
-
-    @property
-    def unavailable_tags(self) -> list[str]:
-        all_tags = set(Tags.objects.all().values_list("tag_name", flat=True))
-        return list(set(all_tags) - set(self.get_tags()))
 
     def __str__(self):
         return self.username

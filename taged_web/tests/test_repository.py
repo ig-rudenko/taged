@@ -28,6 +28,7 @@ class TestRepository(SimpleTestCase):
         note = self.repo.get("1")
         self.assertEqual(note.title, "title")
         self.assertEqual(note.content, "content")
+        self.assertEqual(note.preview_image, "//image.png")
         self.assertEqual(note.tags, "tag1, tag2")
         self.assertListEqual(note.tags_list, ["tag1", "tag2"])
         self.assertEqual(note.published_at, datetime(2024, 4, 28, 0, 0, 0, 0))

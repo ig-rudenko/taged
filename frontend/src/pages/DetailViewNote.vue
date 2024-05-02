@@ -3,7 +3,7 @@
           :show-count="false"
           :show-create-button="false"/>
 
-  <ViewNote v-if="noteID" :note-id="noteID" />
+  <ViewNote v-if="noteID" :note-id="noteID"/>
 
   <Footer/>
 
@@ -24,7 +24,7 @@ export default {
 
   data() {
     return {
-      noteID: null as string,
+      noteID: null as string | null,
     }
   },
 

@@ -4,7 +4,7 @@ from elasticsearch import Elasticsearch
 from requests.exceptions import ConnectionError
 
 from .base_index import AbstractIndex
-from .transport import ElasticsearchConnection, elasticsearch_connector
+from .transport import ElasticsearchConnection, es_connector
 
 
 class IndexRegister:
@@ -12,7 +12,7 @@ class IndexRegister:
     Регистрирует индексы в Elasticsearch.
     """
 
-    def __init__(self, es_connector: ElasticsearchConnection = elasticsearch_connector):
+    def __init__(self, es_connector: ElasticsearchConnection = es_connector):
         self._es: Elasticsearch = es_connector.es
 
     def register_index(self, index: Type[AbstractIndex]) -> None:
@@ -45,14 +45,10 @@ class IndexRegister:
         :param index: Класс индекса.
         """
         if not issubclass(index, AbstractIndex):
-            raise TypeError(
-                f"Индекс `{index.__class__}` должен быть унаследован от `AbstractIndex`"
-            )
+            raise TypeError(f"Индекс `{index.__class__}` должен быть унаследован от `AbstractIndex`")
 
         if not hasattr(index, "Meta"):
-            raise NotImplementedError(
-                f"Индекс `{index.__class__}` должен содержать класс Meta с настройками"
-            )
+            raise NotImplementedError(f"Индекс `{index.__class__}` должен содержать класс Meta с настройками")
 
         if not hasattr(index.Meta, "index_name"):
             raise ValueError(

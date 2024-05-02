@@ -21,7 +21,7 @@ from elasticsearch import Elasticsearch
 from requests.exceptions import ConnectionError as ElasticConnectionError
 
 from elasticsearch_control import IndexRegister
-from elasticsearch_control.transport import elasticsearch_connector
+from elasticsearch_control.transport import es_connector
 from taged_web.es_index import PostIndex
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -176,11 +176,6 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
-    "DEFAULT_PARSER_CLASSES": [
-        "rest_framework.parsers.JSONParser",
-        "rest_framework.parsers.FormParser",
-        "rest_framework.parsers.MultiPartParser",
-    ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
@@ -215,7 +210,7 @@ if ELASTICSEARCH_HOSTS_raw_str:
     print("ELASTICSEARCH_HOSTS:", ELASTICSEARCH_HOSTS)
 
     # Инициализируем подключение к Elasticsearch
-    elasticsearch_connector.init(es=Elasticsearch(ELASTICSEARCH_HOSTS), timeout=ELASTICSEARCH_TIMEOUT)
+    es_connector.init(es=Elasticsearch(ELASTICSEARCH_HOSTS), timeout=ELASTICSEARCH_TIMEOUT)
 
     # Регистратор индексов в Elasticsearch
     es_index_register = IndexRegister()

@@ -1,23 +1,20 @@
 <template>
-  <Header :section-name="editNoteID?'Редактирование записи':'Создание новой записи'"
-          :show-count="false"/>
-
   <Toast/>
+
+  <Header :section-name="editNoteID?'Редактирование записи':'Создание новой записи'" :show-count="false"/>
 
   <div class="lg:px-8">
 
     <div class="px-3">
       <Button v-if="submitInProcess" severity="success" icon="pi pi-spin pi-spinner"
               :label="editNoteID?'Обновляется':'Создается'"/>
-      <Button v-else @click="submit" severity="success" icon="pi pi-check"
-              :label="editNoteID?'Обновить':'Создать'"/>
+      <Button v-else @click="submit" severity="success" icon="pi pi-check" :label="editNoteID?'Обновить':'Создать'"/>
     </div>
 
     <div class="p-3 flex flex-column">
       <InlineMessage v-if="!note.valid.title" class="w-fit">Укажите заголовок</InlineMessage>
-      <InputText class="text-900 w-full" v-model.trim="note.title"
-                 style="font-size: 1.5rem; text-align: center"
-                 size="lg" placeholder="Укажите заголовок"></InputText>
+      <InputText class="text-900 w-full" v-model.trim="note.title" style="font-size: 1.5rem; text-align: center"
+                 size="lg" placeholder="Укажите заголовок"/>
     </div>
 
     <div class="flex flex-column">
@@ -28,8 +25,8 @@
           <MultiSelect v-model="note.tags" display="chip"
                        :options="availableTags" filter placeholder="Выберите теги для записи"
                        scroll-height="400px"/>
-          <Button v-if="hasPermissionToCreateTag && !showAddTagInput"
-                  @click="showAddTagInput=true" icon="pi pi-plus-circle" severity="warning"/>
+          <Button v-if="hasPermissionToCreateTag && !showAddTagInput" @click="showAddTagInput=true"
+                  icon="pi pi-plus-circle" severity="warning"/>
           <template v-if="showAddTagInput">
             <InputText v-model.trim="newTag" @keydown.enter="addNewTag" placeholder="Укажите новый тег"/>
             <Button @click="showAddTagInput=false" icon="pi pi-times" severity="warning"/>
@@ -126,16 +123,17 @@ export default {
       newTag: "",
     }
   },
-  mounted() {
-    api.get("/notes/permissions").then(resp => {
-      this.userPermissions = resp.data
-    })
+  async mounted() {
+    api.get("/notes/permissions").then(resp => this.userPermissions = resp.data)
 
     // Проверяем, не является ли данная ссылка редактированием существующей записи
     this.editNoteID = this.$route.params.id
     if (this.editNoteID) {
       // В таком случае получаем её данные
-      this.getNote()
+      await this.getNote()
+      document.title = "Редактирование: " + this.note.title;
+    } else {
+      document.title = "Создание записи";
     }
 
     // Получаем доступные пользователем теги
@@ -148,12 +146,10 @@ export default {
 
 
   computed: {
+    ...mapState({accessToken: (state) => state.auth.userTokens.accessToken}),
     hasPermissionToCreateTag() {
       return this.userPermissions.includes("add_tags")
     },
-    ...mapState({
-      accessToken: (state) => state.auth.userTokens.accessToken,
-    }),
     ckeditorConfig() {
       return {
         filebrowserUploadUrl: "/api/ckeditor/upload/",
@@ -171,8 +167,7 @@ export default {
 
   methods: {
     getNote() {
-      let url = "/notes/" + this.editNoteID
-      api.get(url)
+      return api.get("/notes/" + this.editNoteID)
           .then(resp => this.note = createNewNote(resp.data))
           .catch(reason => console.log(reason))
     },

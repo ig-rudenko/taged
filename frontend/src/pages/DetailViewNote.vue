@@ -3,7 +3,7 @@
           :show-count="false"
           :show-create-button="false"/>
 
-  <ViewNote v-if="noteID" :note-id="noteID"/>
+  <ViewNote @selected-tag="filterByTag" v-if="noteID" :note-id="noteID"/>
 
   <Footer/>
 
@@ -24,14 +24,19 @@ export default {
 
   data() {
     return {
-      noteID: null as string | null,
+      noteID: this.$route.params.id.toString(),
     }
   },
 
-  mounted() {
-    const match = window.location.href.match(/\/notes\/(\S+)$/);
-    if (match) this.noteID = match[1];
-  },
+  // mounted() {
+  //   this.noteID = ;
+  // },
+
+  methods: {
+    filterByTag(tag: string) {
+      document.location.href = "/?tags-in=" + tag;
+    }
+  }
 
 }
 </script>

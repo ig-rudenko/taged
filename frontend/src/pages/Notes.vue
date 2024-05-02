@@ -1,11 +1,11 @@
 <template>
   <Header section-name="База знаний" section-description="Здесь вы можете найти необходимую для вас информацию"
           :show-create-button="userPermissions.hasPermissionToCreateNote"/>
-  <div class="md:px-6 lg:px-8">
+  <div class="px-2">
 
-    <div class="flex-column p-fluid">
+    <div class="flex-column p-fluid md:px-6 lg:px-8">
       <div class="p-inputgroup flex-1">
-        <AutoComplete class="h-4rem text-900" v-model="search"
+        <AutoComplete class="h-4rem text-900" v-model="filter.search"
                       :input-style="{'text-align': 'center', 'font-size': '1.5rem'}"
                       @keydown.enter="performNewSearch"
                       :suggestions="titles"
@@ -18,9 +18,8 @@
           </template>
         </AutoComplete>
       </div>
-      <MultiSelect v-model="tagsSelected" :options="tags" filter placeholder="Выберите теги"
-                   @change="performNewSearch" scroll-height="400px"
-                   :maxSelectedLabels="3" class="w-full md:w-20rem"/>
+      <MultiSelect v-model="filter.tags" :options="tags" filter placeholder="Выберите теги" @change="performNewSearch"
+                   scroll-height="400px" :maxSelectedLabels="3" class="w-full md:w-20rem"/>
 
       <div v-if="showTotalCount" class="flex justify-content-center">
         <div class="bg-indigo-500 border-round-3xl flex justify-content-around p-2 text-white" style="width: 150px;">
@@ -29,12 +28,6 @@
       </div>
 
     </div>
-
-
-    <Dialog v-if="showNoteID" style="max-height: 100%" v-model:visible="showNoteModal" modal :show-header="true"
-            :style="{ width: '100vw', height: '100%' }">
-      <ViewNote @selected-tag="selectTag" :note-id="showNoteID"/>
-    </Dialog>
 
     <OverlayPanel ref="showFiles">
       <div v-if="noteFilesShow" class="flex flex-column">
@@ -46,7 +39,7 @@
 
 
     <div class="flex flex-wrap justify-content-center">
-      <div class="w-30rem p-3" v-for="note in notes">
+      <div class="w-30rem p-2 m-1" v-for="note in notes">
 
         <Badge v-if="note.score>0.05" :class="badgeClasses((<DetailNote>note))"
                :value="'match: '+note.scorePercents+'%'"/>
@@ -92,13 +85,20 @@
 
 
     <div v-if="paginator.currentPage < paginator.maxPages" @click="addNextPage"
-         class="pt-4 align-items-center cursor-pointer flex flex-column"
-         style="font-size: 1.2rem;">
+         class="pt-4 align-items-center cursor-pointer flex flex-column" style="font-size: 1.2rem;">
       <div>Больше</div>
       <i class="p-button-icon pi pi-angle-double-down" data-pc-section="icon" style="font-size: 1.5rem;"/>
     </div>
 
   </div>
+
+
+  <Dialog v-if="showNoteID" style="max-height: 100%" v-model:visible="showNoteModal" modal :show-header="true"
+          content-class="p-0"
+          :style="{ width: '100vw', height: '100%' }">
+    <ViewNote @selected-tag="selectTag" :note-id="showNoteID"/>
+  </Dialog>
+
 
   <Footer/>
 
@@ -124,6 +124,7 @@ import api from "@/services/api";
 import {Paginator} from "@/paginator";
 import {UserPermissions} from "@/permissions";
 import {DetailNote, getFiles, newDetailNote} from "@/note";
+import {createNoteFilter, NoteSearchFilter} from "@/filters.ts";
 
 enum FindNotesMode {
   rebase = "rebase",
@@ -150,8 +151,6 @@ export default {
     return {
       showNoteID: null as string | null,
       showNoteModal: false,
-      search: "",
-      tagsSelected: [] as string[],
       titles: [] as string[],
       notes: [] as DetailNote[],
       tags: [] as string[],
@@ -160,6 +159,8 @@ export default {
       userPermissions: new UserPermissions([]),
       showTotalCount: false,
       noteFilesShow: null as DetailNote | null,
+
+      filter: new NoteSearchFilter()
     }
   },
   mounted() {
@@ -167,13 +168,11 @@ export default {
       this.userPermissions = new UserPermissions(resp.data)
     })
 
+    this.filter = createNoteFilter(this.$route.query)
+
     this.findNotes(FindNotesMode.rebase)
 
-    api.get("/notes/tags")
-        .then(
-            resp => this.tags = resp.data
-        )
-        .catch(reason => console.log(reason))
+    api.get("/notes/tags").then(resp => this.tags = resp.data).catch(reason => console.log(reason))
   },
 
   computed: {
@@ -183,12 +182,10 @@ export default {
   },
   methods: {
     autocomplete(event: any) {
-      api.get("/notes/autocomplete?term=" + event.query)
-          .then(
-              resp => this.titles = Array.from(resp.data)
-          )
+      api.get("/notes/autocomplete?term=" + event.query).then(resp => this.titles = Array.from(resp.data))
           .catch(reason => console.log(reason))
     },
+
     noteClasses(note: DetailNote): string[] {
       let classes = ["border-round-2xl"]
       if (note.score > 0.9) {
@@ -198,6 +195,7 @@ export default {
       }
       return classes
     },
+
     badgeClasses(note: DetailNote): string[] {
       let classes = ["absolute", "m-2"]
       if (note.score > 0.9) {
@@ -219,7 +217,7 @@ export default {
     },
 
     selectTag(tagName: string): void {
-      this.tagsSelected = [tagName]
+      this.filter.tags = [tagName]
       this.showNoteModal = false
       this.performNewSearch()
     },
@@ -237,29 +235,25 @@ export default {
      * @param {String} save_mode
      */
     findNotes(save_mode: FindNotesMode): void {
-      let url = "/notes/?"
-      url += "page=" + this.paginator.currentPage
-      url += "&search=" + this.search
-      for (const tag of this.tagsSelected) {
-        url += "&tags-in=" + tag
-      }
-      api.get(url)
-          .then(
-              resp => {
-                if (save_mode === FindNotesMode.append) {
-                  this.notes.push(...this.getDetailNotes(resp.data.records))
-                } else {
-                  this.notes = this.getDetailNotes(resp.data.records)
-                }
-                this.totalRecords = Number(resp.data.totalRecords)
-                this.paginator = new Paginator(
-                    resp.data.paginator.currentPage,
-                    resp.data.paginator.maxPages,
-                    resp.data.paginator.perPage
-                )
-              }
-          )
-          .catch(reason => console.log(reason))
+      const params = this.filter.getParams()
+      let apiURL = "/notes/" + params
+      history.pushState({path: "/" + params}, '', "/" + params);
+
+      api.get(apiURL).then(
+          resp => {
+            if (save_mode === FindNotesMode.append) {
+              this.notes.push(...this.getDetailNotes(resp.data.records))
+            } else {
+              this.notes = this.getDetailNotes(resp.data.records)
+            }
+            this.totalRecords = Number(resp.data.totalRecords)
+            this.paginator = new Paginator(
+                resp.data.paginator.currentPage,
+                resp.data.paginator.maxPages,
+                resp.data.paginator.perPage
+            )
+          }
+      ).catch(reason => console.log(reason))
     },
 
     getDetailNotes(data: any[]): Array<DetailNote> {

@@ -22,10 +22,10 @@
       </div>
 
       <div class="mb-4">
-        <Button v-if="userPermissions.hasPermissionToUpdateNote" @click="goToNoteEditURL"
+        <Button v-if="userPermissions.hasPermissionToUpdateNote" @click="goToNoteEditURL" icon="pi pi-pencil"
                 severity="warning" class="mr-2" label="Редактировать" size="small"></Button>
         <Button v-if="userPermissions.hasPermissionToDeleteNote" severity="danger" @click="showDeleteModal=true"
-                label="Удалить" size="small"></Button>
+                icon="pi pi-trash" label="Удалить" size="small"></Button>
       </div>
 
     </div>
@@ -47,9 +47,9 @@
         <div class="font-bold text-red-500">Это действие необратимо!</div>
       </div>
       <template #footer>
-        <div class="flex align-items-center justify-content-end">
+        <div class="flex align-items-center justify-content-end gap-2">
           <Button label="Нет" severity="primary" autofocus icon="pi pi-angle-left" @click="showDeleteModal = false"/>
-          <Button label="Да" severity="danger" icon="pi pi-trash" @click="deleteNote" size="small"/>
+          <Button label="Да" severity="danger" icon="pi pi-trash" @click="deleteNote"/>
         </div>
       </template>
     </Dialog>
@@ -57,6 +57,12 @@
     <ScrollTop/>
 
   </div>
+
+  <!--Запись не найдена-->
+  <Dialog v-model:visible="noteDoesNotExist" modal :closable="false" :show-header="false" :draggable="false"
+          content-class="border-round-md">
+    <NoteDoesNotExist/>
+  </Dialog>
 
 
 </template>
@@ -73,10 +79,13 @@ import api from "@/services/api";
 import {DetailNote, newDetailNote} from "@/note";
 import {UserPermissions} from "@/permissions";
 import MediaPreview from "./MediaPreview.vue";
+import NoteDoesNotExist from "@/components/NoteDoesNotExist.vue";
+import {AxiosError} from "axios";
 
 export default {
   name: "ViewNote",
   components: {
+    NoteDoesNotExist,
     Button,
     Dialog,
     Image,
@@ -88,19 +97,33 @@ export default {
   props: {
     noteId: {required: true, type: String}
   },
-  mounted() {
-    api.get("/notes/permissions").then(resp => {
-      this.userPermissions = new UserPermissions(resp.data)
-    })
-    api.get("/notes/" + this.noteId).then(resp => this.note = newDetailNote(resp.data))
-  },
+  emits: ["selected-tag"],
 
   data() {
     return {
       note: null as DetailNote | null,
+
+      noteDoesNotExist: false,
       showDeleteModal: false,
       userPermissions: new UserPermissions([]),
     }
+  },
+
+  mounted() {
+    api.get("/notes/permissions").then(resp => this.userPermissions = new UserPermissions(resp.data))
+
+    api.get("/notes/" + this.noteId)
+        .then(resp => {
+          this.note = newDetailNote(resp.data);
+          document.title = this.note.title;
+        })
+        .catch(
+            (reason: AxiosError) => {
+              if (reason.response?.status === 404) {
+                this.noteDoesNotExist = true
+              }
+            }
+        )
   },
 
   methods: {

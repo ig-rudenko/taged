@@ -63,9 +63,8 @@ export default {
     }),
   },
   created() {
-    if (this.loggedIn) {
-      this.$router.push("/");
-    }
+    document.title = "Вход в Базу Знаний"
+    if (this.loggedIn) this.$router.push("/");
   },
   methods: {
     ...mapActions("auth", ["login"]),

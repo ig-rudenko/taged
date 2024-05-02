@@ -67,7 +67,7 @@ export default {
       api.get("/notes/count").then(resp => this.totalCount = resp.data.totalCount)
     },
     goToCreateNoteURL(): void {
-      window.location.href = "/notes/create"
+      this.$router.push("/notes/create")
     },
     getRandomInt(min: number, max: number): number {
       min = Math.ceil(min);

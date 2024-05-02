@@ -73,7 +73,7 @@
                 <Tag @click="selectTag(tag)" v-for="tag in note.tags" :value="tag"
                      class="bg-orange-light hover:bg-indigo-500 hover:shadow-4 mr-2 font-normal cursor-pointer"/>
               </div>
-              <i v-if="note.filesCount>0" @click="(e) => showNoteFiles((<DetailNote>note), e)"
+              <i v-if="note.filesCount>0" @click="e => showNoteFiles((<DetailNote>note), e)"
                  v-badge="note.filesCount" class="pi pi-file p-overlay-badge cursor-pointer" style="font-size: 2rem"/>
             </div>
 
@@ -112,7 +112,7 @@ import Dialog from "primevue/dialog/Dialog.vue";
 import MultiSelect from "primevue/multiselect/MultiSelect.vue";
 import AutoComplete from "primevue/autocomplete/AutoComplete.vue";
 import Button from "primevue/button/Button.vue"
-import OverlayPanel from "primevue/overlaypanel";
+import OverlayPanel from "primevue/overlaypanel/OverlayPanel.vue";
 import Tag from "primevue/tag/Tag.vue";
 import ScrollTop from 'primevue/scrolltop';
 
@@ -187,9 +187,7 @@ export default {
           .then(
               resp => this.titles = Array.from(resp.data)
           )
-          .catch(
-              reason => console.log(reason)
-          )
+          .catch(reason => console.log(reason))
     },
     noteClasses(note: DetailNote): string[] {
       let classes = ["border-round-2xl"]
@@ -215,7 +213,7 @@ export default {
           resp => {
             note.files = getFiles(resp.data);
             this.noteFilesShow = note;
-            (<OverlayPanel>this.$refs.showFiles).toggle(event)
+            (<typeof OverlayPanel>this.$refs.showFiles).toggle(event, event.target)
           }
       )
     },

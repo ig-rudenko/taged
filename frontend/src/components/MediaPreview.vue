@@ -11,9 +11,9 @@
             class="text-900 hover:text-indigo-500 cursor-pointer">{{ shortenString(file.name) }}</span>
       <span class="font-normal text-500">
         {{ formatBytes(file.size) }}
-        <a v-if="!isFileObject" target="_blank" :href="fileDownloadLink" class="ml-1">
+        <span v-if="!isFileObject" @click="downloadFile" class="ml-1">
           <i class="pi pi-download cursor-pointer font-bold text-700 hover:text-indigo-500"/>
-        </a>
+        </span>
       </span>
     </div>
   </div>
@@ -35,6 +35,7 @@ import Image from "primevue/image/Image.vue";
 import {NoteFile} from "@/note";
 import format_bytes from "@/helpers/format_size";
 import getFileFormatIconName from "@/helpers/icons";
+import api from "@/services/api.ts";
 
 export default {
   name: "MediaPreview",
@@ -60,8 +61,6 @@ export default {
   mounted() {
     this.checkFile()
     this.currentFile = this.file
-    console.log(this.file)
-    console.log(this.currentFile)
   },
   updated() {
     if (this.currentFile !== this.file) {
@@ -73,12 +72,11 @@ export default {
 
   computed: {
     fileIconURL(): string {
-      console.log(this.file, "TEST")
       const icon = getFileFormatIconName(this.file.name)
       return '/icons/formats/' + icon + '.png'
     },
     fileDownloadLink(): string {
-      return '/api/notes/' + this.fileNoteID + '/files/' + this.file.name
+      return '/notes/' + this.fileNoteID + '/files/' + this.file.name
     },
     fileOriginLink(): string {
       return '/media/' + this.fileNoteID + '/' + this.file.name
@@ -100,6 +98,23 @@ export default {
         // Возвращаем исходную строку без изменений
         return str;
       }
+    },
+
+    downloadFile() {
+      api.get(this.fileDownloadLink, {responseType: "blob"})
+          .then((response) => {
+            // create file link in browser's memory
+            const href = URL.createObjectURL(response.data);
+            // create "a" HTML element with href to file & click
+            const link = document.createElement('a');
+            link.href = href;
+            link.setAttribute('download', this.file.name); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+            // clean up "a" element & remove ObjectURL
+            document.body.removeChild(link);
+            URL.revokeObjectURL(href);
+          });
     },
 
     enterFile(): void {

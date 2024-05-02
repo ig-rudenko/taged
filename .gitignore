@@ -9,3 +9,5 @@ static/admin
 static/rest_framework
 .idea
 .obsidian
+.coverage
+htmlcov

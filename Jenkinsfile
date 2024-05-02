@@ -18,6 +18,44 @@ pipeline {
             }
         }
 
+        // Стадия создания виртуального окружения Python и установки зависимостей
+        stage('Setup Python environment') {
+            steps {
+                // Создание виртуального окружения Python с помощью virtualenv
+                sh "python3 -m venv ${VENV_NAME}"
+                // Активация виртуального окружения
+                sh '''#!/bin/bash
+                    source ${VENV_NAME}/bin/activate
+                    pip install -r requirements.txt && pip install coverage'''
+            }
+        }
+
+        // Стадия запуска тестов и генерации отчета coverage.py
+        stage('Run tests and coverage') {
+            steps {
+                // Запуск тестов и генерации отчета coverage.py с помощью coverage
+                sh '''#!/bin/bash
+                    source ${VENV_NAME}/bin/activate
+                    export DJANGO_DEBUG=1
+                    coverage run --source='.' manage.py test && coverage html'''
+            }
+        }
+
+        // Стадия публикации HTML-отчета coverage
+        stage('Publish coverage report') {
+            steps {
+                // Публикация HTML-отчета с помощью плагина HTML Publisher
+                publishHTML (target: [
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: 'htmlcov',
+                    reportFiles: 'index.html',
+                    reportName: 'Coverage Report',
+                ])
+            }
+        }
+
         // Стадия запуска ansible-playbook из папки проекта "ansible"
         stage('Deploy with Ansible') {
             steps {

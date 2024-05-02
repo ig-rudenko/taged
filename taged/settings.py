@@ -166,6 +166,11 @@ LOGOUT_REDIRECT_URL = "/"
 DATA_UPLOAD_MAX_MEMORY_SIZE = 300_000_000  # 300МБ
 
 
+# Используется кэш со сквозной записью - каждая запись в кеш также будет записываться в базу данных.
+# Чтения сеанса используют базу данных только в том случае, если данные еще не находятся в кеше.
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+
+
 if os.getenv("REDIS_CACHE_URL"):
     CACHES = {
         "default": {

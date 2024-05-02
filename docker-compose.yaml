@@ -55,6 +55,8 @@ services:
     image: knowledge_base:1.2
     restart: always
     command: /bin/bash /app/run.sh
+    environment:
+      REDIS_CACHE_URL: redis://redis:6379/0
     env_file:
       - /etc/sysconfig/taged
     mem_limit: 300m

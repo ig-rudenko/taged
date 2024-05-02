@@ -55,13 +55,12 @@
           <a :href="'/notes/' + note.id"
              class=" flex justify-content-center align-content-center align-items-center cursor-pointer"
              style="min-height: 230px;">
-            <img v-if="note.previewImage" :src="note.previewImage"
+            <img v-if="note.previewImage.length>0" :src="note.previewImage"
                  class="border-round-2xl p-2 border-round-2xl" style="max-height: 230px; max-width: 100%;"
                  alt="preview">
             <svg v-else class="border-round-top-2xl cursor-pointer" width="100%" height="225"
                  xmlns="http://www.w3.org/2000/svg"
                  role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false">
-              <title>Placeholder</title>
               <rect width="100%" height="100%" fill="#aaaaaa"></rect>
               <text x="38%" y="50%" fill="#eceeef" dy=".3em">Нет изображения</text>
             </svg>
@@ -92,7 +91,8 @@
     </div>
 
 
-    <div @click="addNextPage" class="pt-4 align-items-center cursor-pointer flex flex-column"
+    <div v-if="paginator.currentPage < paginator.maxPages" @click="addNextPage"
+         class="pt-4 align-items-center cursor-pointer flex flex-column"
          style="font-size: 1.2rem;">
       <div>Больше</div>
       <i class="p-button-icon pi pi-angle-double-down" data-pc-section="icon" style="font-size: 1.5rem;"/>
@@ -112,7 +112,7 @@ import Dialog from "primevue/dialog/Dialog.vue";
 import MultiSelect from "primevue/multiselect/MultiSelect.vue";
 import AutoComplete from "primevue/autocomplete/AutoComplete.vue";
 import Button from "primevue/button/Button.vue"
-import OverlayPanel from "primevue/overlaypanel/OverlayPanel.vue";
+import OverlayPanel from "primevue/overlaypanel";
 import Tag from "primevue/tag/Tag.vue";
 import ScrollTop from 'primevue/scrolltop';
 
@@ -213,7 +213,7 @@ export default {
           resp => {
             note.files = getFiles(resp.data);
             this.noteFilesShow = note;
-            (<typeof OverlayPanel>this.$refs.showFiles).toggle(event, event.target)
+            (<OverlayPanel>this.$refs.showFiles).toggle(event, event.target)
           }
       )
     },
@@ -288,17 +288,5 @@ export default {
 <style scoped>
 html, body {
   margin: 0 !important;
-}
-
-.bg-orange-light {
-  background-color: #FEAA69;
-}
-
-.bg-purple-light {
-  background-color: #bd77ff;
-}
-
-.total-match {
-  box-shadow: 0 4px 10px #bd77ffaa, 0 0 2px #bd77ffaa, 0 2px 6px #bd77ff33 !important;
 }
 </style>

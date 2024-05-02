@@ -5,7 +5,6 @@ from taged_web.filters import create_notes_query_params, notes_records_filter
 
 
 class TestQueryParams(SimpleTestCase):
-
     def test_filter_with_tags_in(self):
         query_params = create_notes_query_params("test_index", tags_in=["tag1", "tag2"], tags_off=[])
         valid_query_params = QueryLimitParams(
@@ -71,7 +70,7 @@ class TestQueryParams(SimpleTestCase):
 
     def test_filter_with_tags_in_search(self):
         query_params = create_notes_query_params(
-            "test_index", tags_in=["tag1", "tag2"], string="Search String"
+            "test_index", tags_in=["tag1", "tag2"], tags_off=[], string="Search String"
         )
         valid_query_params = QueryLimitParams(
             index="test_index",

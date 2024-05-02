@@ -1,10 +1,10 @@
 <template>
   <!--Предпросмотр изображения-->
   <div class="flex align-items-center align-self-center">
-    <Image v-if="isImage" preview :image-style="{'max-height': '64px', 'max-width': '64px'}"
+    <Image v-if="isImage" preview :image-style="iconStyles"
            class="rounded-3 mr-2" :src="imageSrc" alt="Предпросмотр изображения"/>
 
-    <img v-else @click="enterFile" height="48" class="mr-2 cursor-pointer" :src="fileIconURL" :alt="file.name">
+    <img v-else @click="enterFile" :style="iconStyles" class="mr-2 cursor-pointer" :src="fileIconURL" :alt="file.name">
 
     <div class="flex flex-column">
       <span @click="enterFile"
@@ -18,7 +18,7 @@
     </div>
   </div>
 
-  <Dialog v-model:visible="showFilePreviewModal" :header="file.name" modal :show-header="true" style="max-height: 100%"
+  <Dialog v-model:visible="showFilePreviewModal" modal :show-header="true" style="max-height: 100%"
           :style="{ width: '100vw', height: '100%' }">
     <object type="application/pdf" :data="fileOriginLink" :title="file.name" width="100%"
             :height="windowHeight"></object>
@@ -81,7 +81,9 @@ export default {
     fileOriginLink(): string {
       return '/media/' + this.fileNoteID + '/' + this.file.name
     },
-
+    iconStyles() {
+      return {'max-height': '64px!important', 'max-width': '64px!important'}
+    }
   },
 
   methods: {

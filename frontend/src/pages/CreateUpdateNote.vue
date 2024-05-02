@@ -301,16 +301,4 @@ export default {
 html, body {
   margin: 0 !important;
 }
-
-.bg-orange-light {
-  background-color: #FEAA69;
-}
-
-.bg-purple-light {
-  background-color: #bd77ff;
-}
-
-.total-match {
-  box-shadow: 0 4px 10px #bd77ffaa, 0 0 2px #bd77ffaa, 0 2px 6px #bd77ff33 !important;
-}
 </style>

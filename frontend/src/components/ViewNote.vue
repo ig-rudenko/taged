@@ -128,17 +128,3 @@ export default {
   }
 }
 </script>
-
-<style>
-
-@media (max-width: 600px) {
-  img {
-    width: 100% !important;
-    height: 100% !important;
-  }
-}
-
-.bg-orange-light {
-  background-color: #FEAA69;
-}
-</style>

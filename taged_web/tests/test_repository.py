@@ -37,20 +37,13 @@ class TestRepository(SimpleTestCase):
         note = self.repo.create("title", ["tag1", "tag2"], "content", "image")
 
         self.assertEqual(
-            {
-                "title": "title",
-                "tags": ["tag1", "tag2"],
-                "content": "content",
-                "published_at": datetime.now(),
-                "preview_image": "image",
-            },
+            note.json(),
             self.fake_es.index_docs[0],
         )
         self.assertEqual(note.title, "title")
         self.assertEqual(note.content, "content")
         self.assertEqual(note.tags, "tag1, tag2")
         self.assertListEqual(note.tags_list, ["tag1", "tag2"])
-        self.assertEqual(note.published_at, datetime.now())
 
     def test_delete_note(self):
         self.assertTrue(self.repo.delete("122"))

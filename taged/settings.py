@@ -79,7 +79,7 @@ ROOT_URLCONF = "taged.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -165,12 +165,14 @@ LOGOUT_REDIRECT_URL = "/"
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 300_000_000  # 300МБ
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://redis:6379",
+
+if os.getenv("REDIS_CACHE_URL"):
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": os.getenv("REDIS_CACHE_URL"),
+        }
     }
-}
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [

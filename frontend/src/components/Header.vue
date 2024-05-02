@@ -79,7 +79,7 @@ export default {
 <style scoped>
 .header-image {
   height: 200px;
-  background-image: url('/static/img/knowledge-background.png');
+  background-image: url('/img/knowledge-background.png');
   background-position: center;
 }
 

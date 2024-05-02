@@ -24,7 +24,8 @@ services:
       - knowledge-base-elasticsearch-network
 
   web:
-    image: nginx:1.25.4-alpine
+    image: knowledge_base-nginx:1.2
+    build: frontend
     ports:
       - "443:443"
       - "80:80"

@@ -35,9 +35,9 @@ services:
     cpus: 0.2
     volumes:
       # Медиа - картинки, книги
-      - ./media:/var/www/media:ro
+      - ./media:/usr/share/nginx/html/media:ro
       # Статика - CSS, JS
-      - ./static:/var/www/static:ro
+      - ./static:/usr/share/nginx/html/static/:ro
 
       # Настройки nginx
       - ./settings/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro

@@ -2,7 +2,7 @@
   <Header :section-name="editNoteID?'Редактирование записи':'Создание новой записи'"
           :show-count="false"/>
 
-  <Toast />
+  <Toast/>
 
   <div class="lg:px-8">
 
@@ -29,10 +29,10 @@
                        :options="availableTags" filter placeholder="Выберите теги для записи"
                        scroll-height="400px"/>
           <Button v-if="hasPermissionToCreateTag && !showAddTagInput"
-                  @click="showAddTagInput=true" icon="pi pi-plus-circle" severity="warning" />
+                  @click="showAddTagInput=true" icon="pi pi-plus-circle" severity="warning"/>
           <template v-if="showAddTagInput">
-            <InputText v-model.trim="newTag" @keydown.enter="addNewTag" placeholder="Укажите новый тег" />
-            <Button @click="showAddTagInput=false" icon="pi pi-times" severity="warning" />
+            <InputText v-model.trim="newTag" @keydown.enter="addNewTag" placeholder="Укажите новый тег"/>
+            <Button @click="showAddTagInput=false" icon="pi pi-times" severity="warning"/>
           </template>
         </div>
 
@@ -45,9 +45,13 @@
           <div class="flex flex-wrap">
             <div v-for="file in note.files" class="p-3 w-15rem">
               <div class="flex align-items-end flex-column">
-                <i v-if="file.disable" @click="toggleFile(file)" class="pi pi-check border-round-2xl border-1 px-1 py-1 cursor-pointer hover:text-green-500" aria-label="Cancel" />
-                <i v-else @click="toggleFile(file)" class="pi pi-times border-round-2xl border-1 px-1 py-1 cursor-pointer hover:text-red-500" aria-label="Cancel" />
-                <div :class="file.disable?['opacity-30']:[]" >
+                <i v-if="file.disable" @click="toggleFile(file)"
+                   class="pi pi-check border-round-2xl border-1 px-1 py-1 cursor-pointer hover:text-green-500"
+                   aria-label="Cancel"/>
+                <i v-else @click="toggleFile(file)"
+                   class="pi pi-times border-round-2xl border-1 px-1 py-1 cursor-pointer hover:text-red-500"
+                   aria-label="Cancel"/>
+                <div :class="file.disable?['opacity-30']:[]">
                   <MediaPreview :file="file" :is-file-object="false"
                                 :max-file-name-length="20" :fileNoteID="editNoteID"/>
                 </div>
@@ -65,14 +69,15 @@
 
       <InlineMessage v-if="!note.valid.content">Укажите содержимое</InlineMessage>
       <ckeditor v-if="accessToken" v-model="note.content"
-                :config="ckeditorConfig" editor-url="/static/ckeditor/ckeditor/ckeditor.js" value="Hello, World!"></ckeditor>
+                :config="ckeditorConfig" editor-url="/static/ckeditor/ckeditor/ckeditor.js"
+                value="Hello, World!"></ckeditor>
     </div>
 
   </div>
 
   <Footer/>
 
-  <ScrollTop />
+  <ScrollTop/>
 
 </template>
 
@@ -84,14 +89,14 @@ import MultiSelect from "primevue/multiselect/MultiSelect.vue";
 import ScrollTop from "primevue/scrolltop/ScrollTop.vue";
 import Button from "primevue/button/Button.vue";
 import Toast from "primevue/toast";
-
-import MediaPreview from "../components/MediaPreview.vue";
-import Header from "../components/Header.vue";
-import Footer from "../components/Footer.vue";
-import api from "../services/api";
-import LoadMedia from "../components/LoadMedia.vue";
-import {createNewNote, Note} from "../note";
 import {mapState} from "vuex";
+
+import MediaPreview from "@/components/MediaPreview.vue";
+import Header from "@/components/Header.vue";
+import Footer from "@/components/Footer.vue";
+import api from "@/services/api";
+import LoadMedia from "@/components/LoadMedia.vue";
+import {createNewNote, Note} from "@/note";
 
 export default {
   name: "Notes",
@@ -122,7 +127,9 @@ export default {
     }
   },
   mounted() {
-    api.get("/notes/permissions").then(resp => {this.userPermissions = resp.data})
+    api.get("/notes/permissions").then(resp => {
+      this.userPermissions = resp.data
+    })
 
     // Проверяем, не является ли данная ссылка редактированием существующей записи
     this.editNoteID = this.$route.params.id
@@ -178,9 +185,13 @@ export default {
       }
     },
 
-    updateFiles(files){ this.files = files },
+    updateFiles(files) {
+      this.files = files
+    },
 
-    toggleFile(file) { file.disable = !file.disable },
+    toggleFile(file) {
+      file.disable = !file.disable
+    },
 
     addNewTag() {
       if (!this.newTag.length) return;
@@ -191,7 +202,7 @@ export default {
 
     /** Подтверждаем данные заметки */
     async submit() {
-      if (!this.note.isValid() || this.submitInProcess){ return }
+      if (!this.note.isValid() || this.submitInProcess) return;
 
       this.submitInProcess = true
       let form = new FormData()
@@ -203,14 +214,14 @@ export default {
       try {
         if (this.editNoteID) {
           // Если заметка уже существовала, то обновляем
-          resp = await api.put("/notes/"+this.editNoteID, this.note)
+          resp = await api.put("/notes/" + this.editNoteID, this.note)
         } else {
           // Иначе создаем новую заметку
           resp = await api.post("/notes/", this.note)
         }
         const data = await resp.data
 
-        if (resp.status === 200 || resp.status === 201){
+        if (resp.status === 200 || resp.status === 201) {
           await this.changeFiles(data.id, form)
         } else {
           this.showError(resp.status, data)
@@ -238,7 +249,11 @@ export default {
         }
       }
       // Загружаем новые добавленные файлы
-      const resp = await api.post("/notes/" + note_id + '/files', files_form)
+      const resp = await api.post("/notes/" + note_id + '/files', files_form, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        }
+      })
       const data = await resp.data
 
       if (resp.status === 201) {
@@ -255,7 +270,12 @@ export default {
     handleError(request) {
       request.catch(
           reason => {
-            this.$toast.add({ severity: 'error', summary: 'Error: ' + reason.response.status, detail: reason.response.data, life: 5000 });
+            this.$toast.add({
+              severity: 'error',
+              summary: 'Error: ' + reason.response.status,
+              detail: reason.response.data,
+              life: 5000
+            });
           }
       )
     },
@@ -266,7 +286,7 @@ export default {
      * @param {Object} data
      */
     showError(status, data) {
-      this.$toast.add({ severity: 'error', summary: 'Error: ' + status, detail: data, life: 5000 });
+      this.$toast.add({severity: 'error', summary: 'Error: ' + status, detail: data, life: 5000});
     },
 
     goToNoteViewURL(note_id) {
@@ -279,7 +299,7 @@ export default {
 
 <style scoped>
 html, body {
-  margin: 0!important;
+  margin: 0 !important;
 }
 
 .bg-orange-light {
@@ -291,6 +311,6 @@ html, body {
 }
 
 .total-match {
-  box-shadow: 0 4px 10px #bd77ffaa,0 0 2px #bd77ffaa,0 2px 6px #bd77ff33!important;
+  box-shadow: 0 4px 10px #bd77ffaa, 0 0 2px #bd77ffaa, 0 2px 6px #bd77ff33 !important;
 }
 </style>

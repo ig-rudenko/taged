@@ -1,4 +1,4 @@
-<template id="app" >
+<template id="app">
   <div class="back form-signin">
     <div class="panel">
 
@@ -14,13 +14,15 @@
             <InlineMessage @click="userError = ''" severity="error"><span v-html="userError"></span></InlineMessage>
           </div>
           <div class="py-3 w-100">
-            <InputText @keydown.enter="handleLogin" name="username" class="w-100" autofocus v-model="user.username" placeholder="Логин"/>
+            <InputText @keydown.enter="handleLogin" name="username" class="w-100" autofocus v-model="user.username"
+                       placeholder="Логин"/>
           </div>
           <div class="py-3 w-100">
-            <InputText @keydown.enter="handleLogin" name="password" class="w-100" v-model="user.password" type="password" placeholder="Пароль"/>
+            <InputText @keydown.enter="handleLogin" name="password" class="w-100" v-model="user.password"
+                       type="password" placeholder="Пароль"/>
           </div>
           <div class="py-3">
-            <Button @click="handleLogin" label="Войти" type="submit" severity="primary" />
+            <Button @click="handleLogin" label="Войти" type="submit" severity="primary"/>
           </div>
         </div>
 
@@ -41,10 +43,11 @@
 </template>
 
 <script lang="ts">
-import {LoginUser} from "@/user.ts";
 import {mapActions, mapState} from "vuex";
 import {AxiosError, AxiosResponse} from "axios";
-import {getVerboseAxiosError} from "@/errorFmt.ts";
+
+import {LoginUser} from "@/user";
+import {getVerboseAxiosError} from "@/errorFmt";
 
 export default {
   app: "Login",
@@ -70,7 +73,7 @@ export default {
     handleLogin() {
       this.login(this.user)
           .then(
-              (value: AxiosResponse|AxiosError) => {
+              (value: AxiosResponse | AxiosError) => {
                 if (value.status == 200) {
                   this.$router.push("/");
                 } else {
@@ -134,8 +137,8 @@ export default {
 }
 
 .icon {
-  width: 32px!important;
-  height: 32px!important;
+  width: 32px !important;
+  height: 32px !important;
 }
 
 
@@ -145,6 +148,7 @@ export default {
     box-shadow: none;
     top: -50px;
   }
+
   .welcome-panel {
     top: -4rem;
   }

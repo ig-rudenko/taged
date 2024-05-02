@@ -69,9 +69,9 @@ import ScrollTop from "primevue/scrolltop/ScrollTop.vue";
 import Tag from "primevue/tag/Tag.vue";
 import Toast from "primevue/toast";
 
-import api_request from "../services/api";
-import {DetailNote, newDetailNote} from "../note";
-import {UserPermissions} from "../permissions";
+import api from "@/services/api";
+import {DetailNote, newDetailNote} from "@/note";
+import {UserPermissions} from "@/permissions";
 import MediaPreview from "./MediaPreview.vue";
 
 export default {
@@ -89,10 +89,10 @@ export default {
     noteId: {required: true, type: String}
   },
   mounted() {
-    api_request.get("/api/notes/permissions").then(resp => {
+    api.get("/notes/permissions").then(resp => {
       this.userPermissions = new UserPermissions(resp.data)
     })
-    api_request.get("/api/notes/" + this.noteId).then(resp => this.note = newDetailNote(resp.data))
+    api.get("/notes/" + this.noteId).then(resp => this.note = newDetailNote(resp.data))
   },
 
   data() {
@@ -113,7 +113,7 @@ export default {
     },
 
     deleteNote(): void {
-      api_request.delete("/api/notes/" + this.noteId)
+      api.delete("/notes/" + this.noteId)
           .then(() => window.location.href = "/notes/")
           .catch(
               reason => this.$toast.add({

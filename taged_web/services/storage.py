@@ -3,14 +3,13 @@ from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpResponse, Http404
 
 
-def add_files(files: dict[str, list[UploadedFile]], note_id: str):
-    if files and files.get("files"):
-        (settings.MEDIA_ROOT / note_id).mkdir(parents=True, exist_ok=True)
-        # Создаем папку для текущей заметки
-        for uploaded_file in files["files"]:  # Для каждого файла
-            with open(settings.MEDIA_ROOT / f"{note_id}/{uploaded_file.name}", "wb+") as file:
-                for chunk_ in uploaded_file.chunks():
-                    file.write(chunk_)  # Записываем файл
+def add_files(files: list[UploadedFile], note_id: str):
+    (settings.MEDIA_ROOT / note_id).mkdir(parents=True, exist_ok=True)
+    # Создаем папку для текущей заметки
+    for uploaded_file in files:  # Для каждого файла
+        with open(settings.MEDIA_ROOT / f"{note_id}/{uploaded_file.name}", "wb+") as file:
+            for chunk_ in uploaded_file.chunks():
+                file.write(chunk_)  # Записываем файл
 
 
 def get_file(note_id: str, file_name: str) -> HttpResponse:

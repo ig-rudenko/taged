@@ -2,21 +2,24 @@
   <div>
     <div class="header-image"></div>
     <div class="px-4 py-5 md:px-6 lg:px-8 surface-section">
-      <div class="flex-column lg:flex-row lg:align-items-center lg:justify-content-between relative" style="margin-top: -2rem; top: -70px; margin-bottom: -70px;">
+      <div class="flex-column lg:flex-row lg:align-items-center lg:justify-content-between relative"
+           style="margin-top: -2rem; top: -70px; margin-bottom: -70px;">
         <div>
           <div class="menu-card">
             <div class="flex lg:align-items-center">
-              <a href="/" class="mb-3 mr-2 flex align-items-center justify-content-center knowledge-button cursor-pointer">
+              <a href="/"
+                 class="mb-3 mr-2 flex align-items-center justify-content-center knowledge-button cursor-pointer">
                 <img class="knowledge-button" src="/img/note.svg" alt="Image">
               </a>
               <div class="align-items-center border-round-2xl flex justify-content-center library-button mb-3">
-                  <img :src="'/img/cats/cat'+getRandomInt(0, 8)+'.gif'" alt="Image" width="120" height="120">
+                <img :src="'/img/cats/cat'+getRandomInt(0, 8)+'.gif'" alt="Image" width="120" height="120">
               </div>
             </div>
 
             <div v-if="showCount" class="flex flex-wrap">
               <div class="p-3 mr-2 w-10rem text-center bg-indigo-500 shadow-2" style="border-radius: 12px;">
-                <span class="inline-flex justify-content-center align-items-center bg-indigo-600 border-circle mb-3 p-3">
+                <span
+                    class="inline-flex justify-content-center align-items-center bg-indigo-600 border-circle mb-3 p-3">
                   <i class="pi pi-file text-xl text-white"></i>
                 </span>
                 <div class="text-2xl font-medium text-white mb-2">{{ totalCount }}</div>
@@ -28,7 +31,7 @@
           <div class="pt-4 text-900 text-3xl font-medium mb-3">{{ sectionName }}</div>
           <p class="mt-0 mb-3 text-700 text-xl">{{ sectionDescription }}</p>
         </div>
-        <Button v-if="showCreateButton" @click="goToCreateNoteURL" rounded label="Создать" />
+        <Button v-if="showCreateButton" @click="goToCreateNoteURL" rounded label="Создать"/>
       </div>
     </div>
   </div>
@@ -36,7 +39,7 @@
 
 <script lang="ts">
 import Button from "primevue/button/Button.vue";
-import api from "../services/api";
+import api from "@/services/api";
 
 export default {
   name: "Header",
@@ -106,16 +109,16 @@ export default {
 .menu-card {
   display: flex;
   flex-wrap: wrap;
-  -webkit-box-pack: justify!important;
-  -ms-flex-pack: justify!important;
-  justify-content: space-between!important;
+  -webkit-box-pack: justify !important;
+  -ms-flex-pack: justify !important;
+  justify-content: space-between !important;
 }
 
 @media (max-width: 500px) {
   .menu-card {
-    -webkit-box-pack: center!important;
-    -ms-flex-pack: center!important;
-    justify-content: center!important;
+    -webkit-box-pack: center !important;
+    -ms-flex-pack: center !important;
+    justify-content: center !important;
   }
 }
 

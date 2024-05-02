@@ -154,14 +154,18 @@ class NoteDetailUpdateAPIView(UserGenericAPIView):
 
 class NoteFilesListCreateAPIView(UserGenericAPIView):
     def get(self, request: Request, note_id: str):
-        note = get_note_or_404(note_id, self.current_user(), values=["tags"])
+        # Проверяем, имеет ли пользователь доступ к текущей записи
+        get_note_or_404(note_id, self.current_user(), values=["tags"])
         return Response([file.json() for file in get_repository().get_files(note_id)])
 
     def post(self, request: Request, note_id: str):
         # Проверяем, имеет ли пользователь доступ к текущей записи
         get_note_or_404(note_id, self.current_user(), values=["tags"])
-        files: dict[str, list[UploadedFile]] = dict(request.FILES)
-        add_files(files, note_id)
+        files_data: dict[str, list[UploadedFile]] = dict(request.FILES or {})
+        files = files_data.get("files", [])
+        if files:
+            add_files(files, note_id)
+
         return Response({"filesCount": len(files)}, status=201)
 
 

@@ -4,7 +4,7 @@
     <Image v-if="isImage" preview :image-style="{'max-height': '64px', 'max-width': '64px'}"
            class="rounded-3 mr-2" :src="imageSrc" alt="Предпросмотр изображения"/>
 
-    <img @click="enterFile" v-else height="48" class="mr-2 cursor-pointer" :src="fileIconURL" :alt="file.name">
+    <img v-else @click="enterFile" height="48" class="mr-2 cursor-pointer" :src="fileIconURL" :alt="file.name">
 
     <div class="flex flex-column">
       <span @click="enterFile"
@@ -32,9 +32,9 @@ import {PropType} from "vue";
 import Dialog from "primevue/dialog/Dialog.vue";
 import Image from "primevue/image/Image.vue";
 
-import {NoteFile} from "../note";
-import format_bytes from "../helpers/format_size";
-import getFileFormatIconName from "../helpers/icons";
+import {NoteFile} from "@/note";
+import format_bytes from "@/helpers/format_size";
+import getFileFormatIconName from "@/helpers/icons";
 
 export default {
   name: "MediaPreview",
@@ -75,7 +75,7 @@ export default {
     fileIconURL(): string {
       console.log(this.file, "TEST")
       const icon = getFileFormatIconName(this.file.name)
-      return '/static/images/icons/' + icon + '.png'
+      return '/icons/formats/' + icon + '.png'
     },
     fileDownloadLink(): string {
       return '/api/notes/' + this.fileNoteID + '/files/' + this.file.name

@@ -6,7 +6,7 @@ WORKDIR /app
 # this will allow us to run vite and other tools directly
 ENV PATH /usr/src/node_modules/.bin:$PATH
 
-COPY package*.json .
+COPY package*.json /app/
 
 RUN npm install;
 

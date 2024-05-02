@@ -20,7 +20,7 @@
       </div>
       <MultiSelect v-model="tagsSelected" :options="tags" filter placeholder="Выберите теги"
                    @change="performNewSearch" scroll-height="400px"
-                   :maxSelectedLabels="3" class="w-full md:w-20rem" />
+                   :maxSelectedLabels="3" class="w-full md:w-20rem"/>
 
       <div v-if="showTotalCount" class="flex justify-content-center">
         <div class="bg-indigo-500 border-round-3xl flex justify-content-around p-2 text-white" style="width: 150px;">
@@ -31,7 +31,8 @@
     </div>
 
 
-    <Dialog v-if="showNoteID" style="max-height: 100%" v-model:visible="showNoteModal" modal :show-header="true" :style="{ width: '100vw', height: '100%' }">
+    <Dialog v-if="showNoteID" style="max-height: 100%" v-model:visible="showNoteModal" modal :show-header="true"
+            :style="{ width: '100vw', height: '100%' }">
       <ViewNote @selected-tag="selectTag" :note-id="showNoteID"/>
     </Dialog>
 
@@ -45,56 +46,63 @@
 
 
     <div class="flex flex-wrap justify-content-center">
-        <div class="w-30rem p-3" v-for="note in notes">
+      <div class="w-30rem p-3" v-for="note in notes">
 
-          <Badge v-if="note.score>0.05" :class="badgeClasses((<DetailNote>note))" :value="'match: '+note.scorePercents+'%'" />
+        <Badge v-if="note.score>0.05" :class="badgeClasses((<DetailNote>note))"
+               :value="'match: '+note.scorePercents+'%'"/>
 
-          <div :class="noteClasses((<DetailNote>note))" style="height: 100%">
-            <a :href="'/notes/' + note.id" class=" flex justify-content-center align-content-center align-items-center cursor-pointer" style="min-height: 230px;">
-              <img v-if="note.previewImage" :src="note.previewImage"
-                   class="border-round-2xl p-2 border-round-2xl" style="max-height: 230px; max-width: 100%;" alt="preview">
-              <svg v-else class="border-round-top-2xl cursor-pointer" width="100%" height="225" xmlns="http://www.w3.org/2000/svg"
-                   role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false">
-                <title>Placeholder</title>
-                <rect width="100%" height="100%" fill="#aaaaaa"></rect>
-                <text x="38%" y="50%" fill="#eceeef" dy=".3em">Нет изображения</text>
-              </svg>
-            </a>
+        <div :class="noteClasses((<DetailNote>note))" style="height: 100%">
+          <a :href="'/notes/' + note.id"
+             class=" flex justify-content-center align-content-center align-items-center cursor-pointer"
+             style="min-height: 230px;">
+            <img v-if="note.previewImage" :src="note.previewImage"
+                 class="border-round-2xl p-2 border-round-2xl" style="max-height: 230px; max-width: 100%;"
+                 alt="preview">
+            <svg v-else class="border-round-top-2xl cursor-pointer" width="100%" height="225"
+                 xmlns="http://www.w3.org/2000/svg"
+                 role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false">
+              <title>Placeholder</title>
+              <rect width="100%" height="100%" fill="#aaaaaa"></rect>
+              <text x="38%" y="50%" fill="#eceeef" dy=".3em">Нет изображения</text>
+            </svg>
+          </a>
 
-            <div class="p-3">
-              <div class="flex flex-wrap justify-content-between align-items-center">
-                <div>
-                  <Tag @click="selectTag(tag)" v-for="tag in note.tags" :value="tag"
-                       class="bg-orange-light hover:bg-indigo-500 hover:shadow-4 mr-2 font-normal cursor-pointer" />
-                </div>
-                <i v-if="note.filesCount>0" @click="(e) => showNoteFiles((<DetailNote>note), e)"
-                   v-badge="note.filesCount" class="pi pi-file p-overlay-badge cursor-pointer" style="font-size: 2rem" />
-              </div>
-
-              <h2>{{ note.title }}</h2>
-              <div class="flex justify-content-end">
-                <Button size="small" rounded class="bg-orange-light border-0" icon="pi pi-eye" @click="showNote(note.id)"></Button>
-              </div>
+          <div class="p-3">
+            <div class="flex flex-wrap justify-content-between align-items-center">
               <div>
-                <small class="text-black-alpha-60"><i class="pi pi-calendar"/> {{ note.published_at }}</small>
+                <Tag @click="selectTag(tag)" v-for="tag in note.tags" :value="tag"
+                     class="bg-orange-light hover:bg-indigo-500 hover:shadow-4 mr-2 font-normal cursor-pointer"/>
               </div>
+              <i v-if="note.filesCount>0" @click="(e) => showNoteFiles((<DetailNote>note), e)"
+                 v-badge="note.filesCount" class="pi pi-file p-overlay-badge cursor-pointer" style="font-size: 2rem"/>
+            </div>
+
+            <h2>{{ note.title }}</h2>
+            <div class="flex justify-content-end">
+              <Button size="small" rounded class="bg-orange-light border-0" icon="pi pi-eye"
+                      @click="showNote(note.id)"></Button>
+            </div>
+            <div>
+              <small class="text-black-alpha-60"><i class="pi pi-calendar"/> {{ note.published_at }}</small>
             </div>
           </div>
         </div>
-
       </div>
 
+    </div>
 
-    <div @click="addNextPage" class="pt-4 align-items-center cursor-pointer flex flex-column" style="font-size: 1.2rem;">
-        <div>Больше</div>
-        <i class="p-button-icon pi pi-angle-double-down" data-pc-section="icon" style="font-size: 1.5rem;" />
+
+    <div @click="addNextPage" class="pt-4 align-items-center cursor-pointer flex flex-column"
+         style="font-size: 1.2rem;">
+      <div>Больше</div>
+      <i class="p-button-icon pi pi-angle-double-down" data-pc-section="icon" style="font-size: 1.5rem;"/>
     </div>
 
   </div>
 
   <Footer/>
 
-  <ScrollTop />
+  <ScrollTop/>
 
 </template>
 
@@ -102,20 +110,20 @@
 import Badge from "primevue/badge/Badge.vue";
 import Dialog from "primevue/dialog/Dialog.vue";
 import MultiSelect from "primevue/multiselect/MultiSelect.vue";
-import AutoComplete  from "primevue/autocomplete/AutoComplete.vue";
+import AutoComplete from "primevue/autocomplete/AutoComplete.vue";
 import Button from "primevue/button/Button.vue"
 import OverlayPanel from "primevue/overlaypanel";
 import Tag from "primevue/tag/Tag.vue";
 import ScrollTop from 'primevue/scrolltop';
 
-import Header from "../components/Header.vue";
-import MediaPreview from "../components/MediaPreview.vue";
-import Footer from "../components/Footer.vue";
-import ViewNote from "../components/ViewNote.vue";
-import api_request from "../services/api.ts";
-import {Paginator} from "../paginator.ts";
-import {DetailNote, getFiles, newDetailNote} from "../note.ts";
-import {UserPermissions} from "../permissions.ts";
+import MediaPreview from "@/components/MediaPreview.vue";
+import ViewNote from "@/components/ViewNote.vue";
+import Header from "@/components/Header.vue";
+import Footer from "@/components/Footer.vue";
+import api from "@/services/api";
+import {Paginator} from "@/paginator";
+import {UserPermissions} from "@/permissions";
+import {DetailNote, getFiles, newDetailNote} from "@/note";
 
 enum FindNotesMode {
   rebase = "rebase",
@@ -140,7 +148,7 @@ export default {
   },
   data() {
     return {
-      showNoteID: null as string|null,
+      showNoteID: null as string | null,
       showNoteModal: false,
       search: "",
       tagsSelected: [] as string[],
@@ -151,26 +159,33 @@ export default {
       paginator: new Paginator(),
       userPermissions: new UserPermissions([]),
       showTotalCount: false,
-      noteFilesShow: null as DetailNote|null,
+      noteFilesShow: null as DetailNote | null,
     }
   },
   mounted() {
-    api_request.get("/notes/permissions").then(resp => {this.userPermissions = new UserPermissions(resp.data)})
+    api.get("/notes/permissions").then(resp => {
+      this.userPermissions = new UserPermissions(resp.data)
+    })
 
     this.findNotes(FindNotesMode.rebase)
 
-    api_request.get("/notes/tags")
+    api.get("/notes/tags")
         .then(
             resp => this.tags = resp.data
         )
         .catch(reason => console.log(reason))
   },
 
+  computed: {
+    DetailNote() {
+      return DetailNote
+    }
+  },
   methods: {
     autocomplete(event: any) {
-      api_request.get("/notes/autocomplete?term=" + event.query)
+      api.get("/notes/autocomplete?term=" + event.query)
           .then(
-            resp => this.titles = Array.from(resp.data)
+              resp => this.titles = Array.from(resp.data)
           )
           .catch(
               reason => console.log(reason)
@@ -196,7 +211,7 @@ export default {
     },
 
     showNoteFiles(note: DetailNote, event: Event) {
-      api_request.get("/notes/"+note.id+"/files").then(
+      api.get("/notes/" + note.id + "/files").then(
           resp => {
             note.files = getFiles(resp.data);
             this.noteFilesShow = note;
@@ -230,7 +245,7 @@ export default {
       for (const tag of this.tagsSelected) {
         url += "&tags-in=" + tag
       }
-      api_request.get(url)
+      api.get(url)
           .then(
               resp => {
                 if (save_mode === FindNotesMode.append) {
@@ -251,7 +266,9 @@ export default {
 
     getDetailNotes(data: any[]): Array<DetailNote> {
       let res: Array<DetailNote> = []
-      for (const note of data) { res.push(newDetailNote(note)) }
+      for (const note of data) {
+        res.push(newDetailNote(note))
+      }
       return res
     },
 
@@ -272,7 +289,7 @@ export default {
 
 <style scoped>
 html, body {
-  margin: 0!important;
+  margin: 0 !important;
 }
 
 .bg-orange-light {
@@ -284,6 +301,6 @@ html, body {
 }
 
 .total-match {
-  box-shadow: 0 4px 10px #bd77ffaa,0 0 2px #bd77ffaa,0 2px 6px #bd77ff33!important;
+  box-shadow: 0 4px 10px #bd77ffaa, 0 0 2px #bd77ffaa, 0 2px 6px #bd77ff33 !important;
 }
 </style>

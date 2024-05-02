@@ -22,6 +22,8 @@
       </div>
 
       <div class="mb-4">
+        <Button v-if="userPermissions.hasPermissionToCreateLink" icon="pi pi-link" @click="showShareLinkPanel"
+                severity="help" class="mr-2" label="Поделиться" size="small"></Button>
         <Button v-if="userPermissions.hasPermissionToUpdateNote" @click="goToNoteEditURL" icon="pi pi-pencil"
                 severity="warning" class="mr-2" label="Редактировать" size="small"></Button>
         <Button v-if="userPermissions.hasPermissionToDeleteNote" severity="danger" @click="showDeleteModal=true"
@@ -65,14 +67,45 @@
   </Dialog>
 
 
+  <!--Создать временную ссылку-->
+  <OverlayPanel ref="shareLink">
+    <div class="max-w-20rem">
+      <div class="flex flex-wrap gap-2">
+        <h4 class="m-0 p-2 mb-2">Создать временную ссылку</h4>
+        <InlineMessage severity="info" class="w-full">По данной ссылке любой сможет посмотреть эту запись
+        </InlineMessage>
+        <InlineMessage severity="warn" class="w-full">Ссылку невозможно будет удалить</InlineMessage>
+
+        <!--Временная ссылка-->
+        <div v-if="shareLink" class="w-full p-inputtext link-container">{{ shareLink }}</div>
+
+        <div class="flex w-full align-items-end gap-2 justify-content-end">
+          <div class="mt-2">
+            <label for="horizontal-buttons" class="block mb-2">Время жизни ссылки</label>
+            <InputNumber v-model="shareLinkMinutes" inputId="horizontal-buttons" showButtons buttonLayout="horizontal"
+                         :step="1" suffix=" мин." class="justify-content-center" input-class="w-6rem">
+              <template #incrementbuttonicon>
+                <span class="pi pi-plus"/>
+              </template>
+              <template #decrementbuttonicon>
+                <span class="pi pi-minus"/>
+              </template>
+            </InputNumber>
+          </div>
+          <Button @click="getSharedLink" class="w-full justify-content-center">Создать</Button>
+        </div>
+      </div>
+    </div>
+  </OverlayPanel>
+
 </template>
 
 <script lang="ts">
 import Button from "primevue/button/Button.vue";
 import Dialog from "primevue/dialog/Dialog.vue";
 import Image from "primevue/image/Image.vue";
+import InputNumber from "primevue/inputnumber";
 import ScrollTop from "primevue/scrolltop/ScrollTop.vue";
-import Tag from "primevue/tag/Tag.vue";
 import Toast from "primevue/toast";
 
 import api from "@/services/api";
@@ -80,7 +113,8 @@ import {DetailNote, newDetailNote} from "@/note";
 import {UserPermissions} from "@/permissions";
 import MediaPreview from "./MediaPreview.vue";
 import NoteDoesNotExist from "@/components/NoteDoesNotExist.vue";
-import {AxiosError} from "axios";
+import {AxiosError, AxiosResponse} from "axios";
+import OverlayPanel from "primevue/overlaypanel";
 
 export default {
   name: "ViewNote",
@@ -89,9 +123,10 @@ export default {
     Button,
     Dialog,
     Image,
+    InputNumber,
+    OverlayPanel,
     MediaPreview,
     ScrollTop,
-    Tag,
     Toast,
   },
   props: {
@@ -103,7 +138,11 @@ export default {
     return {
       note: null as DetailNote | null,
 
+      shareLinkMinutes: 10,
+      shareLink: "",
+
       noteDoesNotExist: false,
+
       showDeleteModal: false,
       userPermissions: new UserPermissions([]),
     }
@@ -147,7 +186,32 @@ export default {
               })
           )
       this.showDeleteModal = false
-    }
+    },
+
+    showShareLinkPanel(event: Event) {
+      (<OverlayPanel>this.$refs.shareLink).toggle(event, event.target)
+    },
+
+    getSharedLink() {
+      const data = {
+        minutes: this.shareLinkMinutes
+      }
+      api.post('/notes/temp/' + this.noteId, data).then(
+          (resp: AxiosResponse<{ link: string }>) => {
+            this.shareLink = document.location.origin + resp.data.link;
+          }
+      )
+    },
+
   }
 }
 </script>
+
+
+<style scoped>
+.link-container {
+  user-select: all;
+  overflow-x: hidden;
+  text-wrap: nowrap;
+}
+</style>

@@ -17,3 +17,9 @@ class NotePermission(BasePermission):
             return user.has_perms(["taged_web.update_notes"])
         if request.method == "DELETE":
             return user.has_perms(["taged_web.delete_notes"])
+
+
+class NoteCreateLinkPermission(BasePermission):
+    def has_permission(self, request: Request, view: APIView):
+        user = cast(AbstractUser, request.user)
+        return user.has_perms(["taged_web.create_notes_link"])

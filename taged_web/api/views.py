@@ -1,17 +1,29 @@
-from django.contrib.humanize.templatetags import humanize
 from django.core.cache import cache
 from django.core.files.uploadedfile import UploadedFile
 from django.utils.decorators import method_decorator
 from elasticsearch import exceptions as es_exceptions
+from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from elasticsearch_control.decorators import api_elasticsearch_check_available
-from taged_web.api.permissions import NotePermission
-from taged_web.api.serializers import NoteSerializerNoTagsValidation, NoteSerializerTagsValidation
+from taged_web.api.permissions import NotePermission, NoteCreateLinkPermission
+from taged_web.api.serializers import (
+    NoteSerializerNoTagsValidation,
+    NoteSerializerTagsValidation,
+    CreateTempLinkSerializer,
+)
 from taged_web.es_index import PostIndex
 from taged_web.repo.notes import get_repository
-from taged_web.services.notes import get_note_or_404, clear_notes_cache, get_notes, update_note
+from taged_web.services.notes import (
+    get_note_or_404,
+    clear_notes_cache,
+    get_notes,
+    update_note,
+    get_note_detail,
+    create_temp_link,
+    get_note_from_temp_link,
+)
 from taged_web.services.storage import add_files, get_file, delete_file
 from taged_web.services.tags import get_unavailable_tags, add_tags_to_user_if_not_exist, get_available_tags
 from .types import UserGenericAPIView
@@ -124,12 +136,8 @@ class NoteDetailUpdateAPIView(UserGenericAPIView):
 
     def get(self, request: Request, note_id: str):
         note = get_note_or_404(note_id, self.current_user())
-        note_json_data = note.json()
-        repository = get_repository()
-
-        note_json_data["published_at"] = humanize.naturaltime(note_json_data["published_at"])
-        note_json_data["files"] = [file.json() for file in repository.get_files(note.id)]
-        return Response(note_json_data)
+        note_data = get_note_detail(note)
+        return Response(note_data)
 
     def put(self, request: Request, note_id: str):
         note = get_note_or_404(note_id, self.current_user())
@@ -186,3 +194,26 @@ class NoteFileDetailDeleteAPIView(UserGenericAPIView):
 class TagsListAPIView(UserGenericAPIView):
     def get(self, request: Request, *args, **kwargs):
         return Response(get_available_tags(self.current_user()))
+
+
+class CreateNoteTempLinkAPIView(UserGenericAPIView):
+    permission_classes = [NoteCreateLinkPermission]
+    serializer_class = CreateTempLinkSerializer
+
+    def post(self, request: Request, note_id: str, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        note = get_note_or_404(note_id, self.current_user())
+        link = create_temp_link(note, serializer.validated_data["minutes"])
+
+        return Response({"link": link})
+
+
+class ShowNoteTempLinkAPIView(UserGenericAPIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request: Request, token: str, *args, **kwargs):
+        note = get_note_from_temp_link(token)
+        note_json_data = get_note_detail(note)
+        return Response(note_json_data)

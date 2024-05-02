@@ -125,6 +125,7 @@ import {Paginator} from "@/paginator";
 import {UserPermissions} from "@/permissions";
 import {DetailNote, getFiles, newDetailNote} from "@/note";
 import {createNoteFilter, NoteSearchFilter} from "@/filters.ts";
+import {mapState} from "vuex";
 
 enum FindNotesMode {
   rebase = "rebase",
@@ -164,6 +165,8 @@ export default {
     }
   },
   mounted() {
+    if (!this.loggedIn) this.$router.push("/login");
+
     api.get("/notes/permissions").then(resp => {
       this.userPermissions = new UserPermissions(resp.data)
     })
@@ -176,6 +179,7 @@ export default {
   },
 
   computed: {
+    ...mapState({loggedIn: (state: any) => state.auth.status.loggedIn}),
     DetailNote() {
       return DetailNote
     }

@@ -1,10 +1,12 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import TypeVar
 
 from django.conf import settings
 from django.contrib.humanize.templatetags import humanize
 from django.core.cache import cache
 from django.http import Http404
+from jwt import encode as jwt_encode, decode as jwt_decode, PyJWTError
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from elasticsearch_control.cache import get_or_cache
@@ -32,6 +34,15 @@ def clear_notes_cache() -> None:
     keys = [f"NotesCount.{username}" for username in all_usernames]
     keys += [f"last_updated_posts.{username}" for username in all_usernames]
     cache.delete_many(keys)
+
+
+def get_note_detail(note: PostIndex) -> dict:
+    note_json_data = note.json()
+    repository = get_repository()
+
+    note_json_data["published_at"] = humanize.naturaltime(note_json_data["published_at"])
+    note_json_data["files"] = [file.json() for file in repository.get_files(note.id)]
+    return note_json_data
 
 
 def update_note(note: PostIndex, title: str, content: str, tags: list[str], user: User) -> PostIndex:
@@ -125,3 +136,46 @@ def humanize_datetime(objects: list[_N]) -> list[_N]:
     for post in objects:
         post["published_at"] = humanize.naturaltime(datetime.strptime(post["published_at"], "%Y-%m-%dT%X.%f"))
     return objects
+
+
+def create_temp_link(note: PostIndex, minutes: int) -> str:
+    """
+    Создает временную ссылку на запись.
+    """
+    token = jwt_encode(
+        {
+            "id": note.id,
+            "exp": (datetime.now() + timedelta(minutes=minutes)).timestamp(),
+        },
+        key=settings.SIMPLE_JWT["SIGNING_KEY"],
+        algorithm=settings.SIMPLE_JWT["ALGORITHM"],
+    )
+    return f"/temp/{token}"
+
+
+def get_note_from_temp_link(token: str) -> PostIndex:
+    """
+    Получает запись по временной ссылке.
+    """
+    try:
+        payload = jwt_decode(
+            token,
+            key=settings.SIMPLE_JWT["SIGNING_KEY"],
+            algorithms=[settings.SIMPLE_JWT["ALGORITHM"]],
+        )
+    except PyJWTError:
+        raise ValidationError("Invalid token")
+
+    exp: int | None = payload.get("exp", None)
+    note_id: str | None = payload.get("id", None)
+
+    if exp is None or note_id is None:
+        raise ValidationError("Invalid token")
+    if datetime.fromtimestamp(exp) < datetime.now():
+        raise ValidationError("Ссылка истекла")
+
+    try:
+        note = get_repository().get(note_id)
+    except NotFoundError:
+        raise ValidationError("Запись не найдена")
+    return note

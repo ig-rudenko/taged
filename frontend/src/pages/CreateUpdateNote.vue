@@ -124,6 +124,8 @@ export default {
     }
   },
   async mounted() {
+    if (!this.accessToken) this.$router.push("/login");
+
     api.get("/notes/permissions").then(resp => this.userPermissions = resp.data)
 
     // Проверяем, не является ли данная ссылка редактированием существующей записи

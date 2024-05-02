@@ -2,7 +2,8 @@
   <div class="surface-section px-4 py-8 md:px-6 lg:px-8">
     <div class="border-top-1 border-300 text-center">
       <ul class="align-items-center flex flex-column justify-content-center lg:flex-row list-none mb-4 mx-0 p-0">
-        <li><span class="no-underline text-600 cursor-pointer line-height-3 lg:mr-5" @click="performLogout">Выйти</span>
+        <li v-if="showLogout">
+          <span class="no-underline text-600 cursor-pointer line-height-3 lg:mr-5" @click="performLogout">Выйти</span>
         </li>
       </ul>
       <div class="flex align-items-center justify-content-center mb-5">
@@ -30,6 +31,9 @@ export default {
   name: "Footer",
   components: {
     Button,
+  },
+  props: {
+    showLogout: {required: false, type: Boolean, default: true},
   },
   methods: {
     ...mapActions("auth", ["logout"]),

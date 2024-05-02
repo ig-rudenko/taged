@@ -13,6 +13,7 @@
 import Header from "@/components/Header.vue";
 import ViewNote from "@/components/ViewNote.vue";
 import Footer from "@/components/Footer.vue";
+import {mapState} from "vuex";
 
 export default {
   name: "DetailViewNote",
@@ -28,9 +29,13 @@ export default {
     }
   },
 
-  // mounted() {
-  //   this.noteID = ;
-  // },
+  mounted() {
+    if (!this.loggedIn) this.$router.push("/login");
+  },
+
+  computed: {
+    ...mapState({loggedIn: (state: any) => state.auth.status.loggedIn}),
+  },
 
   methods: {
     filterByTag(tag: string) {

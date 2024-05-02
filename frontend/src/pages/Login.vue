@@ -58,9 +58,7 @@ export default {
     };
   },
   computed: {
-    ...mapState({
-      loggedIn: (state: any) => state.auth.status.loggedIn,
-    }),
+    ...mapState({loggedIn: (state: any) => state.auth.status.loggedIn}),
   },
   created() {
     document.title = "Вход в Базу Знаний"

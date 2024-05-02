@@ -1,5 +1,5 @@
 from rest_framework.exceptions import ValidationError
-from rest_framework.serializers import ListSerializer, CharField, Serializer, ModelSerializer
+from rest_framework.serializers import ListSerializer, CharField, Serializer, ModelSerializer, IntegerField
 
 from taged_web.models import Tags, User
 
@@ -25,3 +25,7 @@ class UserSerializer(ModelSerializer):
     class Meta:
         model = User
         fields = ("id", "username", "email", "first_name", "last_name", "is_staff", "is_superuser")
+
+
+class CreateTempLinkSerializer(Serializer):
+    minutes = IntegerField(required=True, min_value=1, max_value=60 * 24)

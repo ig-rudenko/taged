@@ -1,5 +1,5 @@
 <template>
-  <div v-if="note" class="flex flex-wrap justify-content-between align-items-center p-4">
+  <div v-if="note" class="p-4">
 
     <div class="border-blue-600 pl-4 mb-3 text-900" style="border-left: 8px solid;">
       <h1>{{ note.title }}</h1>

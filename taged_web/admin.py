@@ -3,8 +3,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
 
-from .es_index import PostIndex
 from .models import Tags
+from .repo.notes import get_repository
 
 
 @admin.register(Tags)
@@ -23,7 +23,7 @@ class TagsAdmin(admin.ModelAdmin):
 
     @admin.display(description="Кол-во записей")
     def notes_count(self, tag: Tags):
-        return PostIndex.tags_count(tag_name=tag.tag_name)
+        return get_repository().tags_count(tag_name=tag.tag_name)
 
 
 class TagsInline(admin.TabularInline):

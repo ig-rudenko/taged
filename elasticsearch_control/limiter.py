@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from typing import Callable, Literal
+from typing import Callable, Literal, Optional
 
 from elasticsearch import Elasticsearch
 
@@ -39,11 +39,7 @@ class ElasticsearchPaginator:
     per_page = 24
 
     def __init__(
-        self,
-        es: Elasticsearch,
-        params: QueryLimitParams,
-        convert_result: Callable = None,
-        **extra
+        self, es: Elasticsearch, params: QueryLimitParams, convert_result: Optional[Callable] = None, **extra
     ):
         """
         Инициализируем пагинатор запросов.
@@ -105,7 +101,7 @@ class ElasticsearchPaginator:
         )
 
         # Вызываем функцию форматирования результата, его была указана
-        if self._convert_func:
+        if callable(self._convert_func):
             return self._convert_func(res, **self.extra_parameters)
 
         if res.get("hits") and res["hits"].get("hits"):
@@ -115,12 +111,12 @@ class ElasticsearchPaginator:
 
     def validate_number(self, number: str | int | float) -> int:
         try:
-            number = int(number)
+            valid_number = int(number)
         except (ValueError, TypeError):
-            number = 1
+            valid_number = 1
 
-        if self.max_pages and number > self.max_pages:
-            number = self.max_pages
-        elif number <= 0:
-            number = 1
-        return number
+        if self.max_pages and valid_number > self.max_pages:
+            valid_number = self.max_pages
+        elif valid_number <= 0:
+            valid_number = 1
+        return valid_number

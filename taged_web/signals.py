@@ -8,9 +8,8 @@ def create_permission(sender, **kwargs):
         ("update_notes", "Can update notes"),
         ("create_notes", "Can create notes"),
         ("delete_notes", "Can delete notes"),
+        ("create_notes_link", "Can create notes link"),
     ]
 
     for codename, name in extra_permissions:
-        Permission.objects.get_or_create(
-            codename=codename, name=name, content_type=content_type
-        )
+        Permission.objects.get_or_create(codename=codename, name=name, content_type=content_type)

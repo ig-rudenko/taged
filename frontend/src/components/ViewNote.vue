@@ -22,9 +22,12 @@
       </div>
 
       <div class="mb-4">
-        <Button v-if="userPermissions.hasPermissionToUpdateNote" @click="goToNoteEditURL"
+        <Button v-if="userPermissions.hasPermissionToCreateLink" icon="pi pi-link" @click="showShareLinkPanel"
+                severity="help" class="mr-2" label="Поделиться" size="small"></Button>
+        <Button v-if="userPermissions.hasPermissionToUpdateNote" @click="goToNoteEditURL" icon="pi pi-pencil"
                 severity="warning" class="mr-2" label="Редактировать" size="small"></Button>
-        <Button v-if="userPermissions.hasPermissionToDeleteNote" severity="danger" @click="showDeleteModal=true" label="Удалить" size="small"></Button>
+        <Button v-if="userPermissions.hasPermissionToDeleteNote" severity="danger" @click="showDeleteModal=true"
+                icon="pi pi-trash" label="Удалить" size="small"></Button>
       </div>
 
     </div>
@@ -40,23 +43,60 @@
     <div v-html="note.content" class="border-300 border-top-1 pt-5"></div>
 
 
-    <Dialog v-model:visible="showDeleteModal" modal close-icon="pi" header="Подтвердите удаление" >
+    <Dialog v-model:visible="showDeleteModal" modal close-icon="pi" header="Подтвердите удаление">
       <div class="flex flex-column align-items-center">
         <div class="font-bold text-red-500">Вы уверены, что хотите удалить данную запись?</div>
         <div class="font-bold text-red-500">Это действие необратимо!</div>
       </div>
       <template #footer>
-        <div class="flex align-items-center justify-content-end">
-          <Button label="Нет" severity="primary" autofocus icon="pi pi-angle-left" @click="showDeleteModal = false" />
-          <Button label="Да" severity="danger" icon="pi pi-trash" @click="deleteNote" size="small" />
+        <div class="flex align-items-center justify-content-end gap-2">
+          <Button label="Нет" severity="primary" autofocus icon="pi pi-angle-left" @click="showDeleteModal = false"/>
+          <Button label="Да" severity="danger" icon="pi pi-trash" @click="deleteNote"/>
         </div>
       </template>
     </Dialog>
 
-    <ScrollTop />
+    <ScrollTop/>
 
   </div>
 
+  <!--Запись не найдена-->
+  <Dialog v-model:visible="noteDoesNotExist" modal :closable="false" :show-header="false" :draggable="false"
+          content-class="border-round-md">
+    <NoteDoesNotExist/>
+  </Dialog>
+
+
+  <!--Создать временную ссылку-->
+  <OverlayPanel ref="shareLink">
+    <div class="max-w-20rem">
+      <div class="flex flex-wrap gap-2">
+        <h4 class="m-0 p-2 mb-2">Создать временную ссылку</h4>
+        <InlineMessage severity="info" class="w-full">По данной ссылке любой сможет посмотреть эту запись
+        </InlineMessage>
+        <InlineMessage severity="warn" class="w-full">Ссылку невозможно будет удалить</InlineMessage>
+
+        <!--Временная ссылка-->
+        <div v-if="shareLink" class="w-full p-inputtext link-container">{{ shareLink }}</div>
+
+        <div class="flex w-full align-items-end gap-2 justify-content-end">
+          <div class="mt-2">
+            <label for="horizontal-buttons" class="block mb-2">Время жизни ссылки</label>
+            <InputNumber v-model="shareLinkMinutes" inputId="horizontal-buttons" showButtons buttonLayout="horizontal"
+                         :step="1" suffix=" мин." class="justify-content-center" input-class="w-6rem">
+              <template #incrementbuttonicon>
+                <span class="pi pi-plus"/>
+              </template>
+              <template #decrementbuttonicon>
+                <span class="pi pi-minus"/>
+              </template>
+            </InputNumber>
+          </div>
+          <Button @click="getSharedLink" class="w-full justify-content-center">Создать</Button>
+        </div>
+      </div>
+    </div>
+  </OverlayPanel>
 
 </template>
 
@@ -64,40 +104,65 @@
 import Button from "primevue/button/Button.vue";
 import Dialog from "primevue/dialog/Dialog.vue";
 import Image from "primevue/image/Image.vue";
+import InputNumber from "primevue/inputnumber";
 import ScrollTop from "primevue/scrolltop/ScrollTop.vue";
-import Tag from "primevue/tag/Tag.vue";
 import Toast from "primevue/toast";
 
-import api_request from "../api_request";
-import {newDetailNote, DetailNote} from "../note";
-import {UserPermissions} from "../permissions";
+import api from "@/services/api";
+import {DetailNote, newDetailNote} from "@/note";
+import {UserPermissions} from "@/permissions";
 import MediaPreview from "./MediaPreview.vue";
+import NoteDoesNotExist from "@/components/NoteDoesNotExist.vue";
+import {AxiosError, AxiosResponse} from "axios";
+import OverlayPanel from "primevue/overlaypanel";
 
 export default {
   name: "ViewNote",
   components: {
+    NoteDoesNotExist,
     Button,
     Dialog,
     Image,
+    InputNumber,
+    OverlayPanel,
     MediaPreview,
     ScrollTop,
-    Tag,
     Toast,
   },
   props: {
     noteId: {required: true, type: String}
   },
-  mounted() {
-    api_request.get("/api/notes/permissions").then(resp => {this.userPermissions = new UserPermissions(resp.data)})
-    api_request.get("/api/notes/"+this.noteId).then(resp => this.note = newDetailNote(resp.data))
-  },
+  emits: ["selected-tag"],
 
   data() {
     return {
-      note: null as DetailNote,
+      note: null as DetailNote | null,
+
+      shareLinkMinutes: 10,
+      shareLink: "",
+
+      noteDoesNotExist: false,
+
       showDeleteModal: false,
       userPermissions: new UserPermissions([]),
     }
+  },
+
+  mounted() {
+    api.get("/notes/permissions").then(resp => this.userPermissions = new UserPermissions(resp.data))
+
+    api.get("/notes/" + this.noteId)
+        .then(resp => {
+          this.note = newDetailNote(resp.data);
+          document.title = this.note.title;
+        })
+        .catch(
+            (reason: AxiosError) => {
+              if (reason.response?.status === 404) {
+                this.noteDoesNotExist = true
+              }
+            }
+        )
   },
 
   methods: {
@@ -110,27 +175,43 @@ export default {
     },
 
     deleteNote(): void {
-      api_request.delete("/api/notes/" + this.noteId)
+      api.delete("/notes/" + this.noteId)
           .then(() => window.location.href = "/notes/")
           .catch(
-              reason => this.$toast.add({ severity: 'error', summary: 'Error: ' + reason.response.status, detail: reason.response.data, life: 5000 })
+              reason => this.$toast.add({
+                severity: 'error',
+                summary: 'Error: ' + reason.response.status,
+                detail: reason.response.data,
+                life: 5000
+              })
           )
       this.showDeleteModal = false
-    }
+    },
+
+    showShareLinkPanel(event: Event) {
+      (<OverlayPanel>this.$refs.shareLink).toggle(event, event.target)
+    },
+
+    getSharedLink() {
+      const data = {
+        minutes: this.shareLinkMinutes
+      }
+      api.post('/notes/temp/' + this.noteId, data).then(
+          (resp: AxiosResponse<{ link: string }>) => {
+            this.shareLink = document.location.origin + resp.data.link;
+          }
+      )
+    },
+
   }
 }
 </script>
 
-<style>
 
-@media (max-width: 600px) {
-  img {
-      width: 100%!important;
-      height: 100%!important;
-  }
-}
-
-.bg-orange-light {
-  background-color: #FEAA69;
+<style scoped>
+.link-container {
+  user-select: all;
+  overflow-x: hidden;
+  text-wrap: nowrap;
 }
 </style>

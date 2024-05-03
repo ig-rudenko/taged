@@ -13,9 +13,8 @@ urlpatterns = [
     path("count", views.NotesCount.as_view()),
     path("tags", views.TagsListAPIView.as_view()),
     path("<str:note_id>", views.NoteDetailUpdateAPIView.as_view()),
+    path("temp/<str:note_id>", views.CreateNoteTempLinkAPIView.as_view()),
+    path("temp/show/<str:token>", views.ShowNoteTempLinkAPIView.as_view()),
     path("<str:note_id>/files", views.NoteFilesListCreateAPIView.as_view()),
-    path(
-        "<str:note_id>/files/<str:file_name>",
-        views.NoteFileDetailDeleteAPIView.as_view(),
-    ),
+    path("<str:note_id>/files/<str:file_name>", views.NoteFileDetailDeleteAPIView.as_view()),
 ]

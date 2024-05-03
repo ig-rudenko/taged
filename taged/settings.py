@@ -14,13 +14,14 @@ import logging
 import os
 import time
 import uuid
+from datetime import timedelta
 from pathlib import Path
 
 from elasticsearch import Elasticsearch
 from requests.exceptions import ConnectionError as ElasticConnectionError
 
 from elasticsearch_control import IndexRegister
-from elasticsearch_control.transport import elasticsearch_connector
+from elasticsearch_control.transport import es_connector
 from taged_web.es_index import PostIndex
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -38,7 +39,7 @@ SECRET_KEY = os.getenv(
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.environ.get("DJANGO_DEBUG", "False") in ["1", "True", "true"]
 
 ALLOWED_HOSTS = ["*"]
 
@@ -60,6 +61,7 @@ INSTALLED_APPS = [
     "ckeditor_uploader",
     "rest_framework",
     "taged_web.apps.TagedWebConfig",
+    "rest_framework_simplejwt",
 ]
 
 MIDDLEWARE = [
@@ -77,7 +79,7 @@ ROOT_URLCONF = "taged.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -161,21 +163,37 @@ LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 300_000_000  # 100МБ
+DATA_UPLOAD_MAX_MEMORY_SIZE = 300_000_000  # 300МБ
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://redis:6379",
+
+# Используется кэш со сквозной записью - каждая запись в кеш также будет записываться в базу данных.
+# Чтения сеанса используют базу данных только в том случае, если данные еще не находятся в кеше.
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+
+
+if os.getenv("REDIS_CACHE_URL"):
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": os.getenv("REDIS_CACHE_URL"),
+        }
     }
-}
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.FormParser",
+        "rest_framework.parsers.MultiPartParser",
+    ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
+    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ],
 }
 
@@ -195,7 +213,6 @@ logging.basicConfig(filename="logs", level=logging.INFO)
 ELASTICSEARCH_HOSTS_raw_str = os.getenv("ELASTICSEARCH_HOSTS")
 
 if ELASTICSEARCH_HOSTS_raw_str:
-
     ELASTICSEARCH_HOSTS = [
         {"host": host.split(":")[0], "port": int(host.split(":")[1])}
         for host in ELASTICSEARCH_HOSTS_raw_str.split(",")
@@ -205,9 +222,7 @@ if ELASTICSEARCH_HOSTS_raw_str:
     print("ELASTICSEARCH_HOSTS:", ELASTICSEARCH_HOSTS)
 
     # Инициализируем подключение к Elasticsearch
-    elasticsearch_connector.init(
-        es=Elasticsearch(ELASTICSEARCH_HOSTS), timeout=ELASTICSEARCH_TIMEOUT
-    )
+    es_connector.init(es=Elasticsearch(ELASTICSEARCH_HOSTS), timeout=ELASTICSEARCH_TIMEOUT)
 
     # Регистратор индексов в Elasticsearch
     es_index_register = IndexRegister()
@@ -222,3 +237,38 @@ if ELASTICSEARCH_HOSTS_raw_str:
             print(error)
             # Если Elasticsearch недоступен, то пытаемся еще раз
             time.sleep(10)
+
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": False,
+    "UPDATE_LAST_LOGIN": False,
+    "ALGORITHM": "HS512",
+    "SIGNING_KEY": os.getenv("JWT_SECRET_KEY", SECRET_KEY),
+    "VERIFYING_KEY": "",
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "JSON_ENCODER": None,
+    "JWK_URL": None,
+    "LEEWAY": 0,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
+    "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
+    "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
+    "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
+    "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
+    "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
+    "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
+}

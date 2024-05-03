@@ -40,6 +40,7 @@
 <script lang="ts">
 import Button from "primevue/button/Button.vue";
 import api from "@/services/api";
+import {mapState} from "vuex";
 
 export default {
   name: "Header",
@@ -58,9 +59,13 @@ export default {
     }
   },
   mounted() {
+    if (!this.loggedIn) this.$router.push('/login');
     if (this.showCount) {
       this.getTotalRecordsCount()
     }
+  },
+  computed: {
+    ...mapState({loggedIn: (state: any) => state.auth.status.loggedIn}),
   },
   methods: {
     getTotalRecordsCount(): void {

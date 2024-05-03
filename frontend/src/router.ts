@@ -14,6 +14,7 @@ const routes: RouteRecordRaw[] = [
     {path: "/notes/:id/edit", component: CreateUpdateNote},
     {path: "/notes/:id", component: DetailViewNote},
     {path: "/temp/:token", component: ShareNoteView},
+    {path: "/:catchAll(.*)", redirect: "/"},
 ]
 
 const router: Router = createRouter({

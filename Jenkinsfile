@@ -6,6 +6,7 @@ pipeline {
     environment {
         // Путь к репозиторию
         REPO_URL = 'https://github.com/ig-rudenko/taged'
+        VENV_NAME = 'venv'
     }
 
     // Определение шагов pipeline

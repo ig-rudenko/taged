@@ -48,7 +48,7 @@
           <a :href="'/notes/' + note.id"
              class=" flex justify-content-center align-content-center align-items-center cursor-pointer"
              style="min-height: 230px;">
-            <img v-if="note.previewImage.length>0" :src="note.previewImage"
+            <img v-if="note.previewImage?.length" :src="note.previewImage"
                  class="border-round-2xl p-2 border-round-2xl" style="max-height: 230px; max-width: 100%;"
                  alt="preview">
             <svg v-else class="border-round-top-2xl cursor-pointer" width="100%" height="225"

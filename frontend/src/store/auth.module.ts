@@ -7,7 +7,8 @@ import api from "@/services/api";
 class Status {
     constructor(
         public loggedIn: boolean,
-    ) {}
+    ) {
+    }
 }
 
 class UserState {
@@ -15,7 +16,8 @@ class UserState {
         public status: Status,
         public user: User | null,
         public userTokens: UserTokens,
-    ) {}
+    ) {
+    }
 }
 
 const user = UserService.getUser()
@@ -30,7 +32,7 @@ export const auth = {
     namespaced: true,
     state: initialState,
     actions: {
-        login({ commit }: any, user: LoginUser) {
+        login({commit}: any, user: LoginUser) {
             return AuthService.login(user).then(
                 (data) => {
                     if (data.status == 200) {
@@ -44,18 +46,18 @@ export const auth = {
                 }
             );
         },
-        logout({ commit }: any) {
+        logout({commit}: any) {
             AuthService.logout();
             commit('logout');
         },
-        refreshToken({ commit }: any, accessToken: string) {
+        refreshToken({commit}: any, accessToken: string) {
             commit('refreshToken', accessToken);
         }
     },
     mutations: {
         loginSuccess(state: UserState) {
             state.status.loggedIn = true;
-            api.get("/auth/myself")
+            api.get("/auth/myself/")
                 .then(
                     resp => {
                         const user = createNewUser(resp.data)

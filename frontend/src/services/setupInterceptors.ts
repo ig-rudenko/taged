@@ -34,7 +34,7 @@ const setup = (store: any) => {
                         if (!refreshToken) return;
                         const rs = await axiosInstance.post(
                             "auth/token/refresh/",
-                            {refreshToken: refreshToken},
+                            {refresh: refreshToken},
                             originalConfig
                         )
                             .then(
@@ -49,10 +49,10 @@ const setup = (store: any) => {
                             return Promise.reject(err)
                         }
 
-                        const {accessToken} = rs.data;
+                        const {access} = rs.data;
 
-                        store.dispatch('auth/refreshToken', accessToken);
-                        TokenService.updateLocalAccessToken(accessToken);
+                        store.dispatch('auth/refreshToken', access);
+                        TokenService.updateLocalAccessToken(access);
 
                         return axiosInstance(originalConfig);
                     } catch (_error) {

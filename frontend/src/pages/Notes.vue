@@ -240,8 +240,13 @@ export default {
      */
     findNotes(save_mode: FindNotesMode): void {
       const params = this.filter.getParams()
-      let apiURL = "/notes/" + params
-      history.pushState({path: "/" + params}, '', "/" + params);
+      const filterParamsString = this.filter.getParamsString()
+
+      params.append("page", String(this.paginator.currentPage))
+
+      history.pushState({path: "/" + filterParamsString}, '', "/" + filterParamsString);
+
+      let apiURL = "/notes/?" + params.toString()
 
       api.get(apiURL).then(
           resp => {

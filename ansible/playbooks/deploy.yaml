@@ -82,13 +82,15 @@
       copy:
         dest: /etc/sysconfig/taged
         content: |
+          DJANGO_DEGUB=0
           DJANGO_SECRET_KEY={{DJANGO_SECRET_KEY}}
+          JWT_SECRET_KEY={{JWT_SECRET_KEY}}
           ELASTICSEARCH_HOSTS=elasticsearch:9200
         owner: root
         group: root
         mode: 0600
 
     - name: Старт docker compose
-      shell: docker-compose up -d
+      shell: docker-compose up -d --build
       args:
         chdir: "{{ root_folder }}"

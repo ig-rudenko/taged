@@ -1,4 +1,4 @@
-Django>=5.0.4
+Django>=4.2.11
 requests
 elasticsearch==7.15.2
 django-ckeditor

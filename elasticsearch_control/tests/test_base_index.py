@@ -1,9 +1,8 @@
 from datetime import datetime
-from typing import Self
 
 from django.test import SimpleTestCase
 
-from elasticsearch_control import AbstractIndex, ElasticsearchPaginator
+from elasticsearch_control import AbstractIndex
 
 
 class Index(AbstractIndex):
@@ -19,20 +18,11 @@ class Index(AbstractIndex):
         index_name = "test_index"
         settings = {}
 
-    @classmethod
-    def create(cls, *args, **kwargs) -> Self | None:
-        pass
-
-    @classmethod
-    def filter(cls, *args, **kwargs) -> ElasticsearchPaginator:
-        pass
-
     def json(self) -> dict:
         pass
 
 
 class TestIndex(SimpleTestCase):
-
     def test_index(self):
         self.assertDictEqual(
             {

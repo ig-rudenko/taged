@@ -150,12 +150,14 @@ class NoteDetailUpdateAPIView(UserGenericAPIView):
             serializer.validated_data["tags"],
             user=self.current_user(),
         )
-        cache.delete("last_updated_posts")
+        # Обнуляем кеш
+        clear_notes_cache()
         return Response({"id": note.id, "published_at": note.published_at})
 
     def delete(self, request: Request, note_id: str):
         note = get_note_or_404(note_id, self.current_user())
         get_repository().delete(note.id)
+        # Обнуляем кеш
         clear_notes_cache()
         return Response(status=204)
 

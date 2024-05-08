@@ -90,7 +90,7 @@ def get_notes(search: str, tags_in: list[str], page: str, user: User) -> Respons
             function=paginator.get_page,
             kwargs={"page": page},
             unique_name=f"last_updated_posts:{user.username}",
-            cache_period=1,
+            cache_period=60 * 5,
         )
     else:
         records = paginator.get_page(page)

@@ -2,7 +2,7 @@ from django.core.cache import cache
 from django.core.files.uploadedfile import UploadedFile
 from django.utils.decorators import method_decorator
 from elasticsearch import exceptions as es_exceptions
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -30,6 +30,7 @@ from .types import UserGenericAPIView
 
 
 class ListUserPermissions(UserGenericAPIView):
+    permission_classes = [IsAuthenticated]
     def get(self, *args, **kwargs):
         # Получаем все права пользователей, которые связаны с данным приложением `taged_web`
         taged_web_permissions = filter(
@@ -47,6 +48,7 @@ class AutocompleteAPIView(UserGenericAPIView):
     Подключаемся к серверу Elasticsearch, получаем начало заголовки документов,
     соответствующие поисковому запросу, и возвращаем их полные названия в виде ответа JSON.
     """
+    permission_classes = [IsAuthenticated]
 
     def get(self, request: Request):
         try:
@@ -62,6 +64,7 @@ class AutocompleteAPIView(UserGenericAPIView):
 @method_decorator(api_elasticsearch_check_available, name="dispatch")
 class NotesCount(UserGenericAPIView):
     """Получает кол-во записей от Elasticsearch"""
+    permission_classes = [IsAuthenticated]
 
     cache_key = "NotesCount"
     cache_timeout = 60 * 10
@@ -80,7 +83,7 @@ class NotesCount(UserGenericAPIView):
 
 @method_decorator(api_elasticsearch_check_available, name="dispatch")
 class NotesListCreateAPIView(UserGenericAPIView):
-    permission_classes = [NotePermission]
+    permission_classes = [IsAuthenticated, NotePermission]
     cache_key = "last_updated_posts"
     cache_timeout = 60 * 10
 
@@ -122,7 +125,7 @@ class NotesListCreateAPIView(UserGenericAPIView):
 
 @method_decorator(api_elasticsearch_check_available, name="dispatch")
 class NoteDetailUpdateAPIView(UserGenericAPIView):
-    permission_classes = [NotePermission]
+    permission_classes = [IsAuthenticated, NotePermission]
 
     def get_serializer_class(self):
         """
@@ -163,6 +166,8 @@ class NoteDetailUpdateAPIView(UserGenericAPIView):
 
 
 class NoteFilesListCreateAPIView(UserGenericAPIView):
+    permission_classes = [IsAuthenticated, NotePermission]
+
     def get(self, request: Request, note_id: str):
         # Проверяем, имеет ли пользователь доступ к текущей записи
         get_note_or_404(note_id, self.current_user(), values=["tags"])
@@ -180,6 +185,8 @@ class NoteFilesListCreateAPIView(UserGenericAPIView):
 
 
 class NoteFileDetailDeleteAPIView(UserGenericAPIView):
+    permission_classes = [IsAuthenticated, NotePermission]
+
     def get(self, request: Request, note_id: str, file_name: str):
         # Проверяем, имеет ли пользователь доступ к текущей записи.
         get_note_or_404(note_id, self.current_user(), values=["tags"])
@@ -194,12 +201,14 @@ class NoteFileDetailDeleteAPIView(UserGenericAPIView):
 
 
 class TagsListAPIView(UserGenericAPIView):
+    permission_classes = [IsAuthenticated, NotePermission]
+
     def get(self, request: Request, *args, **kwargs):
         return Response(get_available_tags(self.current_user()))
 
 
 class CreateNoteTempLinkAPIView(UserGenericAPIView):
-    permission_classes = [NoteCreateLinkPermission]
+    permission_classes = [IsAuthenticated, NoteCreateLinkPermission]
     serializer_class = CreateTempLinkSerializer
 
     def post(self, request: Request, note_id: str, *args, **kwargs):

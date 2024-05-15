@@ -35,7 +35,7 @@
 
     <div class="mb-5 flex flex-wrap">
       <p v-for="file in note.files" class="mr-3 flex align-items-center">
-        <MediaPreview :file="file" :is-file-object="false" :fileNoteID="noteId"/>
+        <MediaPreview :file="file" :is-file-object="false" :fileNoteID="noteId" :max-file-name-length="20"/>
       </p>
     </div>
 

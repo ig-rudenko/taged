@@ -1,13 +1,13 @@
 <template>
   <!--Предпросмотр изображения-->
   <div class="flex align-items-center align-self-center">
-    <Image v-if="isImage" preview :image-style="iconStyles"
+    <Image v-if="isImage" preview :image-style="imageStyles"
            class="rounded-3 mr-2" :src="imageSrc" alt="Предпросмотр изображения"/>
 
     <img v-else @click="enterFile" :style="iconStyles" class="mr-2 cursor-pointer" :src="fileIconURL" :alt="file.name">
 
     <div class="flex flex-column">
-      <span @click="enterFile"
+      <span @click="enterFile" :title="file.name"
             class="text-900 hover:text-indigo-500 cursor-pointer">{{ shortenString(file.name) }}</span>
       <span class="font-normal text-500">
         {{ formatBytes(file.size) }}
@@ -81,8 +81,11 @@ export default {
     fileOriginLink(): string {
       return '/media/' + this.fileNoteID + '/' + this.file.name
     },
+    imageStyles() {
+      return {'max-height': '96px!important', 'max-width': '96px!important'}
+    },
     iconStyles() {
-      return {'max-height': '64px!important', 'max-width': '64px!important'}
+      return {'max-height': '48px!important', 'max-width': '48px!important'}
     }
   },
 

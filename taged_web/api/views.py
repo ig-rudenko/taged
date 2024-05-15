@@ -31,6 +31,7 @@ from .types import UserGenericAPIView
 
 class ListUserPermissions(UserGenericAPIView):
     permission_classes = [IsAuthenticated]
+
     def get(self, *args, **kwargs):
         # Получаем все права пользователей, которые связаны с данным приложением `taged_web`
         taged_web_permissions = filter(
@@ -48,6 +49,7 @@ class AutocompleteAPIView(UserGenericAPIView):
     Подключаемся к серверу Elasticsearch, получаем начало заголовки документов,
     соответствующие поисковому запросу, и возвращаем их полные названия в виде ответа JSON.
     """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request: Request):
@@ -64,6 +66,7 @@ class AutocompleteAPIView(UserGenericAPIView):
 @method_decorator(api_elasticsearch_check_available, name="dispatch")
 class NotesCount(UserGenericAPIView):
     """Получает кол-во записей от Elasticsearch"""
+
     permission_classes = [IsAuthenticated]
 
     cache_key = "NotesCount"

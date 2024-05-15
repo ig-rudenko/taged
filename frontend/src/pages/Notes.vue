@@ -30,10 +30,12 @@
     </div>
 
     <OverlayPanel ref="showFiles">
-      <div v-if="noteFilesShow" class="flex flex-column">
-        <p v-for="file in noteFilesShow.files" class="mr-3 flex align-items-center">
-          <MediaPreview :file="file" :is-file-object="false" :fileNoteID="noteFilesShow.id"/>
-        </p>
+      <div style="max-height: 300px;" class="files-scrollbar block">
+        <div v-if="noteFilesShow" class="flex flex-column">
+          <p v-for="file in noteFilesShow.files" class="mr-3 m-2 flex align-items-center">
+            <MediaPreview :file="file" :is-file-object="false" :fileNoteID="noteFilesShow.id"/>
+          </p>
+        </div>
       </div>
     </OverlayPanel>
 
@@ -114,6 +116,7 @@ import AutoComplete from "primevue/autocomplete/AutoComplete.vue";
 import Button from "primevue/button/Button.vue"
 import OverlayPanel from "primevue/overlaypanel";
 import Tag from "primevue/tag/Tag.vue";
+import ScrollPanel from "primevue/scrollpanel";
 import ScrollTop from 'primevue/scrolltop';
 
 import MediaPreview from "@/components/MediaPreview.vue";
@@ -147,6 +150,7 @@ export default {
     Button,
     Tag,
     ScrollTop,
+    ScrollPanel,
   },
   data() {
     return {
@@ -211,6 +215,12 @@ export default {
     },
 
     showNoteFiles(note: DetailNote, event: Event) {
+      if (note.files.length > 0) {
+        this.noteFilesShow = note;
+        (<OverlayPanel>this.$refs.showFiles).toggle(event, event.target)
+        return
+      }
+
       api.get("/notes/" + note.id + "/files").then(
           resp => {
             note.files = getFiles(resp.data);
@@ -291,5 +301,31 @@ export default {
 <style scoped>
 html, body {
   margin: 0 !important;
+}
+
+.files-scrollbar {
+  overflow: auto;
+}
+
+.files-scrollbar::-webkit-scrollbar {
+  display: inline !important;
+  width: 7px !important;
+  height: 5px !important;
+}
+
+.files-scrollbar::-webkit-scrollbar-track-piece {
+  background-color: var(--primary-100) !important;
+  border-radius: 20px !important;
+  opacity: 0.3 !important;
+}
+
+.files-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--primary-300) !important;
+  border-radius: 20px !important;
+  height: 4px !important;
+}
+
+.files-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary-500) !important;
 }
 </style>

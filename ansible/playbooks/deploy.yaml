@@ -82,7 +82,7 @@
       copy:
         dest: /etc/sysconfig/taged
         content: |
-          DJANGO_DEGUB=0
+          DJANGO_DEBUG=0
           DJANGO_SECRET_KEY={{DJANGO_SECRET_KEY}}
           JWT_SECRET_KEY={{JWT_SECRET_KEY}}
           ELASTICSEARCH_HOSTS=elasticsearch:9200

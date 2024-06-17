@@ -73,7 +73,7 @@ class NotesCount(UserGenericAPIView):
     cache_timeout = 60 * 10
 
     def get(self, request: Request):
-        user_cache_key: str = f"{self.cache_key}.{request.user.username}"  # type: ignore
+        user_cache_key: str = f"{self.cache_key}:{request.user.username}"  # type: ignore
         total_count: int = cache.get(user_cache_key, 0)
 
         if not total_count:

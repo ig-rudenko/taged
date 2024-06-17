@@ -31,8 +31,8 @@ def get_note_or_404(note_id: str, user: User, values: list[T_Values] | None = No
 
 def clear_notes_cache() -> None:
     all_usernames = User.objects.all().values_list("username", flat=True)
-    keys = [f"NotesCount.{username}" for username in all_usernames]
-    keys += [f"last_updated_posts.{username}" for username in all_usernames]
+    keys = [f"NotesCount:{username}" for username in all_usernames]
+    keys += [f"last_updated_posts:{username}" for username in all_usernames]
     cache.delete_many(keys)
 
 

@@ -32,7 +32,7 @@
 
     </div>
 
-    <div class="text-sm">
+    <div v-if="note.files.length > 0" class="text-sm">
       <i class="pi pi-paperclip"/> Прикрепленные файлы
     </div>
     <div class="mb-2 flex flex-wrap">

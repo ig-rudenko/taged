@@ -32,16 +32,19 @@
 
     </div>
 
-
-    <div class="mb-5 flex flex-wrap">
+    <div class="text-sm">
+      <i class="pi pi-paperclip"/> Прикрепленные файлы
+    </div>
+    <div class="mb-2 flex flex-wrap">
       <p v-for="file in note.files" class="mr-3 flex align-items-center">
         <MediaPreview :file="file" :is-file-object="false" :fileNoteID="noteId" :max-file-name-length="20"/>
       </p>
     </div>
 
+    <InTextImages v-if="note.content" :text="note.content"/>
+
     <!-- CONTENT -->
     <div v-html="note.content" class="border-300 border-top-1 pt-5"></div>
-
 
     <Dialog v-model:visible="showDeleteModal" modal close-icon="pi" header="Подтвердите удаление">
       <div class="flex flex-column align-items-center">
@@ -103,7 +106,6 @@
 <script lang="ts">
 import Button from "primevue/button/Button.vue";
 import Dialog from "primevue/dialog/Dialog.vue";
-import Image from "primevue/image/Image.vue";
 import InputNumber from "primevue/inputnumber";
 import ScrollTop from "primevue/scrolltop/ScrollTop.vue";
 import Toast from "primevue/toast";
@@ -115,14 +117,15 @@ import MediaPreview from "./MediaPreview.vue";
 import NoteDoesNotExist from "@/components/NoteDoesNotExist.vue";
 import {AxiosError, AxiosResponse} from "axios";
 import OverlayPanel from "primevue/overlaypanel";
+import InTextImages from "@/components/InTextImages.vue";
 
 export default {
   name: "ViewNote",
   components: {
+    InTextImages,
     NoteDoesNotExist,
     Button,
     Dialog,
-    Image,
     InputNumber,
     OverlayPanel,
     MediaPreview,

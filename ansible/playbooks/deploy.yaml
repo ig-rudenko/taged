@@ -91,6 +91,6 @@
         mode: 0600
 
     - name: Старт docker compose
-      shell: docker-compose up -d --build
+      shell: docker compose up -d --build
       args:
         chdir: "{{ root_folder }}"

@@ -11,7 +11,7 @@ services:
       - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
     environment:
       - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms750m -Xmx750m
+      - ES_JAVA_OPTS=-Xms1200m -Xmx1200m
     mem_limit: 1500m
     healthcheck:
       test: "curl -s localhost:9200 > /dev/null || exit 1"

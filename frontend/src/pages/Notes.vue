@@ -85,6 +85,9 @@
 
     </div>
 
+    <div v-if="searchingNotes" class="text-center p-3">
+      <i class="pi pi-spinner pi-spin text-6xl"/>
+    </div>
 
     <div v-if="paginator.currentPage < paginator.maxPages" @click="addNextPage"
          class="pt-4 align-items-center cursor-pointer flex flex-column" style="font-size: 1.2rem;">
@@ -154,6 +157,8 @@ export default {
   },
   data() {
     return {
+      searchingNotes: false,
+
       showNoteID: null as string | null,
       showNoteModal: false,
       titles: [] as string[],
@@ -258,6 +263,12 @@ export default {
 
       let apiURL = "/notes/?" + params.toString()
 
+      if (save_mode === FindNotesMode.rebase) {
+        this.notes = []
+        this.paginator = new Paginator()
+      }
+      this.searchingNotes = true;
+
       api.get(apiURL).then(
           resp => {
             if (save_mode === FindNotesMode.append) {
@@ -265,6 +276,7 @@ export default {
             } else {
               this.notes = this.getDetailNotes(resp.data.records)
             }
+            this.searchingNotes = false;
             this.totalRecords = Number(resp.data.totalRecords)
             this.paginator = new Paginator(
                 resp.data.paginator.currentPage,

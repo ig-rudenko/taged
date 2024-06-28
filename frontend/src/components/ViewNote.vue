@@ -32,13 +32,16 @@
 
     </div>
 
-    <div v-if="note.files.length > 0" class="text-sm">
-      <i class="pi pi-paperclip"/> Прикрепленные файлы
-    </div>
-    <div class="mb-2 flex flex-wrap">
-      <p v-for="file in note.files" class="mr-3 flex align-items-center">
-        <MediaPreview :file="file" :is-file-object="false" :fileNoteID="noteId" :max-file-name-length="20"/>
-      </p>
+    <div v-if="note.files.length > 0">
+      <div v-if="note.files.length > 0" class="text-sm">
+        <i class="pi pi-paperclip"/> Прикрепленные файлы
+      </div>
+      <ImageGallery :images="noteImages.urls" :with-descriptions="noteImages.names" />
+      <div class="mb-2 flex flex-wrap">
+        <p v-for="file in noteNonImageFiles" class="mr-3 flex align-items-center">
+          <MediaPreview :file="file" :is-file-object="false" :fileNoteID="noteId" :max-file-name-length="20"/>
+        </p>
+      </div>
     </div>
 
     <InTextImages v-if="note.content" :text="note.content"/>
@@ -111,17 +114,20 @@ import ScrollTop from "primevue/scrolltop/ScrollTop.vue";
 import Toast from "primevue/toast";
 
 import api from "@/services/api";
-import {DetailNote, newDetailNote} from "@/note";
+import {DetailNote, newDetailNote, NoteFile} from "@/note";
 import {UserPermissions} from "@/permissions";
 import MediaPreview from "./MediaPreview.vue";
 import NoteDoesNotExist from "@/components/NoteDoesNotExist.vue";
 import {AxiosError, AxiosResponse} from "axios";
 import OverlayPanel from "primevue/overlaypanel";
 import InTextImages from "@/components/InTextImages.vue";
+import ImageGallery from "@/components/ImageGallery.vue";
+import format_bytes from "@/helpers/format_size.ts";
 
 export default {
   name: "ViewNote",
   components: {
+    ImageGallery,
     InTextImages,
     NoteDoesNotExist,
     Button,
@@ -166,6 +172,34 @@ export default {
               }
             }
         )
+  },
+
+  computed: {
+    noteImages(): { urls: string[], names: string[] } {
+      let imagesUrls: string[] = []
+      let imagesNames: string[] = []
+      if (this.note?.files) {
+        this.note?.files.forEach(file => {
+          if (this.isImage(file.name)) {
+            imagesUrls.push('/media/' + this.noteId + '/' + file.name)
+            imagesNames.push(`<small>${file.name}</small>`)
+          }
+        })
+      }
+      return {
+        urls: imagesUrls,
+        names: imagesNames,
+      };
+    },
+
+    noteNonImageFiles(): NoteFile[] {
+      let files: NoteFile[] = []
+      this.note?.files.forEach(file => {
+        if (!this.isImage(file.name)) files.push(file)
+      })
+      return files;
+    },
+
   },
 
   methods: {

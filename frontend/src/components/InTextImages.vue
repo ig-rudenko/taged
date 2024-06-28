@@ -6,10 +6,9 @@
         <i :class="['pi', show?'pi-angle-up':'pi-angle-down']"/>
       </Button>
     </div>
-    <div v-if="show" class="flex flex-wrap justify-content-start">
-      <div v-for="url in noteImages" class="flex align-items-center">
-        <Image :src="url" preview class="rounded-3 p-2" :image-style="{'max-height': '168px!important', 'max-width': '168px!important'}" />
-      </div>
+
+    <div v-if="show" class="p-2 bg-black-alpha-10 border-round">
+      <ImageGallery :images="noteImages"/>
     </div>
   </div>
 </template>
@@ -17,10 +16,11 @@
 <script lang="ts">
 import Image from "primevue/image/Image.vue";
 import {defineComponent} from 'vue'
+import ImageGallery from "@/components/ImageGallery.vue";
 
 export default defineComponent({
   name: "InTextImages",
-  components: {Image},
+  components: {ImageGallery, Image},
   props: {
     text: {required: true, type: String},
   },

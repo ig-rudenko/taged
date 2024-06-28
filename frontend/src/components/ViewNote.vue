@@ -122,7 +122,6 @@ import {AxiosError, AxiosResponse} from "axios";
 import OverlayPanel from "primevue/overlaypanel";
 import InTextImages from "@/components/InTextImages.vue";
 import ImageGallery from "@/components/ImageGallery.vue";
-import format_bytes from "@/helpers/format_size.ts";
 
 export default {
   name: "ViewNote",

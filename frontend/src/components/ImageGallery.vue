@@ -27,7 +27,6 @@ export default defineComponent({
     this.images.forEach((url, index) => {
       let data = {src: url}
       if (this.withDescriptions) {
-        console.log(this.withDescriptions)
         data.title = this.withDescriptions[index]
       }
       items.push(data)
@@ -81,6 +80,11 @@ export default defineComponent({
 })
 </script>
 
-<style scoped>
-
+<style>
+tinytext {
+  font-size: 0.8rem;
+  display: flex;
+  justify-content: flex-start;
+  width: 140px;
+}
 </style>

@@ -47,7 +47,7 @@
     <InTextImages v-if="note.content" :text="note.content"/>
 
     <!-- CONTENT -->
-    <div v-html="note.content" class="border-300 border-top-1 pt-5"></div>
+    <NoteContent v-if="note.content" :content="note.content"/>
 
     <Dialog v-model:visible="showDeleteModal" modal close-icon="pi" header="Подтвердите удаление">
       <div class="flex flex-column align-items-center">
@@ -122,10 +122,13 @@ import {AxiosError, AxiosResponse} from "axios";
 import OverlayPanel from "primevue/overlaypanel";
 import InTextImages from "@/components/InTextImages.vue";
 import ImageGallery from "@/components/ImageGallery.vue";
+import NoteContent from "@/components/NoteContent.vue";
+import format_bytes from "@/helpers/format_size.ts";
 
 export default {
   name: "ViewNote",
   components: {
+    NoteContent,
     ImageGallery,
     InTextImages,
     NoteDoesNotExist,
@@ -181,7 +184,7 @@ export default {
         this.note?.files.forEach(file => {
           if (this.isImage(file.name)) {
             imagesUrls.push('/media/' + this.noteId + '/' + file.name)
-            imagesNames.push(`<small>${file.name}</small>`)
+            imagesNames.push(`<tinytext>${file.name}</tinytext><tinytext>${format_bytes(file.size)}</tinytext>`)
           }
         })
       }

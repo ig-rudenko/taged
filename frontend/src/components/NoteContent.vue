@@ -25,14 +25,14 @@ export default defineComponent({
   methods: {
 
     formatContent() {
-      var parser = new DOMParser();
-      var doc = parser.parseFromString(this.content, 'text/html');
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(this.content, 'text/html');
 
       // Находим все теги <img>
-      var images = doc.getElementsByTagName('img');
+      const images = doc.getElementsByTagName('img');
 
       // Добавляем атрибут data-new="gg" каждому тегу <img>
-      for (var i = 0; i < images.length; i++) {
+      for (let i = 0; i < images.length; i++) {
         // images[i].setAttribute('data-nanogallery2-lightbox', '');
         images[i].toggleAttribute("data-nanogallery2-lightbox")
         images[i].setAttribute('data-ngsrc', images[i].src);

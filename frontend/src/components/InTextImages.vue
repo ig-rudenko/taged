@@ -1,8 +1,9 @@
 <template>
   <div v-if="noteImages.length > 0" class="mb-3">
-    <div class="flex justify-content-start">
-      <Button @click="show=!show" class="text-right cursor-pointer border-1" size="small" outlined>
-        <span class="mr-1">Изображения в тексте</span>
+    <div class="flex justify-content-center">
+      <Button @click="show=!show" class="text-right cursor-pointer border-1" size="large">
+        <span v-if="show" class="mr-1"><i class="pi pi-images"/> Изображения в тексте</span>
+        <h1 v-else class="mr-1">Изображения в тексте (жми сюда)</h1>
         <i :class="['pi', show?'pi-angle-up':'pi-angle-down']"/>
       </Button>
     </div>

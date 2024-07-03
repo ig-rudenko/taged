@@ -17,9 +17,10 @@
 
     </div>
 
+    <InTextImages v-if="note.content" :text="note.content"/>
 
     <!-- CONTENT -->
-    <div v-html="note.content" class="border-300 border-top-1 pt-5"></div>
+    <NoteContent v-if="note.content" :content="note.content"/>
 
   </div>
 
@@ -42,10 +43,12 @@ import api from "@/services/api.ts";
 import {DetailNote, newDetailNote} from "@/note.ts";
 import {AxiosError} from "axios";
 import NoteDoesNotExist from "@/components/NoteDoesNotExist.vue";
+import NoteContent from "@/components/NoteContent.vue";
+import InTextImages from "@/components/InTextImages.vue";
 
 export default defineComponent({
   name: "ShareNoteView",
-  components: {NoteDoesNotExist},
+  components: {InTextImages, NoteContent, NoteDoesNotExist},
   data() {
     return {
       token: this.$route.params.token.toString(),

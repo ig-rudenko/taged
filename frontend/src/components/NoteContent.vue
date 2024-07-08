@@ -47,6 +47,8 @@ export default defineComponent({
 })
 </script>
 
-<style scoped>
-
+<style>
+img {
+  max-width: 100%!important;
+}
 </style>

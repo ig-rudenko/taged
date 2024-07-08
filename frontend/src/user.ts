@@ -23,8 +23,15 @@ class User {
 }
 
 function createNewUser(data: any): User {
-    return new User(data.id, data.username, data.is_superuser, data.is_staff,
-        data.first_name, data.last_name, data.email)
+    return new User(
+        data.id,
+        data.username,
+        data.is_superuser || data.isSuperuser,
+        data.is_staff || data.isStaff,
+        data.first_name || data.firstName,
+        data.last_name || data.lastName,
+        data.email
+    )
 }
 
 export {LoginUser, UserTokens, User, createNewUser}

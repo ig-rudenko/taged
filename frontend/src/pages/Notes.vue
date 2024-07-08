@@ -19,7 +19,8 @@
         </AutoComplete>
       </div>
       <MultiSelect v-model="filter.tags" :options="tags" filter placeholder="Выберите теги" @change="performNewSearch"
-                   scroll-height="400px" :maxSelectedLabels="3" class="w-full md:w-20rem"/>
+                   scroll-height="400px" :maxSelectedLabels="3" class="w-full md:w-20rem"
+                   :class="filter.tags.length?'border-primary-500':''"/>
 
       <div v-if="showTotalCount" class="flex justify-content-center">
         <div class="bg-indigo-500 border-round-3xl flex justify-content-around p-2 text-white" style="width: 150px;">
@@ -98,10 +99,11 @@
   </div>
 
 
-  <Dialog v-if="showNoteID" style="max-height: 100%" v-model:visible="showNoteModal" modal :show-header="true"
-          content-class="p-0"
+  <Dialog v-if="showNoteID" style="max-height: 100%;" v-model:visible="showNoteModal" modal :show-header="true"
+          content-class="px-4"
+          @afterHide="initPageTitle"
           :style="{ width: '100vw', height: '100%' }">
-    <ViewNote @selected-tag="selectTag" :note-id="showNoteID"/>
+    <ViewNote @selected-tag="selectTag" :note-id="showNoteID" :remove-padding="true"/>
   </Dialog>
 
 
@@ -174,6 +176,7 @@ export default {
     }
   },
   mounted() {
+    this.initPageTitle()
     if (!this.loggedIn) this.$router.push("/login");
 
     api.get("/notes/permissions").then(resp => {
@@ -194,6 +197,10 @@ export default {
     }
   },
   methods: {
+    initPageTitle() {
+      document.title = 'База Знаний'
+    },
+
     autocomplete(event: any) {
       api.get("/notes/autocomplete?term=" + event.query).then(resp => this.titles = Array.from(resp.data))
           .catch(reason => console.log(reason))

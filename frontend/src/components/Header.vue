@@ -28,10 +28,10 @@
             </div>
 
           </div>
-          <div class="pt-4 text-900 text-3xl font-medium mb-3">{{ sectionName }}</div>
+          <div class="pt-4 text-900 text-4xl font-medium mb-3">{{ sectionName }}</div>
           <p class="mt-0 mb-3 text-700 text-xl">{{ sectionDescription }}</p>
         </div>
-        <Button v-if="showCreateButton" @click="goToCreateNoteURL" rounded label="Создать"/>
+        <Button v-if="showCreateButton" @click="goToCreateNoteURL" icon="pi pi-book" rounded label="Создать"/>
       </div>
     </div>
   </div>

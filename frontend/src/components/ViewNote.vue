@@ -1,5 +1,5 @@
 <template>
-  <div v-if="note" class="surface-section px-4 md:px-6 lg:px-8">
+  <div v-if="note" class="surface-section px-4" :class="noteClasses">
 
     <Toast/>
 
@@ -141,7 +141,8 @@ export default {
     Toast,
   },
   props: {
-    noteId: {required: true, type: String}
+    noteId: {required: true, type: String},
+    removePadding: {required: false, type: Boolean, default: false},
   },
   emits: ["selected-tag"],
 
@@ -177,6 +178,11 @@ export default {
   },
 
   computed: {
+    noteClasses(): string[] {
+      if (!this.removePadding) return ["lg:px-8"]
+      return []
+    },
+
     noteImages(): { urls: string[], names: string[] } {
       let imagesUrls: string[] = []
       let imagesNames: string[] = []

@@ -31,12 +31,12 @@ export default defineComponent({
       // Находим все теги <img>
       const images = doc.getElementsByTagName('img');
 
-      // Добавляем атрибут data-new="gg" каждому тегу <img>
+      // Добавляем атрибуты nanogallery каждому тегу <img>
       for (let i = 0; i < images.length; i++) {
-        // images[i].setAttribute('data-nanogallery2-lightbox', '');
         images[i].toggleAttribute("data-nanogallery2-lightbox")
         images[i].setAttribute('data-ngsrc', images[i].src);
         images[i].setAttribute('data-nanogallery2-lgroup', "inline-content");
+        images[i].style.cssText += "max-width: 100%!important;"
       }
 
       // Возвращаем измененный HTML как строку
@@ -46,9 +46,3 @@ export default defineComponent({
 
 })
 </script>
-
-<style>
-img {
-  max-width: 100%!important;
-}
-</style>

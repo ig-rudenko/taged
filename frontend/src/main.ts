@@ -11,10 +11,7 @@ import InlineMessage from "primevue/inlinemessage/InlineMessage.vue";
 import Tag from "primevue/tag/Tag.vue";
 import Dialog from "primevue/dialog/Dialog.vue";
 
-import "primevue/resources/themes/viva-light/theme.css";
-import "@/assets/styles.min.css"
-import "@/assets/main.css"
-
+// import "primevue/resources/themes/viva-light/theme.css";
 
 import App from './App.vue';
 import store from "@/store";

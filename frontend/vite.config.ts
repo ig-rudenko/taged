@@ -14,13 +14,13 @@ export default defineConfig({
     server: {
         proxy: {
             '/api': {
-                target: 'http://localhost:8000',
+                target: 'http://10.29.29.134',
                 changeOrigin: true,
                 secure: false,
                 ws: true,
             },
-            '/media': {target: 'http://localhost:8000', secure: false},
-            '/static': {target: 'http://localhost:8000', secure: false},
+            '/media': {target: 'http://10.29.29.134', secure: false},
+            '/static': {target: 'http://10.29.29.134', secure: false},
         }
     }
 })

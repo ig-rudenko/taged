@@ -14,6 +14,7 @@
       git:
         repo: https://github.com/ig-rudenko/taged.git
         dest: "{{ root_folder }}"
+        update: true
         force: true
 
     - name: Создание папки медиафайлов

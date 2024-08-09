@@ -66,7 +66,7 @@
 
       <InlineMessage v-if="!note.valid.content">Укажите содержимое</InlineMessage>
       <ckeditor v-if="accessToken" v-model="note.content"
-                :config="ckeditorConfig" editor-url="/static/ckeditor/ckeditor/ckeditor.js"
+                :config="ckeditorConfig" editor-url="/public/ckeditor/ckeditor.js"
                 value="Hello, World!"></ckeditor>
     </div>
 

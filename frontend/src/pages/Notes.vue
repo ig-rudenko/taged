@@ -41,7 +41,7 @@
     </OverlayPanel>
 
 
-    <div class="flex flex-wrap justify-content-center">
+    <div id="notesContainer" class="flex flex-wrap justify-content-center">
       <div class="w-30rem p-2 m-1" v-for="note in notes">
 
         <Badge v-if="note.score>0.05" :class="badgeClasses((<DetailNote>note))"
@@ -63,10 +63,10 @@
           </a>
 
           <div class="p-3">
-            <div class="flex flex-wrap justify-content-between align-items-center">
-              <div>
+            <div class="flex flex-wrap justify-content-between align-items-center gap-3">
+              <div class="flex flex-wrap gap-1">
                 <Tag @click="selectTag(tag)" v-for="tag in note.tags" :value="tag"
-                     class="bg-orange-light hover:bg-indigo-500 hover:shadow-4 mr-2 font-normal cursor-pointer"/>
+                     class="bg-orange-light hover:bg-indigo-500 hover:shadow-4 font-normal cursor-pointer"/>
               </div>
               <i v-if="note.filesCount>0" @click="e => showNoteFiles((<DetailNote>note), e)"
                  v-badge="note.filesCount" class="pi pi-file p-overlay-badge cursor-pointer" style="font-size: 2rem"/>
@@ -99,10 +99,8 @@
   </div>
 
 
-  <Dialog v-if="showNoteID" style="max-height: 100%;" v-model:visible="showNoteModal" modal :show-header="true"
-          content-class="px-4"
-          @afterHide="initPageTitle"
-          :style="{ width: '100vw', height: '100%' }">
+  <Dialog id="notePreviewDialog" v-if="showNoteID" style="max-height: 100%;" v-model:visible="showNoteModal" modal
+          :show-header="true" @afterHide="initPageTitle" :style="{ width: '100vw', height: '100%' }">
     <ViewNote @selected-tag="selectTag" :note-id="showNoteID" :remove-padding="true"/>
   </Dialog>
 
@@ -347,4 +345,12 @@ html, body {
 .files-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: var(--primary-500) !important;
 }
+
+@media (max-width: 600px) {
+  #notesContainer > div {
+    margin: 0!important;
+    padding: 0.7rem 0!important;
+  }
+}
+
 </style>

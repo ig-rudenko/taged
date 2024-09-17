@@ -17,12 +17,9 @@
             </div>
 
             <div v-if="showCount" class="flex flex-wrap">
-              <div class="p-3 mr-2 w-10rem text-center bg-indigo-500 shadow-2" style="border-radius: 12px;">
-                <span
-                    class="inline-flex justify-content-center align-items-center bg-indigo-600 border-circle mb-3 p-3">
-                  <i class="pi pi-file text-xl text-white"></i>
-                </span>
-                <div class="text-2xl font-medium text-white mb-2">{{ totalCount }}</div>
+              <div id="notesCountBlock" class="align-items-center bg-indigo-500 flex flex-column w-10rem gap-2 p-4 shadow-2 text-center" style="border-radius: 12px;">
+                <i class="pi pi-file text-3xl text-white"></i>
+                <div class="text-2xl font-medium text-white">{{ totalCount }}</div>
                 <span class="text-indigo-100 font-medium">Записей</span>
               </div>
             </div>
@@ -124,6 +121,12 @@ export default {
     -webkit-box-pack: center !important;
     -ms-flex-pack: center !important;
     justify-content: center !important;
+  }
+
+  #notesCountBlock {
+    flex-direction: row!important;
+    width: 100%!important;
+    padding: 1rem!important;
   }
 }
 

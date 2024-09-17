@@ -1,11 +1,11 @@
 <template>
-  <div v-if="note" class="surface-section px-4" :class="noteClasses">
+  <div v-if="note" class="px-4" :class="noteClasses">
 
     <Toast/>
 
     <div class="flex flex-wrap justify-content-between align-items-center">
 
-      <div class="border-blue-600 pl-4 mb-3 text-900" style="border-left: 8px solid;">
+      <div class="note-header-block" style="border-left: 8px solid;">
         <h1>{{ note.title }}</h1>
 
         <div class="text-600 text-sm mb-3">
@@ -21,11 +21,11 @@
 
       </div>
 
-      <div class="mb-4">
+      <div class="mb-4 flex flex-wrap gap-2 justify-content-center">
         <Button v-if="userPermissions.hasPermissionToCreateLink" icon="pi pi-link" @click="showShareLinkPanel"
-                severity="help" class="mr-2" label="Поделиться" size="small"></Button>
+                severity="help" label="Поделиться" size="small"></Button>
         <Button v-if="userPermissions.hasPermissionToUpdateNote" @click="goToNoteEditURL" icon="pi pi-pencil"
-                severity="warning" class="mr-2" label="Редактировать" size="small"></Button>
+                severity="warning" label="Редактировать" size="small"></Button>
         <Button v-if="userPermissions.hasPermissionToDeleteNote" severity="danger" @click="showDeleteModal=true"
                 icon="pi pi-trash" label="Удалить" size="small"></Button>
       </div>
@@ -36,7 +36,7 @@
       <div v-if="note.files.length > 0" class="text-sm">
         <i class="pi pi-paperclip"/> Прикрепленные файлы
       </div>
-      <ImageGallery :images="noteImages.urls" :with-descriptions="noteImages.names" />
+      <ImageGallery :images="noteImages.urls" :with-descriptions="noteImages.names"/>
       <div class="mb-2 flex flex-wrap">
         <p v-for="file in noteNonImageFiles" class="mr-3 flex align-items-center">
           <MediaPreview :file="file" :is-file-object="false" :fileNoteID="noteId" :max-file-name-length="20"/>
@@ -258,5 +258,20 @@ export default {
   user-select: all;
   overflow-x: hidden;
   text-wrap: nowrap;
+}
+.note-header-block {
+  border-left: 8px solid;
+  margin-bottom: 1rem !important;
+  padding-left: 1.5rem !important;
+  border-color: var(--blue-600) !important;
+  color: var(--surface-900) !important;
+}
+
+@media (width < 786px) {
+  .note-header-block {
+    padding-left: 0 !important;
+    border-left: 0 solid!important;
+    text-align: center;
+  }
 }
 </style>

@@ -12,10 +12,20 @@ body, html {
 }
 
 @media (max-width: 600px) {
-    img {
+    #noteContent img {
         max-width: 100% !important;
         max-height: 100% !important;
         height: 100% !important;
+    }
+
+    #noteContent {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    div [data-pc-section="content"] {
+        padding: 0!important;
+        color: currentColor!important;
     }
 }
 

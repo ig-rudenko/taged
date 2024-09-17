@@ -21,7 +21,9 @@
   <Dialog v-model:visible="showFilePreviewModal" modal :show-header="true" style="max-height: 100%"
           :style="{ width: '100vw', height: '100%' }">
     <object type="application/pdf" :data="fileOriginLink" :title="file.name" width="100%"
-            :height="windowHeight"></object>
+            :height="windowHeight">
+      <div class="p-4" style="height: 50vh;">Ваш браузер не поддерживает просмотр pdf документов через модальное окно</div>
+    </object>
   </Dialog>
 
 

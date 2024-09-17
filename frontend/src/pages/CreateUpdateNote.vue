@@ -21,14 +21,14 @@
       <div class="lg:border-round p-3 flex flex-column">
         <InlineMessage v-if="!note.valid.tags" class="w-fit">Выберите хотя бы 1 тег</InlineMessage>
 
-        <div class="p-inputgroup" style="width: max-content">
+        <div id="select-tags" class="p-inputgroup flex" style="width: max-content;">
           <MultiSelect v-model="note.tags" display="chip"
                        :options="availableTags" filter placeholder="Выберите теги для записи"
                        scroll-height="400px"/>
           <Button v-if="hasPermissionToCreateTag && !showAddTagInput" @click="showAddTagInput=true"
                   icon="pi pi-plus-circle" severity="warning"/>
           <template v-if="showAddTagInput">
-            <InputText v-model.trim="newTag" @keydown.enter="addNewTag" placeholder="Укажите новый тег"/>
+            <InputText class="max-w-11rem" v-model.trim="newTag" @keydown.enter="addNewTag" placeholder="Укажите новый тег"/>
             <Button @click="showAddTagInput=false" icon="pi pi-times" severity="warning"/>
           </template>
         </div>
@@ -337,5 +337,11 @@ export default {
 <style scoped>
 html, body {
   margin: 0 !important;
+}
+
+@media (width < 786px) {
+  #select-tags {
+    width: 100%!important;
+  }
 }
 </style>

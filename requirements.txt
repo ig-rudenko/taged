@@ -1,4 +1,5 @@
 Django>=5.1
+requests>=2.32.3
 elasticsearch==7.15.2
 django-ckeditor>=6.7.1
 redis>=5.0.8

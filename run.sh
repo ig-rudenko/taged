@@ -1,3 +1,4 @@
+#!/bin/sh
 python manage.py makemigrations;
 python manage.py migrate;
 export DJANGO_COLLECT_STATIC=1

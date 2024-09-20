@@ -42,13 +42,11 @@
 </template>
 
 <script lang="ts">
-import MediaPreview from "./MediaPreview.vue";
-import Button from "primevue/button/Button.vue";
+import MediaPreview from "@/components/MediaPreview.vue";
 
 export default {
   name: "LoadMedia",
   components: {
-    Button,
     MediaPreview,
   },
   emits: ["selectedFiles", "change"],

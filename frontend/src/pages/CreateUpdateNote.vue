@@ -1,5 +1,4 @@
 <template>
-  <Toast/>
 
   <Header :section-name="editNoteID?'Редактирование записи':'Создание новой записи'" :show-count="false"/>
 
@@ -14,7 +13,7 @@
     <div class="p-3 flex flex-column">
       <InlineMessage v-if="!note.valid.title" class="w-fit">Укажите заголовок</InlineMessage>
       <InputText class="text-900 w-full" v-model.trim="note.title" style="font-size: 1.5rem; text-align: center"
-                 size="lg" placeholder="Укажите заголовок"/>
+                 size="large" placeholder="Укажите заголовок"/>
     </div>
 
     <div class="flex flex-column">
@@ -74,42 +73,22 @@
 
   <Footer/>
 
-  <ScrollTop/>
-
 </template>
 
 <script>
 import {component as ckeditor} from '@mayasabha/ckeditor4-vue3'
-import InputText from "primevue/inputtext/InputText.vue";
-import InlineMessage from "primevue/inlinemessage/InlineMessage.vue";
-import MultiSelect from "primevue/multiselect/MultiSelect.vue";
-import ScrollTop from "primevue/scrolltop/ScrollTop.vue";
-import Button from "primevue/button/Button.vue";
-import Toast from "primevue/toast";
 import {mapState} from "vuex";
 
 import MediaPreview from "@/components/MediaPreview.vue";
 import Header from "@/components/Header.vue";
 import Footer from "@/components/Footer.vue";
-import api from "@/services/api";
 import LoadMedia from "@/components/LoadMedia.vue";
-import {createNewNote, Note} from "@/note";
+import {Note} from "@/note";
+import notesService from "@/services/notes";
 
 export default {
   name: "Notes",
-  components: {
-    LoadMedia,
-    InlineMessage,
-    Header,
-    Button,
-    Footer,
-    InputText,
-    MediaPreview,
-    MultiSelect,
-    ckeditor,
-    ScrollTop,
-    Toast,
-  },
+  components: {LoadMedia, Header, Footer, MediaPreview, ckeditor},
   data() {
     return {
       files: [],
@@ -124,9 +103,9 @@ export default {
     }
   },
   async mounted() {
-    if (!this.accessToken) this.$router.push("/login");
+    if (!this.accessToken) await this.$router.push("/login");
 
-    api.get("/notes/permissions").then(resp => this.userPermissions = resp.data)
+    notesService.getPermissions().then(data => this.userPermissions = data);
 
     // Проверяем, не является ли данная ссылка редактированием существующей записи
     this.editNoteID = this.$route.params.id
@@ -138,10 +117,8 @@ export default {
       document.title = "Создание записи";
     }
 
-    // Получаем доступные пользователем теги
-    api.get("/notes/tags")
-        .then(resp => this.availableTags = resp.data)
-        .catch(reason => console.log(reason))
+    this.availableTags = await notesService.getAvailableTags();
+
   },
 
   computed: {
@@ -216,10 +193,8 @@ export default {
 
 
   methods: {
-    getNote() {
-      return api.get("/notes/" + this.editNoteID)
-          .then(resp => this.note = createNewNote(resp.data))
-          .catch(reason => console.log(reason))
+    async getNote() {
+      this.note = await notesService.getNote(this.editNoteID);
     },
 
     updateFiles(files) {
@@ -242,93 +217,21 @@ export default {
       if (!this.note.isValid() || this.submitInProcess) return;
 
       this.submitInProcess = true
-      let form = new FormData()
+
+      let filesForm = new FormData()
       for (const file of this.files) {
-        form.append("files", file)
+        filesForm.append("files", file)
       }
 
-      let resp
-      try {
-        if (this.editNoteID) {
-          // Если заметка уже существовала, то обновляем
-          resp = await api.put("/notes/" + this.editNoteID, this.note)
-        } else {
-          // Иначе создаем новую заметку
-          resp = await api.post("/notes/", this.note)
-        }
-        const data = await resp.data
-
-        if (resp.status === 200 || resp.status === 201) {
-          await this.changeFiles(data.id, form)
-        } else {
-          this.showError(resp.status, data)
-        }
-      } catch (err) {
-        this.showError(err.response.status, err.response.data)
-      }
-      this.submitInProcess = false
-
-    },
-
-    /**
-     * Обновляем файлы заметки
-     * @param {String} note_id
-     * @param {FormData} files_form
-     */
-    async changeFiles(note_id, files_form) {
       if (this.editNoteID) {
-        // Если заметка редактировалась, то проверяем файлы, которые уже существовали
-        for (const file of this.note.files) {
-          if (file.disable) {
-            // Удаляем файлы, которые были отключены
-            this.handleError(api.delete("/notes/" + note_id + '/files/' + file.name))
-          }
-        }
-      }
-      // Загружаем новые добавленные файлы
-      const resp = await api.post("/notes/" + note_id + '/files', files_form, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        }
-      })
-      const data = await resp.data
-
-      if (resp.status === 201) {
-        this.goToNoteViewURL(note_id)
+        await notesService.updateNote(this.note, filesForm);
+        await this.$router.push("/notes/"+this.editNoteID);
       } else {
-        this.showError(resp.status, data)
+        await notesService.createNote(this.note, filesForm);
+        await this.$router.push("/notes/");
       }
+      this.submitInProcess = false;
     },
-
-    /**
-     * Обрабатывает ошибку API запроса и выводит в toast сообщение
-     * @param {Promise} request
-     */
-    handleError(request) {
-      request.catch(
-          reason => {
-            this.$toast.add({
-              severity: 'error',
-              summary: 'Error: ' + reason.response.status,
-              detail: reason.response.data,
-              life: 5000
-            });
-          }
-      )
-    },
-
-    /**
-     * Выводит ошибку API запроса в toast сообщение
-     * @param {Number} status
-     * @param {Object} data
-     */
-    showError(status, data) {
-      this.$toast.add({severity: 'error', summary: 'Error: ' + status, detail: data, life: 5000});
-    },
-
-    goToNoteViewURL(note_id) {
-      this.$router.push("/notes/" + note_id)
-    }
 
   }
 }

@@ -35,15 +35,11 @@
 </template>
 
 <script lang="ts">
-import Button from "primevue/button/Button.vue";
 import api from "@/services/api";
 import {mapState} from "vuex";
 
 export default {
   name: "Header",
-  components: {
-    Button,
-  },
   props: {
     showCount: {required: false, default: true, type: Boolean},
     sectionName: {required: true, type: String},

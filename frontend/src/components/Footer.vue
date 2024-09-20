@@ -39,14 +39,10 @@
 
 <script lang="ts">
 import "primeicons/primeicons.css"
-import Button from "primevue/button/Button.vue";
 import {mapActions, mapState} from "vuex";
 
 export default {
   name: "Footer",
-  components: {
-    Button,
-  },
   data() {
     return {
       showLogoutDialog: false,

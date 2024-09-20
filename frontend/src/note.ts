@@ -73,12 +73,6 @@ function getFiles(data: Array<any>): Array<NoteFile> {
     return files
 }
 
-function createNewNote(data: any): Note {
-    return new Note(
-        data.id, data.title, data.content, data.tags, getFiles(data.files)
-    )
-}
-
 function newDetailNote(data: any): DetailNote {
     return new DetailNote(
         data.id, data.title, data.content, data.tags, getFiles(data.files || []), data.filesCount,
@@ -88,4 +82,4 @@ function newDetailNote(data: any): DetailNote {
 
 
 
-export {NoteFile, Note, DetailNote, createNewNote, newDetailNote, getFiles}
+export {NoteFile, Note, DetailNote, newDetailNote, getFiles}

@@ -31,8 +31,6 @@
 
 <script lang="ts">
 import {PropType} from "vue";
-import Dialog from "primevue/dialog/Dialog.vue";
-import Image from "primevue/image/Image.vue";
 
 import {NoteFile} from "@/note";
 import format_bytes from "@/helpers/format_size";
@@ -41,10 +39,6 @@ import api from "@/services/api.ts";
 
 export default {
   name: "MediaPreview",
-  components: {
-    Dialog,
-    Image,
-  },
   props: {
     file: {required: true, type: Object as PropType<NoteFile | File>},
     isFileObject: {required: true, type: Boolean},

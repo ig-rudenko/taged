@@ -13,19 +13,19 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@mayasabha/ckeditor4-vue3": "^1.0.5",
-    "axios": "^1.6.4",
-    "primeicons": "^6.0.1",
-    "primevue": "^3.52.0",
-    "vue": "^3.3.11",
-    "vue-loader": "^17.3.1",
-    "vue-router": "^4.3.2",
-    "vuex": "^4.1.0"
+    "@mayasabha/ckeditor4-vue3": "^1.0.8",
+    "axios": "^1.7.7",
+    "primeicons": "^7.0.0",
+    "primevue": "^3.53.0",
+    "vue": "^3.5.6",
+    "vue-loader": "^17.4.2",
+    "vue-router": "^4.4.5",
+    "vuex": "^4.1.0",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "vite": "^5.4.6",
+    "vue-tsc": "^2.1.6"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^5.0.4",
-    "typescript": "^5.2.2",
-    "vite": "^5.2.0",
-    "vue-tsc": "^2.0.6"
+    "typescript": "^5.6.2"
   }
 }

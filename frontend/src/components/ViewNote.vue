@@ -1,8 +1,6 @@
 <template>
   <div v-if="note" class="px-4" :class="noteClasses">
 
-    <Toast/>
-
     <div class="flex flex-wrap justify-content-between align-items-center">
 
       <div class="note-header-block" style="border-left: 8px solid;">
@@ -107,23 +105,17 @@
 </template>
 
 <script lang="ts">
-import Button from "primevue/button/Button.vue";
-import Dialog from "primevue/dialog/Dialog.vue";
-import InputNumber from "primevue/inputnumber";
-import ScrollTop from "primevue/scrolltop/ScrollTop.vue";
-import Toast from "primevue/toast";
-
-import api from "@/services/api";
-import {DetailNote, newDetailNote, NoteFile} from "@/note";
-import {UserPermissions} from "@/permissions";
-import MediaPreview from "./MediaPreview.vue";
-import NoteDoesNotExist from "@/components/NoteDoesNotExist.vue";
-import {AxiosError, AxiosResponse} from "axios";
 import OverlayPanel from "primevue/overlaypanel";
+
+import {DetailNote, NoteFile} from "@/note";
+import {UserPermissions} from "@/permissions";
+import MediaPreview from "@/components/MediaPreview.vue";
+import NoteDoesNotExist from "@/components/NoteDoesNotExist.vue";
 import InTextImages from "@/components/InTextImages.vue";
 import ImageGallery from "@/components/ImageGallery.vue";
 import NoteContent from "@/components/NoteContent.vue";
 import format_bytes from "@/helpers/format_size.ts";
+import notesService from "@/services/notes.ts";
 
 export default {
   name: "ViewNote",
@@ -132,13 +124,7 @@ export default {
     ImageGallery,
     InTextImages,
     NoteDoesNotExist,
-    Button,
-    Dialog,
-    InputNumber,
-    OverlayPanel,
     MediaPreview,
-    ScrollTop,
-    Toast,
   },
   props: {
     noteId: {required: true, type: String},
@@ -161,20 +147,13 @@ export default {
   },
 
   mounted() {
-    api.get("/notes/permissions").then(resp => this.userPermissions = new UserPermissions(resp.data))
+    notesService.getPermissions().then(data => this.userPermissions = new UserPermissions(data))
 
-    api.get("/notes/" + this.noteId)
-        .then(resp => {
-          this.note = newDetailNote(resp.data);
+    notesService.getNote(this.noteId)
+        .then(note => {
+          this.note = note
           document.title = this.note.title;
         })
-        .catch(
-            (reason: AxiosError) => {
-              if (reason.response?.status === 404) {
-                this.noteDoesNotExist = true
-              }
-            }
-        )
   },
 
   computed: {
@@ -220,16 +199,7 @@ export default {
     },
 
     deleteNote(): void {
-      api.delete("/notes/" + this.noteId)
-          .then(() => window.location.href = "/notes/")
-          .catch(
-              reason => this.$toast.add({
-                severity: 'error',
-                summary: 'Error: ' + reason.response.status,
-                detail: reason.response.data,
-                life: 5000
-              })
-          )
+      notesService.deleteNote(this.noteId).then(() => window.location.href = "/notes/")
       this.showDeleteModal = false
     },
 
@@ -237,15 +207,8 @@ export default {
       (<OverlayPanel>this.$refs.shareLink).toggle(event, event.target)
     },
 
-    getSharedLink() {
-      const data = {
-        minutes: this.shareLinkMinutes
-      }
-      api.post('/notes/temp/' + this.noteId, data).then(
-          (resp: AxiosResponse<{ link: string }>) => {
-            this.shareLink = document.location.origin + resp.data.link;
-          }
-      )
+    async getSharedLink() {
+      this.shareLink = await notesService.getTempLink(this.noteId, this.shareLinkMinutes)
     },
 
   }

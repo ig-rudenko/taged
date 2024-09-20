@@ -14,13 +14,12 @@
 </template>
 
 <script lang="ts">
-import Image from "primevue/image/Image.vue";
 import {defineComponent} from 'vue'
 import ImageGallery from "@/components/ImageGallery.vue";
 
 export default defineComponent({
   name: "InTextImages",
-  components: {ImageGallery, Image},
+  components: {ImageGallery},
   props: {
     text: {required: true, type: String},
   },

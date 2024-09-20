@@ -107,31 +107,20 @@
 
   <Footer/>
 
-  <ScrollTop/>
-
 </template>
 
 <script lang="ts">
-import Badge from "primevue/badge/Badge.vue";
-import Dialog from "primevue/dialog/Dialog.vue";
-import MultiSelect from "primevue/multiselect/MultiSelect.vue";
-import AutoComplete from "primevue/autocomplete/AutoComplete.vue";
-import Button from "primevue/button/Button.vue"
-import OverlayPanel from "primevue/overlaypanel";
-import Tag from "primevue/tag/Tag.vue";
-import ScrollPanel from "primevue/scrollpanel";
-import ScrollTop from 'primevue/scrolltop';
-
 import MediaPreview from "@/components/MediaPreview.vue";
 import ViewNote from "@/components/ViewNote.vue";
 import Header from "@/components/Header.vue";
 import Footer from "@/components/Footer.vue";
-import api from "@/services/api";
 import {Paginator} from "@/paginator";
 import {UserPermissions} from "@/permissions";
-import {DetailNote, getFiles, newDetailNote} from "@/note";
+import {DetailNote} from "@/note";
 import {createNoteFilter, NoteSearchFilter} from "@/filters.ts";
 import {mapState} from "vuex";
+import notesService from "@/services/notes.ts";
+import OverlayPanel from "primevue/overlaypanel";
 
 enum FindNotesMode {
   rebase = "rebase",
@@ -140,21 +129,7 @@ enum FindNotesMode {
 
 export default {
   name: "Notes",
-  components: {
-    MediaPreview,
-    AutoComplete,
-    Badge,
-    Footer,
-    Dialog,
-    MultiSelect,
-    ViewNote,
-    OverlayPanel,
-    Header,
-    Button,
-    Tag,
-    ScrollTop,
-    ScrollPanel,
-  },
+  components: {MediaPreview, Footer, ViewNote, Header},
   data() {
     return {
       searchingNotes: false,
@@ -173,19 +148,17 @@ export default {
       filter: new NoteSearchFilter()
     }
   },
-  mounted() {
+  async mounted() {
     this.initPageTitle()
     if (!this.loggedIn) this.$router.push("/login");
 
-    api.get("/notes/permissions").then(resp => {
-      this.userPermissions = new UserPermissions(resp.data)
-    })
+    this.userPermissions = await notesService.getPermissions();
 
     this.filter = createNoteFilter(this.$route.query)
 
     this.findNotes(FindNotesMode.rebase)
 
-    api.get("/notes/tags").then(resp => this.tags = resp.data).catch(reason => console.log(reason))
+    this.tags = await notesService.getAvailableTags();
   },
 
   computed: {
@@ -200,8 +173,7 @@ export default {
     },
 
     autocomplete(event: any) {
-      api.get("/notes/autocomplete?term=" + event.query).then(resp => this.titles = Array.from(resp.data))
-          .catch(reason => console.log(reason))
+      notesService.autocomplete(event.query).then(titles => this.titles = titles)
     },
 
     noteClasses(note: DetailNote): string[] {
@@ -231,9 +203,9 @@ export default {
         return
       }
 
-      api.get("/notes/" + note.id + "/files").then(
-          resp => {
-            note.files = getFiles(resp.data);
+      notesService.getNoteFiles(note.id).then(
+          files => {
+            note.files = files;
             this.noteFilesShow = note;
             (<OverlayPanel>this.$refs.showFiles).toggle(event, event.target)
           }
@@ -259,14 +231,6 @@ export default {
      * @param {String} save_mode
      */
     findNotes(save_mode: FindNotesMode): void {
-      const params = this.filter.getParams()
-      const filterParamsString = this.filter.getParamsString()
-
-      params.append("page", String(this.paginator.currentPage))
-
-      history.pushState({path: "/" + filterParamsString}, '', "/" + filterParamsString);
-
-      let apiURL = "/notes/?" + params.toString()
 
       if (save_mode === FindNotesMode.rebase) {
         this.notes = []
@@ -274,30 +238,18 @@ export default {
       }
       this.searchingNotes = true;
 
-      api.get(apiURL).then(
+      notesService.findNotes(this.filter, this.paginator.currentPage).then(
           resp => {
             if (save_mode === FindNotesMode.append) {
-              this.notes.push(...this.getDetailNotes(resp.data.records))
+              this.notes.push(...resp.notes)
             } else {
-              this.notes = this.getDetailNotes(resp.data.records)
+              this.notes = resp.notes
             }
             this.searchingNotes = false;
-            this.totalRecords = Number(resp.data.totalRecords)
-            this.paginator = new Paginator(
-                resp.data.paginator.currentPage,
-                resp.data.paginator.maxPages,
-                resp.data.paginator.perPage
-            )
+            this.totalRecords = Number(resp.totalRecords)
+            this.paginator = resp.paginator
           }
-      ).catch(reason => console.log(reason))
-    },
-
-    getDetailNotes(data: any[]): Array<DetailNote> {
-      let res: Array<DetailNote> = []
-      for (const note of data) {
-        res.push(newDetailNote(note))
-      }
-      return res
+      )
     },
 
     addNextPage(): void {

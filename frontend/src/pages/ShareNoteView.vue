@@ -68,7 +68,6 @@ export default defineComponent({
         })
         .catch(
             (reason: AxiosError) => {
-              console.log(reason)
               this.noteLoadError = true;
               if (reason.response?.status === 404) {
                 this.noteDoesNotExist = true

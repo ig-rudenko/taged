@@ -2,14 +2,22 @@ import {createApp} from 'vue';
 import PrimeVue from 'primevue/config';
 import {Router} from "vue-router";
 
-import Tooltip from "primevue/tooltip";
-import ToastService from 'primevue/toastservice';
 import BadgeDirective from 'primevue/badgedirective';
+import AutoComplete from "primevue/autocomplete";
+import Badge from "primevue/badge";
 import Button from "primevue/button";
+import Dialog from "primevue/dialog";
+import Image from "primevue/image";
+import InputNumber from "primevue/inputnumber";
 import InputText from "primevue/inputtext";
-import InlineMessage from "primevue/inlinemessage/InlineMessage.vue";
-import Tag from "primevue/tag/Tag.vue";
-import Dialog from "primevue/dialog/Dialog.vue";
+import InlineMessage from "primevue/inlinemessage";
+import MultiSelect from "primevue/multiselect";
+import OverlayPanel from "primevue/overlaypanel";
+import ScrollPanel from "primevue/scrollpanel";
+import ScrollTop from "primevue/scrolltop";
+import Tag from "primevue/tag";
+import ToastService from 'primevue/toastservice';
+import Tooltip from "primevue/tooltip";
 
 // import "primevue/resources/themes/viva-light/theme.css";
 
@@ -19,20 +27,28 @@ import setupInterceptors from '@/services/setupInterceptors';
 import router from "@/router";
 
 setupInterceptors(store);
-const app = createApp(App);
+export const app = createApp(App);
 app.use(PrimeVue, {ripple: true});
 app.use(ToastService);
+app.directive('badge', BadgeDirective);
 app.directive('tooltip', Tooltip);
+
 app.use(store);
 app.use(router);
 app.config.globalProperties.$router = router as Router;
 
-app.directive('badge', BadgeDirective);
-
+app.component('AutoComplete', AutoComplete);
+app.component('Badge', Badge);
 app.component('Button', Button);
 app.component('Dialog', Dialog);
-app.component('Tag', Tag);
+app.component('Image', Image);
 app.component('InlineMessage', InlineMessage);
+app.component('InputNumber', InputNumber);
 app.component('InputText', InputText);
+app.component('MultiSelect', MultiSelect);
+app.component('OverlayPanel', OverlayPanel);
+app.component('ScrollPanel', ScrollPanel);
+app.component('ScrollTop', ScrollTop);
+app.component('Tag', Tag);
 
 app.mount('#app');

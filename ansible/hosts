@@ -4,7 +4,9 @@ knowledge_host ansible_host=
 [knowledge-host:vars]
 python_version=3.11
 root_folder=/opt/taged
+JWT_SECRET_KEY=django-insecure-o$84xxrt-ip(b7&)wy)ka(@s@7tq()0vs0u(hu*mo7-^uvc_54
 DJANGO_SECRET_KEY=django-insecure-o$84xxrt-ip(b7&)wy)ka(@s@7tq()0vs0u(hu*mo7-^uvc_54
+CSRF_TRUSTED_ORIGINS=https://example.com
 django_superuser_username=root
 django_superuser_password=password
 django_superuser_email=superuser@example.com

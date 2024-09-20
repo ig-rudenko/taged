@@ -31,28 +31,6 @@
 - docker
 - docker-compose
 
-### Настройка SSL
-
-Для работы https требуется сертификат и ключ, их можно создать через скрипт
-или поместить уже созданные заранее.
-
-Пути требуемых файлов.
-
-- Ключ RSA - `/etc/ssl/taged/private/nginx-selfsigned.key`
-
-- Сертификат - `/etc/ssl/taged/certs/nginx-selfsigned.crt`
-
-- Ключи Диффи-Хеллмана - `/etc/ssl/taged/certs/dhparam.pem`
-
-Создание через скрипт:
-
-```shell
-cd settings/nginx
-bash create_cert.sh
-```
-
-После этого будут созданы необходимые файлы.
-
 ### Ansible
 
 Развертывание приложения осуществляется через **ansible**,
@@ -66,7 +44,7 @@ bash create_cert.sh
 knowledge_host ansible_host =  # Дополнительные параметры подключения
 
 [knowledge-host:vars]
-python_version = 3.11
+python_version = 3.12
 root_folder = /opt/taged
 DJANGO_SECRET_KEY = django-insecure-o$84xxrt-ip(b7&)wy)ka(@s@7tq()0vs0u(hu*mo7-^uvc_54
 django_superuser_username = root

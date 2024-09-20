@@ -3,9 +3,9 @@ FROM python:3.12.6-alpine
 
 ENV PYTHONUNBUFFERED=1
 
-RUN addgroup --gid 10001 app \
-    && adduser --disabled-password --home /app --uid 10001 --gid 10001 app \
-    && chown -R app:app /app; \
+RUN addgroup -g 10001 appgroup \
+    && adduser -D -h /app -u 10002 app appgroup \
+    && chown -R app:app /app;
 
 WORKDIR /app
 

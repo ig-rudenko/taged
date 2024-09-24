@@ -152,7 +152,7 @@ export default {
     this.initPageTitle()
     if (!this.loggedIn) this.$router.push("/login");
 
-    this.userPermissions = await notesService.getPermissions();
+    this.userPermissions = new UserPermissions(await notesService.getPermissions());
 
     this.filter = createNoteFilter(this.$route.query)
 

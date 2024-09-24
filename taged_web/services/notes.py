@@ -52,7 +52,7 @@ def get_notes_count(user: User) -> int:
     version = CacheVersion(_notes_count_cache_key).get_version()
     user_cache_key: str = f"{_notes_count_cache_key}:{user.username}"  # type: ignore
 
-    total_count: int | None = cache.get(user_cache_key, default=0, version=version)
+    total_count: int | None = cache.get(user_cache_key, default=None, version=version)
 
     if total_count is None:
         paginator = get_repository().filter(tags_off=get_unavailable_tags(user))

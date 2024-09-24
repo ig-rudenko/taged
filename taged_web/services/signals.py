@@ -1,8 +1,6 @@
 from typing import Callable, Any
 
-from mypy_extensions import KwArg
-
-signal_callback = Callable[[KwArg(Any)], Any]
+signal_callback = Callable[..., Any]
 
 
 class _Signals:

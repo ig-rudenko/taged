@@ -1,4 +1,3 @@
-from django.core.cache import cache
 from django.core.files.uploadedfile import UploadedFile
 from django.utils.decorators import method_decorator
 from elasticsearch import exceptions as es_exceptions
@@ -17,16 +16,17 @@ from taged_web.es_index import PostIndex
 from taged_web.repo.notes import get_repository
 from taged_web.services.notes import (
     get_note_or_404,
-    clear_notes_cache,
     get_notes,
     update_note,
     get_note_detail,
     create_temp_link,
     get_note_from_temp_link,
+    get_notes_count,
 )
 from taged_web.services.storage import add_files, get_file, delete_file
 from taged_web.services.tags import get_unavailable_tags, add_tags_to_user_if_not_exist, get_available_tags
 from .types import UserGenericAPIView
+from ..services.signals import signals
 
 
 class ListUserPermissions(UserGenericAPIView):
@@ -69,17 +69,8 @@ class NotesCount(UserGenericAPIView):
 
     permission_classes = [IsAuthenticated]
 
-    cache_key = "NotesCount"
-    cache_timeout = 60 * 10
-
     def get(self, request: Request):
-        user_cache_key: str = f"{self.cache_key}:{request.user.username}"  # type: ignore
-        total_count: int = cache.get(user_cache_key, 0)
-
-        if not total_count:
-            paginator = get_repository().filter(tags_off=get_unavailable_tags(self.current_user()))
-            total_count = paginator.count
-            cache.set(user_cache_key, total_count, self.cache_timeout)
+        total_count: int = get_notes_count(self.current_user())
 
         return Response({"totalCount": total_count})
 
@@ -87,8 +78,6 @@ class NotesCount(UserGenericAPIView):
 @method_decorator(api_elasticsearch_check_available, name="dispatch")
 class NotesListCreateAPIView(UserGenericAPIView):
     permission_classes = [IsAuthenticated, NotePermission]
-    cache_key = "last_updated_posts"
-    cache_timeout = 60 * 10
 
     def get_serializer_class(self):
         """
@@ -120,8 +109,7 @@ class NotesListCreateAPIView(UserGenericAPIView):
         add_tags_to_user_if_not_exist(data["tags"], self.current_user())
         post = get_repository().create(**data)
 
-        # Обнуляем кеш
-        clear_notes_cache()
+        signals.emit("created_note", note=post)  # Сигнал о создании записи
 
         return Response({"id": post.id}, status=201)
 
@@ -156,15 +144,14 @@ class NoteDetailUpdateAPIView(UserGenericAPIView):
             serializer.validated_data["tags"],
             user=self.current_user(),
         )
-        # Обнуляем кеш
-        clear_notes_cache()
+
+        signals.emit("updated_note", note=note)  # Сигнал об изменении записи
         return Response({"id": note.id, "published_at": note.published_at})
 
     def delete(self, request: Request, note_id: str):
         note = get_note_or_404(note_id, self.current_user())
         get_repository().delete(note.id)
-        # Обнуляем кеш
-        clear_notes_cache()
+        signals.emit("deleted_note", note=note)  # Сигнал об удалении записи
         return Response(status=204)
 
 

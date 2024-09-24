@@ -15,7 +15,12 @@ from taged_web.filters import notes_records_filter
 from taged_web.models import User
 from taged_web.repo.exc import NotFoundError
 from taged_web.repo.notes import get_repository
-from taged_web.services.tags import get_unavailable_tags, add_tags_to_user_if_not_exist
+from .cache_version import CacheVersion
+from .signals import register
+from .tags import get_unavailable_tags, add_tags_to_user_if_not_exist
+
+_notes_base_cache_key = "notes"
+_notes_count_cache_key = "notesCount"
 
 
 def get_note_or_404(note_id: str, user: User, values: list[T_Values] | None = None) -> PostIndex:
@@ -29,11 +34,33 @@ def get_note_or_404(note_id: str, user: User, values: list[T_Values] | None = No
     return note
 
 
-def clear_notes_cache() -> None:
-    all_usernames = User.objects.all().values_list("username", flat=True)
-    keys = [f"NotesCount:{username}" for username in all_usernames]
-    keys += [f"last_updated_posts:{username}" for username in all_usernames]
-    cache.delete_many(keys)
+@register("created_note", "deleted_note")
+def change_notes_count_callback(**kwargs):
+    """При создании или удалении записи, нужно обновить кэш."""
+    CacheVersion(_notes_count_cache_key).increment_version()  # кол-во записей
+    CacheVersion(_notes_base_cache_key).increment_version()  # Записи
+
+
+@register("updated_note")
+def update_note_callback(**kwargs):
+    """При обновлении записи, нужно обновить только кэш записей, без их кол-ва."""
+    CacheVersion(_notes_base_cache_key).increment_version()  # Записи
+
+
+def get_notes_count(user: User) -> int:
+    timeout = 60 * 10
+
+    user_cache_key: str = f"{_notes_count_cache_key}:{user.username}"  # type: ignore
+    total_count: int | None = cache.get(
+        user_cache_key, default=0, version=CacheVersion(_notes_count_cache_key).get_version()
+    )
+
+    if total_count is None:
+        paginator = get_repository().filter(tags_off=get_unavailable_tags(user))
+        total_count = paginator.count
+        cache.set(user_cache_key, total_count, timeout, version=_notes_count_cache_key)
+
+    return total_count
 
 
 def get_note_detail(note: PostIndex) -> dict:
@@ -70,6 +97,8 @@ def update_note(note: PostIndex, title: str, content: str, tags: list[str], user
 
 
 def get_notes(search: str, tags_in: list[str], page: str, user: User) -> Response:
+    cache_timeout = 60 * 5
+
     # Если не указана строка поиска, то сортируем по времени создания
     sorted_by: T_Values | None = None if search else "published_at"
 
@@ -89,8 +118,9 @@ def get_notes(search: str, tags_in: list[str], page: str, user: User) -> Respons
         records: list = get_or_cache(
             function=paginator.get_page,
             kwargs={"page": page},
-            unique_name=f"last_updated_posts:{user.username}",
-            cache_period=60 * 5,
+            unique_name=f"{_notes_base_cache_key}:{user.username}",
+            cache_timeout=cache_timeout,
+            version=CacheVersion(_notes_base_cache_key).get_version(),
         )
     else:
         records = paginator.get_page(page)

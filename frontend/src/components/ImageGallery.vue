@@ -6,6 +6,7 @@
 
 <script>
 import {defineComponent} from 'vue';
+import {getSmallThumbnail, hasSmallThumbnail} from "@/services/thumbnails";
 
 export default defineComponent({
   name: "ImageGallery",
@@ -20,17 +21,22 @@ export default defineComponent({
       galleryID: this.makeID(12)
     }
   },
-  mounted() {
+  async mounted() {
     const galleryID = this.galleryID
     let items = []
 
-    this.images.forEach((url, index) => {
+    for (const url of this.images) {
+      const index = this.images.indexOf(url);
       let data = {src: url}
+      if (await hasSmallThumbnail(url)) {
+        data.srct = getSmallThumbnail(url)
+      }
+
       if (this.withDescriptions) {
         data.title = this.withDescriptions[index]
       }
       items.push(data)
-    })
+    }
 
     $(document).ready(function () {
       $(`#${galleryID}`).nanogallery2( {
@@ -39,6 +45,7 @@ export default defineComponent({
         thumbnailWidth: 150,
         thumbnailL1GutterWidth: 20,
         thumbnailL1GutterHeight: 20,
+        blurredImageQuality: 3,
         thumbnailAlignment: "left",
         thumbnailOpenImage: true,
         thumbnailDisplayTransitionDuration: 1,

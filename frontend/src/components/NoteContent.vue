@@ -4,6 +4,7 @@
 
 <script>
 import {defineComponent} from 'vue';
+import {getOriginImageURL} from "@/services/thumbnails";
 
 export default defineComponent({
   name: "NoteContent",
@@ -23,7 +24,6 @@ export default defineComponent({
   },
 
   methods: {
-
     formatContent() {
       const parser = new DOMParser();
       const doc = parser.parseFromString(this.content, 'text/html');
@@ -35,6 +35,10 @@ export default defineComponent({
       for (let i = 0; i < images.length; i++) {
         images[i].toggleAttribute("data-nanogallery2-lightbox")
         images[i].setAttribute('data-ngsrc', images[i].src);
+
+        // Добавляем превью, если имеется.
+        images[i].setAttribute('src', getOriginImageURL(images[i].src));
+
         images[i].setAttribute('data-nanogallery2-lgroup', "inline-content");
         images[i].style.cssText += "max-width: 100%!important;"
       }

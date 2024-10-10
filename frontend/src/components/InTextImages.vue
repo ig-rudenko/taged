@@ -1,13 +1,13 @@
 <template>
   <div v-if="noteImages.length > 0" class="mb-3">
     <div class="flex justify-content-start">
-      <Button @click="show=!show" class="text-right cursor-pointer border-1" size="small" outlined>
+      <Button @click="toggle" class="text-right cursor-pointer border-1" size="small" outlined>
         <span class="mr-1">Изображения в тексте</span>
         <i :class="['pi', show?'pi-angle-up':'pi-angle-down']"/>
       </Button>
     </div>
 
-    <div v-if="show" class="p-2 bg-black-alpha-10 border-round">
+    <div v-if="loaded" v-show="show" class="p-2 bg-black-alpha-10 border-round">
       <ImageGallery :images="noteImages"/>
     </div>
   </div>
@@ -25,6 +25,7 @@ export default defineComponent({
   },
   data() {
     return {
+      loaded: false,
       show: false,
       noteImages: [] as string[]
     }
@@ -39,6 +40,11 @@ export default defineComponent({
       const match = this.text.match(/(?<=<img.*? src=")\S+?(?=")/gi)
       if (match) match.forEach(value => this.noteImages.push(value))
     },
+
+    toggle() {
+      this.loaded = true;
+      this.show = !this.show
+    }
   }
 })
 </script>

@@ -1,3 +1,4 @@
+import re
 import uuid
 from datetime import datetime
 
@@ -12,7 +13,6 @@ from ..filters import create_notes_query_params
 
 
 class NotesRepository:
-
     def __init__(self, es: Elasticsearch, index: str, timeout: int = 5):
         self._es = es
         self._timeout = timeout
@@ -192,9 +192,10 @@ class NotesRepository:
         files = []
         # Если существует папка для данного post_id и в ней есть файлы
         for f in (settings.MEDIA_ROOT / id_).glob("*"):
-            if f.is_file():
-                # Добавляем имя файла + иконку в список
-                files.append(PostFile(name=f.name, size=f.stat().st_size))
+            if not f.is_file() or re.search(r"_thumb_(small|large)\.[a-z]+$", f.name):
+                continue
+            # Добавляем имя файла + иконку в список
+            files.append(PostFile(name=f.name, size=f.stat().st_size))
         return files
 
     def tags_count(self, tag_name: str) -> int:

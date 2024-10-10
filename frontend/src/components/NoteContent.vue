@@ -34,10 +34,10 @@ export default defineComponent({
       // Добавляем атрибуты nanogallery каждому тегу <img>
       for (let i = 0; i < images.length; i++) {
         images[i].toggleAttribute("data-nanogallery2-lightbox")
-        images[i].setAttribute('data-ngsrc', images[i].src);
+        images[i].setAttribute('src', images[i].src);
 
         // Добавляем превью, если имеется.
-        images[i].setAttribute('src', getOriginImageURL(images[i].src));
+        images[i].setAttribute('data-ngsrc', getOriginImageURL(images[i].src));
 
         images[i].setAttribute('data-nanogallery2-lgroup', "inline-content");
         images[i].style.cssText += "max-width: 100%!important;"

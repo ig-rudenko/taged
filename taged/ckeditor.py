@@ -1,6 +1,6 @@
 import json
+import re
 
-from ckeditor_uploader import utils
 from ckeditor_uploader.views import ImageUploadView
 from django.conf import settings
 from django.http import JsonResponse
@@ -22,11 +22,15 @@ class CKEditorUploadView(ImageUploadView):
             image_path = settings.MEDIA_ROOT / data["url"].lstrip(settings.MEDIA_URL)
 
             # Создаем несколько превью изображения.
-            thumbs = create_thumbnails(image_path)
+            create_thumbnails(image_path)
 
             # Подменяем оригинальное изображение на превью большого размера,
             # чтобы не нагружать клиента оригинальным изображением.
-            data["url"] = utils.get_media_url(thumbs["large"])
+            data["url"] = re.sub(
+                r"\.[a-z]+$",
+                lambda m: f"_thumb_large{m.group(0)}",
+                data["url"],
+            )
 
             return JsonResponse(data)
 

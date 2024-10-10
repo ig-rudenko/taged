@@ -16,6 +16,7 @@
 <script lang="ts">
 import {defineComponent} from 'vue'
 import ImageGallery from "@/components/ImageGallery.vue";
+import {getOriginImageURL} from "@/services/thumbnails";
 
 export default defineComponent({
   name: "InTextImages",
@@ -38,7 +39,9 @@ export default defineComponent({
   methods: {
     findImagesInNote() {
       const match = this.text.match(/(?<=<img.*? src=")\S+?(?=")/gi)
-      if (match) match.forEach(value => this.noteImages.push(value))
+      if (match) match.forEach(value => {
+        this.noteImages.push(getOriginImageURL(value))
+      })
     },
 
     toggle() {

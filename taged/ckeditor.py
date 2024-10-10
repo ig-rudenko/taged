@@ -14,23 +14,23 @@ class CKEditorUploadView(ImageUploadView):
         response = super().post(request, **kwargs)
 
         if response.headers["Content-Type"] == "application/json":
-            # Если заголовок Content-Type равен application/json,
-            # то изображение было добавлено в папку медиа файлов.
+            # Изображение было успешно добавлено в папку медиа файлов.
             data = json.loads(response.content)
 
             # Получаем путь к исходному изображению.
             image_path = settings.MEDIA_ROOT / data["url"].lstrip(settings.MEDIA_URL)
 
             # Создаем несколько превью изображения.
-            create_thumbnails(image_path)
+            thumbs = create_thumbnails(image_path)
 
-            # Подменяем оригинальное изображение на превью большого размера,
-            # чтобы не нагружать клиента оригинальным изображением.
-            data["url"] = re.sub(
-                r"\.[a-z]+$",
-                lambda m: f"_thumb_large{m.group(0)}",
-                data["url"],
-            )
+            if thumbs.get("large"):
+                # Если было создано превью большого размера, то
+                # подменяем оригинальное изображение, чтобы не нагружать клиента оригинальным.
+                data["url"] = re.sub(
+                    r"\.[a-z]+$",
+                    lambda m: f"_thumb_large{m.group(0)}",
+                    data["url"],
+                )
 
             return JsonResponse(data)
 

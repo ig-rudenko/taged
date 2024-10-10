@@ -10,10 +10,9 @@ export function getOriginImageURL(thumbImage: string): string {
 
 export function getSmallThumbnail(image: string): string {
     const parts = image.split(".");
-    console.log(parts)
     if (parts.length < 2) return image;
     const extension = parts.pop();
-    return `${parts.join(".")}_thumb_large.${extension}`;
+    return `${parts.join(".")}_thumb_small.${extension}`;
 }
 
 

@@ -41,8 +41,8 @@ export default defineComponent({
     $(document).ready(function () {
       $(`#${galleryID}`).nanogallery2( {
         // ### gallery settings ###
-        thumbnailHeight: 150,
-        thumbnailWidth: 150,
+        thumbnailHeight: 100,
+        thumbnailWidth: 100,
         thumbnailL1GutterWidth: 20,
         thumbnailL1GutterHeight: 20,
         blurredImageQuality: 3,

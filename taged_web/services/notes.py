@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timedelta
 from typing import TypeVar
 
@@ -156,8 +157,9 @@ def add_file_mark(objects: list[_N]) -> list[_N]:
         post["filesCount"] = 0
         # Проверяем, существуют ли у записей прикрепленные файлы.
         for file in (settings.MEDIA_ROOT / f'{post["id"]}').glob("*"):
-            if file.is_file():
-                post["filesCount"] += 1
+            if not file.is_file() or re.search(r"_thumb_(small|large)\.[a-z]+$", file.name):
+                continue
+            post["filesCount"] += 1
     return objects
 
 

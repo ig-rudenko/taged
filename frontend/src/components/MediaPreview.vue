@@ -1,8 +1,8 @@
 <template>
   <!--Предпросмотр изображения-->
-  <div class="flex align-items-center align-self-center">
-    <Image v-if="isImage" preview :image-style="imageStyles"
-           class="rounded-3 mr-2" :src="imageSrc" alt="Предпросмотр изображения"/>
+  <div class="flex align-items-center align-self-center gap-2 h-full">
+    <img v-if="isImage" :src="imageThumbnail" alt="" :style="imageStyles" class="hover:border-600 hover:shadow-2 cursor-pointer"
+         :data-ngsrc="getOriginImageURL(imageSrc)" :data-nanogallery2-lgroup="nggroup" data-nanogallery2-lightbox>
 
     <img v-else @click="enterFile" :style="iconStyles" class="mr-2 cursor-pointer" :src="fileIconURL" :alt="file.name">
 
@@ -35,7 +35,9 @@ import {PropType} from "vue";
 import {NoteFile} from "@/note";
 import format_bytes from "@/helpers/format_size";
 import getFileFormatIconName from "@/helpers/icons";
-import api from "@/services/api.ts";
+import api from "@/services/api";
+import {getOriginImageURL, getSmallThumbnailIfHas} from "@/services/thumbnails";
+import {makeRandomID, nanoGalleryReload} from "@/services/nanogallery";
 
 export default {
   name: "MediaPreview",
@@ -44,20 +46,24 @@ export default {
     isFileObject: {required: true, type: Boolean},
     fileNoteID: {required: false, default: null, type: String},
     maxFileNameLength: {required: false, default: -1, type: Number},
+    nggroup: {required: false, type: String, default: makeRandomID(10)},
   },
   data() {
     return {
       currentFile: null as NoteFile | File | null,
       isImage: false,
       imageSrc: "",
+      imageThumbnail: "",
       showFilePreviewModal: false,
       windowHeight: window.innerHeight,
     }
   },
   mounted() {
-    this.checkFile()
-    this.currentFile = this.file
+    this.checkFile();
+    this.currentFile = this.file;
+    nanoGalleryReload()
   },
+
   updated() {
     if (this.currentFile !== this.file) {
       this.currentFile = this.file
@@ -86,6 +92,8 @@ export default {
   },
 
   methods: {
+    getOriginImageURL,
+
     shortenString(str: string): string {
       if (this.maxFileNameLength == -1) return str;
 
@@ -132,8 +140,14 @@ export default {
           this.imageSrc = URL.createObjectURL((<Blob>this.file));
         }
       } else {
-        this.isImage = RegExp(/.+\.(png|jpe?g|gif|bpm|svg|ico|tiff)$/i).test(this.file.name)
-        this.imageSrc = this.fileOriginLink
+        const isImage = RegExp(/.+\.(png|jpe?g|gif|bpm|svg|ico|tiff)$/i).test(this.file.name);
+        this.imageSrc = this.fileOriginLink;
+        if (isImage) {
+          getSmallThumbnailIfHas(this.imageSrc).then(value => {
+            this.imageThumbnail = value;
+            this.isImage = true;
+          })
+        }
       }
     },
 

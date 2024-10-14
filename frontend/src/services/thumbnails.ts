@@ -4,6 +4,9 @@ export function getOriginImageURL(thumbImage: string): string {
     if (/_thumb_large\.[a-z]+$/.test(thumbImage)) {
         return thumbImage.replace("_thumb_large", "")
     }
+    if (/_thumb_small\.[a-z]+$/.test(thumbImage)) {
+        return thumbImage.replace("_thumb_small", "")
+    }
     return thumbImage
 }
 
@@ -24,4 +27,10 @@ export async function hasSmallThumbnail(image: string): Promise<boolean> {
     } catch {
         return false
     }
+}
+
+
+export async function getSmallThumbnailIfHas(imageSrc: string): Promise<string> {
+    if (await hasSmallThumbnail(imageSrc)) return getSmallThumbnail(imageSrc);
+    return imageSrc;
 }

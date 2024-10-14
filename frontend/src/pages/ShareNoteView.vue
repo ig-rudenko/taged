@@ -20,7 +20,7 @@
     <InTextImages v-if="note.content" :text="note.content"/>
 
     <!-- CONTENT -->
-    <NoteContent v-if="note.content" :content="note.content"/>
+    <NoteContent v-if="note.content" :content="note.content" :note-id="note.id"/>
 
   </div>
 

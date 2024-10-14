@@ -27,7 +27,8 @@
           <Button v-if="hasPermissionToCreateTag && !showAddTagInput" @click="showAddTagInput=true"
                   icon="pi pi-plus-circle" severity="warning"/>
           <template v-if="showAddTagInput">
-            <InputText class="max-w-11rem" v-model.trim="newTag" @keydown.enter="addNewTag" placeholder="Укажите новый тег"/>
+            <InputText class="max-w-11rem" v-model.trim="newTag" @keydown.enter="addNewTag"
+                       placeholder="Укажите новый тег"/>
             <Button @click="showAddTagInput=false" icon="pi pi-times" severity="warning"/>
           </template>
         </div>
@@ -39,15 +40,15 @@
         <div v-if="editNoteID && note.files.length" class="align-items-end flex flex-column">
           <div class="font-bold">Существующие файлы</div>
           <div class="flex flex-wrap">
-            <div v-for="file in note.files" class="p-3 w-15rem">
-              <div class="flex align-items-end flex-column">
+            <div v-for="file in note.files" class="p-3">
+              <div class="flex align-items-end flex-column h-full">
                 <i v-if="file.disable" @click="toggleFile(file)"
                    class="pi pi-check border-round-2xl border-1 px-1 py-1 cursor-pointer hover:text-green-500"
                    aria-label="Cancel"/>
                 <i v-else @click="toggleFile(file)"
                    class="pi pi-times border-round-2xl border-1 px-1 py-1 cursor-pointer hover:text-red-500"
                    aria-label="Cancel"/>
-                <div :class="file.disable?['opacity-30']:[]">
+                <div :class="file.disable?['opacity-30']:[]" class="align-items-center flex h-full">
                   <MediaPreview :file="file" :is-file-object="false"
                                 :max-file-name-length="20" :fileNoteID="editNoteID"/>
                 </div>
@@ -85,6 +86,7 @@ import Footer from "@/components/Footer.vue";
 import LoadMedia from "@/components/LoadMedia.vue";
 import {Note} from "@/note";
 import notesService from "@/services/notes";
+import {CkeditorImages} from "@/services/ckeditor";
 
 export default {
   name: "Notes",
@@ -118,7 +120,7 @@ export default {
     }
 
     this.availableTags = await notesService.getAvailableTags();
-
+    this.enableImagesAutoResize();
   },
 
   computed: {
@@ -193,6 +195,14 @@ export default {
 
 
   methods: {
+    enableImagesAutoResize() {
+      // Если режим редактирования, то пропускаем начальные изображения
+      const skipInitialImages = this.editNoteID != null;
+
+      const ckeditorImages = new CkeditorImages(skipInitialImages);
+      ckeditorImages.enableImagesAutoSize();
+    },
+
     async getNote() {
       this.note = await notesService.getNote(this.editNoteID);
     },
@@ -225,7 +235,7 @@ export default {
 
       if (this.editNoteID) {
         await notesService.updateNote(this.note, filesForm);
-        await this.$router.push("/notes/"+this.editNoteID);
+        await this.$router.push("/notes/" + this.editNoteID);
       } else {
         await notesService.createNote(this.note, filesForm);
         await this.$router.push("/notes/");
@@ -244,7 +254,7 @@ html, body {
 
 @media (width < 786px) {
   #select-tags {
-    width: 100%!important;
+    width: 100% !important;
   }
 }
 </style>

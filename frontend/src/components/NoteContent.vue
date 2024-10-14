@@ -5,11 +5,13 @@
 <script>
 import {defineComponent} from 'vue';
 import {getOriginImageURL} from "@/services/thumbnails";
+import {nanoGalleryReload} from "@/services/nanogallery";
 
 export default defineComponent({
   name: "NoteContent",
   props: {
-    content: {required: true, type: String}
+    content: {required: true, type: String},
+    noteId: {required: true, type: String},
   },
 
   data() {
@@ -19,8 +21,7 @@ export default defineComponent({
   },
 
   mounted() {
-    import("../../public/js/jquery@3.1.0.min.js")
-    import("../../public/js/nanogallery2.min.js")
+    nanoGalleryReload()
   },
 
   methods: {
@@ -39,7 +40,7 @@ export default defineComponent({
         // Добавляем превью, если имеется.
         images[i].setAttribute('data-ngsrc', getOriginImageURL(images[i].src));
 
-        images[i].setAttribute('data-nanogallery2-lgroup', "inline-content");
+        images[i].setAttribute('data-nanogallery2-lgroup', "note-inline-images-"+this.noteId);
         images[i].style.cssText += "max-width: 100%!important;"
       }
 

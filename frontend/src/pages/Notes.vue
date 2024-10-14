@@ -34,7 +34,7 @@
       <div style="max-height: 300px;" class="files-scrollbar block">
         <div v-if="noteFilesShow" class="flex flex-column">
           <p v-for="file in noteFilesShow.files" class="mr-3 m-2 flex align-items-center">
-            <MediaPreview :file="file" :is-file-object="false" :fileNoteID="noteFilesShow.id"/>
+            <MediaPreview :file="file" :is-file-object="false" :fileNoteID="noteFilesShow.id" :nggroup="'note-attached-images-'+noteFilesShow.id"/>
           </p>
         </div>
       </div>

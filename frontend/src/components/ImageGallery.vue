@@ -1,12 +1,17 @@
 <template>
   <div class="text-left">
-    <div :id="galleryID"></div>
+    <div :id="galleryID">
+      <div class="flex align-items-center gap-2">
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+        <span>Загружаем</span>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import {defineComponent} from 'vue';
-import {getSmallThumbnail, hasSmallThumbnail} from "@/services/thumbnails";
+import {findThumbs, createGallery, makeRandomID} from "@/services/nanogallery";
 
 export default defineComponent({
   name: "ImageGallery",
@@ -18,72 +23,14 @@ export default defineComponent({
   },
   data() {
     return {
-      galleryID: this.makeID(12)
+      galleryID: makeRandomID(12)
     }
   },
   async mounted() {
     const galleryID = this.galleryID
-    let items = []
-
-    for (const url of this.images) {
-      const index = this.images.indexOf(url);
-      let data = {src: url}
-      if (await hasSmallThumbnail(url)) {
-        data.srct = getSmallThumbnail(url)
-      }
-
-      if (this.withDescriptions) {
-        data.title = this.withDescriptions[index]
-      }
-      items.push(data)
-    }
-
-    $(document).ready(function () {
-      $(`#${galleryID}`).nanogallery2( {
-        // ### gallery settings ###
-        thumbnailHeight: 100,
-        thumbnailWidth: 100,
-        thumbnailL1GutterWidth: 20,
-        thumbnailL1GutterHeight: 20,
-        blurredImageQuality: 3,
-        thumbnailAlignment: "left",
-        thumbnailOpenImage: true,
-        thumbnailDisplayTransitionDuration: 1,
-        thumbnailDisplayInterval: 1,
-        thumbnailBorderVertical: 1,
-        thumbnailBorderHorizontal: 1,
-
-        colorScheme: {
-          thumbnail: {
-            borderColor: "rgba(114,114,114,0.69)",
-            borderRadius: "4px",
-          }
-        },
-        thumbnailToolbarImage :  { topLeft: 'display', bottomRight : 'download' },
-        allowHTMLinData: true,
-        thumbnailLabel: {
-          position: "onBottom",
-          titleMultiLine: true
-        },
-        // ### gallery content ###
-        items: items
-      });
-    });
+    const items = await findThumbs(this.images, this.withDescriptions)
+    createGallery(galleryID, items)
   },
-
-  methods: {
-    makeID(length) {
-      let result = '';
-      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      const charactersLength = characters.length;
-      let counter = 0;
-      while (counter < length) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        counter += 1;
-      }
-      return result;
-    }
-  }
 })
 </script>
 

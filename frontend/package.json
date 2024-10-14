@@ -1,7 +1,7 @@
 {
   "name": "frontend",
   "private": true,
-  "version": "1.2",
+  "version": "1.5",
   "type": "module",
   "description": "Гибкое хранилище записей с разграничением уровня доступа",
   "repository": "https://github.com/ig-rudenko/taged.git",
@@ -13,19 +13,20 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@mayasabha/ckeditor4-vue3": "^1.0.8",
+    "@mayasabha/ckeditor4-vue3": "^1.0.9",
+    "@vitejs/plugin-vue": "^5.1.4",
     "axios": "^1.7.7",
     "primeicons": "^7.0.0",
     "primevue": "^3.53.0",
-    "vue": "^3.5.6",
+    "vite": "^5.4.8",
+    "vue": "^3.5.12",
     "vue-loader": "^17.4.2",
     "vue-router": "^4.4.5",
-    "vuex": "^4.1.0",
-    "@vitejs/plugin-vue": "^5.1.4",
-    "vite": "^5.4.6",
-    "vue-tsc": "^2.1.6"
+    "vue-tsc": "^2.1.6",
+    "vuex": "^4.1.0"
   },
   "devDependencies": {
-    "typescript": "^5.6.2"
+    "@types/jquery": "^3.5.31",
+    "typescript": "^5.6.3"
   }
 }

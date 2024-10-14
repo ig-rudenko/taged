@@ -45,7 +45,7 @@
     <InTextImages v-if="note.content" :text="note.content"/>
 
     <!-- CONTENT -->
-    <NoteContent v-if="note.content" :content="note.content"/>
+    <NoteContent v-if="note.content" :content="note.content" :note-id="note.id"/>
 
     <Dialog v-model:visible="showDeleteModal" modal close-icon="pi" header="Подтвердите удаление">
       <div class="flex flex-column align-items-center">

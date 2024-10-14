@@ -2,7 +2,7 @@ import {getSmallThumbnail, hasSmallThumbnail} from "@/services/thumbnails.ts";
 
 
 export function nanoGalleryReload() {
-    $.getScript("../../public/js/nanogallery2.min.js")
+    $.getScript("/js/nanogallery2.min.js")
         .fail((jqxhr, settings, exception) => {
             console.log("Произошла ошибка при перезагрузке библиотеки `nano gallery`", jqxhr, settings, exception);
         });

@@ -1,5 +1,6 @@
 import json
 import re
+from urllib.parse import unquote
 
 from ckeditor_uploader.views import ImageUploadView
 from django.conf import settings
@@ -18,7 +19,7 @@ class CKEditorUploadView(ImageUploadView):
             data = json.loads(response.content)
 
             # Получаем путь к исходному изображению.
-            image_path = settings.MEDIA_ROOT / data["url"].lstrip(settings.MEDIA_URL)
+            image_path = settings.MEDIA_ROOT / unquote(data["url"]).lstrip(settings.MEDIA_URL)
 
             # Создаем несколько превью изображения.
             thumbs = create_thumbnails(image_path)

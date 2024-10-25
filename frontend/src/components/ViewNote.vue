@@ -1,5 +1,5 @@
 <template>
-  <div v-if="note" class="px-4" :class="noteClasses">
+  <div id="note" v-if="note" class="px-4" :class="noteClasses">
 
     <div class="flex flex-wrap justify-content-between align-items-center">
 
@@ -22,8 +22,9 @@
       <div class="mb-4 flex flex-wrap gap-2 justify-content-center">
         <Button v-if="userPermissions.hasPermissionToCreateLink" icon="pi pi-link" @click="showShareLinkPanel"
                 severity="help" label="Поделиться" size="small"></Button>
-        <Button v-if="userPermissions.hasPermissionToUpdateNote" @click="goToNoteEditURL" icon="pi pi-pencil"
-                severity="warning" label="Редактировать" size="small"></Button>
+        <router-link v-if="userPermissions.hasPermissionToUpdateNote" :to="'/notes/' + noteId + '/edit/'">
+          <Button icon="pi pi-pencil" severity="warning" label="Редактировать" size="small"/>
+        </router-link>
         <Button v-if="userPermissions.hasPermissionToDeleteNote" severity="danger" @click="showDeleteModal=true"
                 icon="pi pi-trash" label="Удалить" size="small"></Button>
       </div>
@@ -151,8 +152,11 @@ export default {
 
     notesService.getNote(this.noteId)
         .then(note => {
-          this.note = note
+          this.note = note;
           document.title = this.note.title;
+          setTimeout(() => {
+            document.getElementById("note")!.scrollIntoView({inline: "center"})
+          })
         })
   },
 
@@ -192,10 +196,6 @@ export default {
   methods: {
     isImage(fileName: string): boolean {
       return RegExp(/.+\.(png|jpe?g|gif|bpm|svg|ico|tiff)$/i).test(fileName)
-    },
-
-    goToNoteEditURL(): void {
-      window.location.href = "/notes/" + this.noteId + "/edit/"
     },
 
     deleteNote(): void {

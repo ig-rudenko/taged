@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="header-image"></div>
-    <div class="px-4 py-5 md:px-6 lg:px-8 surface-section">
+    <div class="px-4 md:px-6 lg:px-8 surface-section">
       <div class="flex-column lg:flex-row lg:align-items-center lg:justify-content-between relative"
            style="margin-top: -2rem; top: -70px; margin-bottom: -70px;">
         <div>
@@ -16,17 +16,18 @@
               </div>
             </div>
 
-            <div v-if="showCount" class="flex flex-wrap">
-              <div id="notesCountBlock" class="align-items-center bg-indigo-500 flex flex-column w-10rem gap-2 p-4 shadow-2 text-center" style="border-radius: 12px;">
-                <i class="pi pi-file text-3xl text-white"></i>
-                <div class="text-2xl font-medium text-white">{{ totalCount }}</div>
-                <span class="text-indigo-100 font-medium">Записей</span>
+            <div v-if="showCount" class="flex flex-wrap h-full">
+              <div id="notesCountBlock" class="border-round-2xl align-items-center bg-indigo-500 flex flex-column sm:p-5 gap-2 shadow-2 text-center">
+                <div class="flex align-items-center gap-2">
+                  <i class="pi pi-file sm:text-3xl text-white"></i>
+                  <div class="sm:text-2xl font-medium text-white">{{ totalCount }}</div>
+                </div>
+                <span class="text-indigo-100 sm:font-medium">Записей</span>
               </div>
             </div>
 
           </div>
-          <div class="pt-4 text-900 text-4xl font-medium mb-3">{{ sectionName }}</div>
-          <p class="mt-0 mb-3 text-700 text-xl">{{ sectionDescription }}</p>
+          <div class="text-900 text-4xl font-medium my-3 sm:mt-0">{{ sectionName }}</div>
         </div>
         <Button v-if="showCreateButton" @click="goToCreateNoteURL" icon="pi pi-book" rounded label="Создать"/>
       </div>
@@ -110,6 +111,7 @@ export default {
   -webkit-box-pack: justify !important;
   -ms-flex-pack: justify !important;
   justify-content: space-between !important;
+  align-items: center;
 }
 
 @media (max-width: 500px) {

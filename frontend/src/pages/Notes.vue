@@ -1,9 +1,10 @@
 <template>
-  <Header section-name="База знаний" section-description="Здесь вы можете найти необходимую для вас информацию"
-          :show-create-button="userPermissions.hasPermissionToCreateNote"/>
-  <div class="px-2">
+  <Header section-name="База знаний" :show-create-button="userPermissions.hasPermissionToCreateNote"/>
+
+  <div class="px-2 py-3">
 
     <div class="flex-column p-fluid md:px-6 lg:px-8">
+
       <div class="p-inputgroup flex-1">
         <AutoComplete class="h-4rem text-900" v-model="filter.search"
                       :input-style="{'text-align': 'center', 'font-size': '1.5rem'}"
@@ -11,19 +12,30 @@
                       :suggestions="titles"
                       @complete="autocomplete"
                       @itemSelect="performNewSearch"
-                      :auto-option-focus="false"
+                      :input-props="{autofocus: true}"
                       placeholder="Поиск информации">
           <template #empty>
             Заголовок с таким названием не найден
           </template>
         </AutoComplete>
       </div>
+
       <MultiSelect v-model="filter.tags" :options="tags" filter placeholder="Выберите теги" @change="performNewSearch"
-                   scroll-height="400px" :maxSelectedLabels="3" class="w-full md:w-20rem"
-                   :class="filter.tags.length?'border-primary-500':''"/>
+                   scroll-height="320px" :maxSelectedLabels="3" class="w-full md:w-20rem text-sm"/>
+
+      <div class="flex flex-wrap justify-content-center gap-2 py-2">
+        <Badge v-for="t in filter.tags">
+          <template #default>
+            <div class="flex align-items-center gap-2 select-none">
+              <span>{{t}}</span>
+              <i class="pi pi-times text-sm cursor-pointer" @click="() => deleteTag(t)"/>
+            </div>
+          </template>
+        </Badge>
+      </div>
 
       <div v-if="showTotalCount" class="flex justify-content-center">
-        <div class="bg-indigo-500 border-round-3xl flex justify-content-around p-2 text-white" style="width: 150px;">
+        <div class=" border-round-3xl flex justify-content-around p-2 " style="width: 150px;">
           Найдено: {{ totalRecords }}
         </div>
       </div>
@@ -41,44 +53,44 @@
     </OverlayPanel>
 
 
-    <div id="notesContainer" class="flex flex-wrap justify-content-center">
-      <div class="w-30rem p-2 m-1" v-for="note in notes">
+    <div id="notesContainer" class="flex flex-wrap justify-content-center gap-3 pt-3">
 
+      <div class="w-22rem" v-for="note in notes">
         <Badge v-if="note.score>0.05" :class="badgeClasses((<DetailNote>note))"
                :value="'match: '+note.scorePercents+'%'"/>
 
-        <div :class="noteClasses((<DetailNote>note))" style="height: 100%">
-          <a :href="'/notes/' + note.id"
-             class=" flex justify-content-center align-content-center align-items-center cursor-pointer"
-             style="min-height: 230px;">
+        <div :class="noteClasses((<DetailNote>note))" class="h-full">
+
+          <router-link :to="'/notes/' + note.id" class="h-14rem">
             <img v-if="note.previewImage?.length" :src="note.previewImage"
-                 class="border-round-2xl p-2 border-round-2xl" style="max-height: 230px; max-width: 100%;"
-                 alt="preview">
-            <svg v-else class="border-round-top-2xl cursor-pointer" width="100%" height="225"
+                 class="border-round-top-2xl max-h-14rem w-full" style="object-fit: cover" alt="preview">
+            <svg v-else class="border-round-top-2xl cursor-pointer h-14rem w-full" width="100%" height="225"
                  xmlns="http://www.w3.org/2000/svg"
                  role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false">
               <rect width="100%" height="100%" fill="#aaaaaa"></rect>
-              <text x="38%" y="50%" fill="#eceeef" dy=".3em">Нет изображения</text>
+              <text x="30%" y="50%" fill="#eceeef" dy=".3em">Нет изображения</text>
             </svg>
-          </a>
+          </router-link>
 
-          <div class="p-3">
-            <div class="flex flex-wrap justify-content-between align-items-center gap-3">
-              <div class="flex flex-wrap gap-1">
-                <Tag @click="selectTag(tag)" v-for="tag in note.tags" :value="tag"
-                     class="bg-orange-light hover:bg-indigo-500 hover:shadow-4 font-normal cursor-pointer"/>
-              </div>
-              <i v-if="note.filesCount>0" @click="e => showNoteFiles((<DetailNote>note), e)"
-                 v-badge="note.filesCount" class="pi pi-file p-overlay-badge cursor-pointer" style="font-size: 2rem"/>
-            </div>
-
-            <h2>{{ note.title }}</h2>
-            <div class="flex justify-content-end">
-              <Button size="small" rounded class="bg-orange-light border-0" icon="pi pi-eye"
-                      @click="showNote(note.id)"></Button>
-            </div>
+          <div class="p-3 flex flex-column justify-content-between">
             <div>
-              <small class="text-black-alpha-60"><i class="pi pi-calendar"/> {{ note.published_at }}</small>
+              <div class="flex flex-wrap justify-content-between align-items-center gap-3">
+                <div class="flex flex-wrap gap-1">
+                  <Tag @click="selectTag(tag)" v-for="tag in note.tags" :value="tag"
+                       class="bg-orange-light hover:bg-indigo-500 hover:shadow-4 font-normal cursor-pointer select-none"/>
+                </div>
+                <i v-if="note.filesCount>0" @click="e => showNoteFiles((<DetailNote>note), e)"
+                   v-badge="note.filesCount" class="pi pi-file p-overlay-badge cursor-pointer" style="font-size: 1.5rem"/>
+              </div>
+              <h2>{{ note.title }}</h2>
+            </div>
+
+            <div class="flex align-items-center justify-content-between ">
+              <div><small class="text-black-alpha-60"><i class="pi pi-calendar"/> {{ note.published_at }}</small></div>
+              <div class="flex justify-content-end">
+                <Button size="small" rounded class="bg-orange-light hover:bg-indigo-500 border-0" icon="pi pi-eye"
+                        @click="showNote(note.id)"></Button>
+              </div>
             </div>
           </div>
         </div>
@@ -212,8 +224,18 @@ export default {
       )
     },
 
+    deleteTag(tagName: string): void {
+      const tagID = this.filter.tags.indexOf(tagName)
+      if (tagID >= 0) {
+        this.filter.tags.splice(tagID, 1);
+        this.performNewSearch();
+      }
+    },
+
     selectTag(tagName: string): void {
-      this.filter.tags = [tagName]
+      const tagID = this.filter.tags.indexOf(tagName);
+      if (tagID >= 0) return;
+      this.filter.tags.push(tagName)
       this.showNoteModal = false
       this.performNewSearch()
     },
@@ -222,7 +244,6 @@ export default {
     performNewSearch(): void {
       this.paginator.currentPage = 1
       this.findNotes(FindNotesMode.rebase)
-      this.showTotalCount = true
     },
 
     /**
@@ -247,6 +268,10 @@ export default {
             }
             this.searchingNotes = false;
             this.totalRecords = Number(resp.totalRecords)
+
+            // Показываем кол-во найденых заметок, только если это был поиск по фильтру.
+            this.showTotalCount = this.filter.getParamsString().length > 0;
+
             this.paginator = resp.paginator
           }
       )

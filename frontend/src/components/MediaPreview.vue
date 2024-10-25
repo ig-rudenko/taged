@@ -11,7 +11,7 @@
             class="text-900 hover:text-indigo-500 cursor-pointer">{{ shortenString(file.name) }}</span>
       <span class="font-normal text-500">
         {{ formatBytes(file.size) }}
-        <span v-if="!isFileObject" @click="downloadFile" class="ml-1">
+        <span v-if="!isFileObject" @click="download" class="ml-1">
           <i class="pi pi-download cursor-pointer font-bold text-700 hover:text-indigo-500"/>
         </span>
       </span>
@@ -35,9 +35,9 @@ import {PropType} from "vue";
 import {NoteFile} from "@/note";
 import format_bytes from "@/helpers/format_size";
 import getFileFormatIconName from "@/helpers/icons";
-import api from "@/services/api";
 import {getOriginImageURL, getSmallThumbnailIfHas} from "@/services/thumbnails";
 import {makeRandomID, nanoGalleryReload} from "@/services/nanogallery";
+import {downloadFile} from "@/services/download.ts";
 
 export default {
   name: "MediaPreview",
@@ -109,21 +109,8 @@ export default {
       }
     },
 
-    downloadFile() {
-      api.get(this.fileDownloadLink, {responseType: "blob"})
-          .then((response) => {
-            // create file link in browser's memory
-            const href = URL.createObjectURL(response.data);
-            // create "a" HTML element with href to file & click
-            const link = document.createElement('a');
-            link.href = href;
-            link.setAttribute('download', this.file.name); //or any other extension
-            document.body.appendChild(link);
-            link.click();
-            // clean up "a" element & remove ObjectURL
-            document.body.removeChild(link);
-            URL.revokeObjectURL(href);
-          });
+    download() {
+      downloadFile(this.fileDownloadLink, this.file.name)
     },
 
     enterFile(): void {

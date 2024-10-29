@@ -29,7 +29,11 @@
           </div>
           <div class="text-900 text-4xl font-medium my-3 sm:mt-0">{{ sectionName }}</div>
         </div>
-        <Button v-if="showCreateButton" @click="goToCreateNoteURL" icon="pi pi-book" rounded label="Создать"/>
+        <template v-if="showCreateButton" >
+          <Button @click="goToCreateNoteURL" icon="pi pi-book" rounded label="Создать"/>
+          <DraftsList/>
+        </template>
+
       </div>
     </div>
   </div>
@@ -38,9 +42,11 @@
 <script lang="ts">
 import api from "@/services/api";
 import {mapState} from "vuex";
+import DraftsList from "@/components/DraftsList.vue";
 
 export default {
   name: "Header",
+  components: {DraftsList},
   props: {
     showCount: {required: false, default: true, type: Boolean},
     sectionName: {required: true, type: String},

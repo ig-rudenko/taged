@@ -55,46 +55,7 @@
 
     <div id="notesContainer" class="flex flex-wrap justify-content-center gap-3 pt-3">
 
-      <div class="w-22rem" v-for="note in notes">
-        <Badge v-if="note.score>0.05" :class="badgeClasses((<DetailNote>note))"
-               :value="'match: '+note.scorePercents+'%'"/>
-
-        <div :class="noteClasses((<DetailNote>note))" class="h-full">
-
-          <router-link :to="'/notes/' + note.id" class="h-14rem">
-            <img v-if="note.previewImage?.length" :src="note.previewImage"
-                 class="border-round-top-2xl max-h-14rem w-full" style="object-fit: cover" alt="preview">
-            <svg v-else class="border-round-top-2xl cursor-pointer h-14rem w-full" width="100%" height="225"
-                 xmlns="http://www.w3.org/2000/svg"
-                 role="img" aria-label="Placeholder: Thumbnail" preserveAspectRatio="xMidYMid slice" focusable="false">
-              <rect width="100%" height="100%" fill="#aaaaaa"></rect>
-              <text x="30%" y="50%" fill="#eceeef" dy=".3em">Нет изображения</text>
-            </svg>
-          </router-link>
-
-          <div class="p-3 flex flex-column justify-content-between">
-            <div>
-              <div class="flex flex-wrap justify-content-between align-items-center gap-3">
-                <div class="flex flex-wrap gap-1">
-                  <Tag @click="selectTag(tag)" v-for="tag in note.tags" :value="tag"
-                       class="bg-orange-light hover:bg-indigo-500 hover:shadow-4 font-normal cursor-pointer select-none"/>
-                </div>
-                <i v-if="note.filesCount>0" @click="e => showNoteFiles((<DetailNote>note), e)"
-                   v-badge="note.filesCount" class="pi pi-file p-overlay-badge cursor-pointer" style="font-size: 1.5rem"/>
-              </div>
-              <h2>{{ note.title }}</h2>
-            </div>
-
-            <div class="flex align-items-center justify-content-between ">
-              <div><small class="text-black-alpha-60"><i class="pi pi-calendar"/> {{ note.published_at }}</small></div>
-              <div class="flex justify-content-end">
-                <Button size="small" rounded class="bg-orange-light hover:bg-indigo-500 border-0" icon="pi pi-eye"
-                        @click="showNote(note.id)"></Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <NoteElement v-for="note in notes" :key="note.id" :note="note" @select:tag="selectTag" @show:preview="showNote" />
 
     </div>
 
@@ -122,17 +83,19 @@
 </template>
 
 <script lang="ts">
+import {mapState} from "vuex";
+
 import MediaPreview from "@/components/MediaPreview.vue";
+import NoteElement from "@/components/NoteElement.vue";
 import ViewNote from "@/components/ViewNote.vue";
 import Header from "@/components/Header.vue";
 import Footer from "@/components/Footer.vue";
-import {Paginator} from "@/paginator";
-import {UserPermissions} from "@/permissions";
+
 import {DetailNote} from "@/note";
-import {createNoteFilter, NoteSearchFilter} from "@/filters.ts";
-import {mapState} from "vuex";
-import notesService from "@/services/notes.ts";
-import OverlayPanel from "primevue/overlaypanel";
+import {Paginator} from "@/paginator";
+import notesService from "@/services/notes";
+import {UserPermissions} from "@/permissions";
+import {createNoteFilter, NoteSearchFilter} from "@/filters";
 
 enum FindNotesMode {
   rebase = "rebase",
@@ -141,7 +104,7 @@ enum FindNotesMode {
 
 export default {
   name: "Notes",
-  components: {MediaPreview, Footer, ViewNote, Header},
+  components: {NoteElement, MediaPreview, Footer, ViewNote, Header},
   data() {
     return {
       searchingNotes: false,
@@ -175,9 +138,6 @@ export default {
 
   computed: {
     ...mapState({loggedIn: (state: any) => state.auth.status.loggedIn}),
-    DetailNote() {
-      return DetailNote
-    }
   },
   methods: {
     initPageTitle() {
@@ -186,42 +146,6 @@ export default {
 
     autocomplete(event: any) {
       notesService.autocomplete(event.query).then(titles => this.titles = titles)
-    },
-
-    noteClasses(note: DetailNote): string[] {
-      let classes = ["border-round-2xl"]
-      if (note.score > 0.9) {
-        classes.push("total-match")
-      } else {
-        classes.push("shadow-4")
-      }
-      return classes
-    },
-
-    badgeClasses(note: DetailNote): string[] {
-      let classes = ["absolute", "m-2"]
-      if (note.score > 0.9) {
-        classes.push("bg-purple-light")
-      } else if (note.score < 0.2) {
-        classes.push("shadow-2")
-      }
-      return classes
-    },
-
-    showNoteFiles(note: DetailNote, event: Event) {
-      if (note.files.length > 0) {
-        this.noteFilesShow = note;
-        (<OverlayPanel>this.$refs.showFiles).toggle(event, event.target)
-        return
-      }
-
-      notesService.getNoteFiles(note.id).then(
-          files => {
-            note.files = files;
-            this.noteFilesShow = note;
-            (<OverlayPanel>this.$refs.showFiles).toggle(event, event.target)
-          }
-      )
     },
 
     deleteTag(tagName: string): void {

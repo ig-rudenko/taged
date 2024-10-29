@@ -40,6 +40,15 @@ class Note {
 }
 
 
+export interface NoteDraft {
+    id: string
+    title: string
+    content: string
+    tags: string[]
+    previewImage: string
+}
+
+
 class DetailNote extends Note {
     constructor(
         public id: string,

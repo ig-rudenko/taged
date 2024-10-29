@@ -1,8 +1,10 @@
-import api from "@/services/api.ts";
-import {DetailNote, getFiles, newDetailNote, Note} from "@/note.ts";
-import {getVerboseAxiosError} from "@/errorFmt.ts";
-import {errorToast, successToast} from "@/services/myToast.ts";
-import {NoteSearchFilter} from "@/filters.ts";
+import { v4 as uuidv4 } from 'uuid';
+
+import api from "@/services/api";
+import {NoteSearchFilter} from "@/filters";
+import {getVerboseAxiosError} from "@/errorFmt";
+import {errorToast, successToast} from "@/services/myToast";
+import {DetailNote, getFiles, newDetailNote, Note, NoteDraft} from "@/note";
 
 
 interface Paginator {
@@ -211,6 +213,48 @@ class NotesService {
         if (resp.status !== 201) errorToast(`Error: ${resp.status}`, data);
     }
 
+    async getDraftsList(): Promise<NoteDraft[]> {
+        return [
+
+        ]
+    }
+
+    async getDraft(id: string): Promise<NoteDraft|undefined> {
+        console.log(id)
+        const notes = await this.getDraftsList()
+        for (const note of notes) {
+            if (String(note.id) === String(id)) {
+                return note
+            }
+        }
+    }
+
+    async createDraft(note: Note): Promise<NoteDraft> {
+        const id = uuidv4();
+        console.log("createDraft", id, note)
+        return {
+            id: id,
+            title: note.title,
+            content: note.content,
+            tags: note.tags,
+            previewImage: "",
+        };
+    }
+
+    async saveDraft(id: string, note: Note): Promise<NoteDraft> {
+        console.log("saveDraft", id, note)
+        return {
+            id: id,
+            title: note.title,
+            content: note.content,
+            tags: note.tags,
+            previewImage: "",
+        };
+    }
+
+    async deleteDraft(id: string) {
+        console.log("deleteDraft", id)
+    }
 
 }
 

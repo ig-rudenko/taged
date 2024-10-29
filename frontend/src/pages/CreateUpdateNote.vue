@@ -2,6 +2,10 @@
 
   <Header :section-name="editNoteID?'Редактирование записи':'Создание новой записи'" :show-count="false"/>
 
+  <InlineMessage v-if="beingEdited" severity="warn" class="mb-3">
+    Данная запись уже редактируется кем-то другим.
+  </InlineMessage>
+
   <NoteForm @submit:form="submit" :note="note" :noteID="editNoteID" :submit-in-process="submitInProcess"/>
   <Footer/>
 
@@ -15,6 +19,7 @@ import Footer from "@/components/Footer.vue";
 import {Note, NoteDraft} from "@/note";
 import notesService from "@/services/notes";
 import NoteForm from "@/components/NoteForm.vue";
+import {EditService} from "@/services/editService";
 
 export default {
   name: "Notes",
@@ -22,10 +27,12 @@ export default {
   data() {
     return {
       note: new Note() as Note,
-      editNoteID: null as string|null,
-      draftID: null as string|null,
-      lastDraft: undefined as NoteDraft|undefined,
+      editNoteID: null as string | null,
+      draftID: null as string | null,
+      lastDraft: undefined as NoteDraft | undefined,
       submitInProcess: false,
+      editService: new EditService(),
+      beingEdited: false,
     }
   },
 
@@ -36,8 +43,11 @@ export default {
     this.editNoteID = this.$route.params.id?.toString() || null
     if (this.editNoteID) {
       // В таком случае получаем её данные
-      await this.getNote()
+      await this.getNote();
       document.title = "Редактирование: " + this.note.title;
+
+      setTimeout(this.setNoteBeingEdited)
+      setTimeout(this.checkNoteEditStatus)
     } else {
       document.title = "Создание записи";
       this.draftID = this.$route.query.draft?.toString() || null;
@@ -59,6 +69,20 @@ export default {
       this.note.title = this.lastDraft.title;
       this.note.content = this.lastDraft.content;
       this.note.tags = this.lastDraft.tags;
+    },
+
+    async setNoteBeingEdited() {
+      if (!this.editNoteID) return;
+      this.editService.setBeingEdited(this.editNoteID).then();
+      setTimeout(this.setNoteBeingEdited, 2000);
+    },
+
+    async checkNoteEditStatus() {
+      if (!this.editNoteID) return;
+      this.editService.isBeingEdited(this.editNoteID).then((isBeingEdited) => {
+        this.beingEdited = isBeingEdited;
+      })
+      setTimeout(this.checkNoteEditStatus, 2000);
     },
 
     async autoSaveDraft() {

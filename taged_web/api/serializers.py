@@ -4,6 +4,11 @@ from rest_framework.serializers import ListSerializer, CharField, Serializer, Mo
 from taged_web.models import Tags, User
 
 
+class NoteEditorSerializer(Serializer):
+    note = CharField(required=True)
+    editor = CharField(required=True)
+
+
 class NoteSerializerNoTagsValidation(Serializer):
     title = CharField(max_length=255, required=True)
     tags: ListSerializer[CharField] = ListSerializer(child=CharField(), required=True)

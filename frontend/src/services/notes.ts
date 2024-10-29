@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 
 import api from "@/services/api";
 import {NoteSearchFilter} from "@/filters";
@@ -214,46 +214,41 @@ class NotesService {
     }
 
     async getDraftsList(): Promise<NoteDraft[]> {
-        return [
-
-        ]
+        try {
+            const resp = await api.get<NoteDraft[]>("/notes/drafts/")
+            return resp.data
+        } catch (error: any) {
+            console.log("getDraftsList", error)
+            return []
+        }
     }
 
-    async getDraft(id: string): Promise<NoteDraft|undefined> {
-        console.log(id)
-        const notes = await this.getDraftsList()
-        for (const note of notes) {
-            if (String(note.id) === String(id)) {
-                return note
-            }
+    async getDraft(id: string): Promise<NoteDraft | undefined> {
+        try {
+            const resp = await api.get<NoteDraft>(`/notes/drafts/${id}/`)
+            return resp.data
+        } catch (error: any) {
         }
     }
 
     async createDraft(note: Note): Promise<NoteDraft> {
         const id = uuidv4();
-        console.log("createDraft", id, note)
-        return {
-            id: id,
-            title: note.title,
-            content: note.content,
-            tags: note.tags,
-            previewImage: "",
-        };
+        return await this.saveDraft(id, note)
     }
 
     async saveDraft(id: string, note: Note): Promise<NoteDraft> {
-        console.log("saveDraft", id, note)
-        return {
+        const data = {
             id: id,
             title: note.title,
             content: note.content,
             tags: note.tags,
-            previewImage: "",
-        };
+        }
+        const resp = await api.post<NoteDraft>("/notes/drafts/", data)
+        return resp.data
     }
 
     async deleteDraft(id: string) {
-        console.log("deleteDraft", id)
+        await api.delete(`/notes/drafts/${id}/`)
     }
 
 }

@@ -17,7 +17,8 @@
             </div>
 
             <div v-if="showCount" class="flex flex-wrap h-full">
-              <div id="notesCountBlock" class="border-round-2xl align-items-center bg-indigo-500 flex flex-column sm:p-5 gap-2 shadow-2 text-center">
+              <div id="notesCountBlock"
+                   class="border-round-2xl align-items-center bg-indigo-500 flex flex-column sm:p-5 gap-2 shadow-2 text-center">
                 <div class="flex align-items-center gap-2">
                   <i class="pi pi-file sm:text-3xl text-white"></i>
                   <div class="sm:text-2xl font-medium text-white">{{ totalCount }}</div>
@@ -29,7 +30,7 @@
           </div>
           <div class="text-900 text-4xl font-medium my-3 sm:mt-0">{{ sectionName }}</div>
         </div>
-        <template v-if="showCreateButton" >
+        <template v-if="showCreateButton">
           <Button @click="goToCreateNoteURL" icon="pi pi-book" rounded label="Создать"/>
           <DraftsList/>
         </template>
@@ -43,6 +44,8 @@
 import api from "@/services/api";
 import {mapState} from "vuex";
 import DraftsList from "@/components/DraftsList.vue";
+import {errorToast} from "@/services/myToast.ts";
+import {getVerboseAxiosError} from "@/errorFmt.ts";
 
 export default {
   name: "Header",
@@ -69,7 +72,9 @@ export default {
   },
   methods: {
     getTotalRecordsCount(): void {
-      api.get("/notes/count").then(resp => this.totalCount = resp.data.totalCount)
+      api.get("/notes/count")
+          .then(resp => this.totalCount = resp.data.totalCount)
+          .catch(reason => errorToast("Ошибка при получении количества записей", getVerboseAxiosError(reason)))
     },
     goToCreateNoteURL(): void {
       this.$router.push("/notes/create")
@@ -128,9 +133,9 @@ export default {
   }
 
   #notesCountBlock {
-    flex-direction: row!important;
-    width: 100%!important;
-    padding: 1rem!important;
+    flex-direction: row !important;
+    width: 100% !important;
+    padding: 1rem !important;
   }
 }
 

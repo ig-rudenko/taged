@@ -16,7 +16,7 @@ const visibleDeleteModal = ref(false);
 
 function deleteDraft() {
   emits('delete:draft', props.note.id);
-  visibleDeleteModal.value=false;
+  visibleDeleteModal.value = false;
 }
 
 </script>
@@ -25,7 +25,8 @@ function deleteDraft() {
 
   <div class="w-22rem">
     <div class="border-round-2xl h-full shadow-3 relative">
-      <Button @click="visibleDeleteModal=!visibleDeleteModal" class="absolute top-0 right-0" severity="danger" size="small" icon="pi pi-trash"/>
+      <Button @click="visibleDeleteModal=!visibleDeleteModal" class="absolute top-0 right-0" severity="danger"
+              size="small" icon="pi pi-trash"/>
 
       <router-link :to="'/notes/create?draft=' + note.id" class="h-14rem">
         <img v-if="note.previewImage?.length" :src="note.previewImage"
@@ -46,7 +47,7 @@ function deleteDraft() {
                    class="bg-orange-light hover:bg-indigo-500 hover:shadow-4 font-normal cursor-pointer select-none"/>
             </div>
           </div>
-          <h2>{{ note.title }}</h2>
+          <h2>{{ note.title || "черновик" }}</h2>
         </div>
 
       </div>
@@ -55,7 +56,7 @@ function deleteDraft() {
 
   <Dialog v-model:visible="visibleDeleteModal" header="Удалить черновик?" :closable="false">
     <div class="flex gap-2 justify-content-center">
-      <Button icon="pi pi-times" label="Нет" @click="visibleDeleteModal=false" />
+      <Button icon="pi pi-times" label="Нет" @click="visibleDeleteModal=false"/>
       <Button icon="pi pi-check" severity="danger" label="Да " @click="deleteDraft"/>
     </div>
   </Dialog>

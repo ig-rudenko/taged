@@ -26,9 +26,11 @@ from rest_framework_simplejwt.views import (
 
 from taged.ckeditor import ckeditor_upload_api_view
 from taged_web.api.myself_views import get_myself_api_view
+from taged_web.api.urls import router as draft_router
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/drafts/", include(draft_router.urls)),
     path("api/notes/", include("taged_web.api.urls")),
     path("api/auth/myself/", get_myself_api_view, name="myself"),
     path("api/auth/token/", TokenObtainPairView.as_view(), name="login"),

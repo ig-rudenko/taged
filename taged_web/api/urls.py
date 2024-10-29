@@ -1,18 +1,17 @@
-from django.urls import path, include
+from django.urls import path
 from rest_framework.routers import DefaultRouter
 
 from . import views
 from .drafts_view import DraftsViewSet
 
 router = DefaultRouter()
-router.register("drafts", DraftsViewSet, basename="drafts")
+router.register("", DraftsViewSet, basename="drafts")
 
 # /api/notes/
 
 app_name = "api:notes"
 
 urlpatterns = [
-    path("", include(router.urls)),
     path("", views.NotesListCreateAPIView.as_view()),
     path("autocomplete", views.AutocompleteAPIView.as_view()),
     path("permissions", views.ListUserPermissions.as_view()),

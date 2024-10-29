@@ -34,11 +34,11 @@ export default defineComponent({
 
 <template>
   <Button @click="showDialog=!showDialog" rounded text icon="pi pi-list" label="Черновики"
-          :badge="drafts.length.toString()" badgeSeverity="danger"/>
+          :badge="drafts.length?drafts.length.toString():''" badgeSeverity="danger"/>
 
   <Dialog v-model:visible="showDialog" modal header="Черновики">
     <div v-if="drafts.length" class="p-2 flex flex-wrap gap-3 justify-content-center">
-      <DraftElement v-for="draft in drafts" :key="draft.id" :note="draft" @delete:draft="deleteDraft" />
+      <DraftElement v-for="draft in drafts" :key="draft.id" :note="draft" @delete:draft="deleteDraft"/>
     </div>
 
     <div v-else class="flex justify-content-center w-30rem">

@@ -215,7 +215,7 @@ class NotesService {
 
     async getDraftsList(): Promise<NoteDraft[]> {
         try {
-            const resp = await api.get<NoteDraft[]>("/notes/drafts/")
+            const resp = await api.get<NoteDraft[]>("/drafts/")
             return resp.data
         } catch (error: any) {
             console.log("getDraftsList", error)
@@ -225,7 +225,7 @@ class NotesService {
 
     async getDraft(id: string): Promise<NoteDraft | undefined> {
         try {
-            const resp = await api.get<NoteDraft>(`/notes/drafts/${id}/`)
+            const resp = await api.get<NoteDraft>(`/drafts/${id}/`)
             return resp.data
         } catch (error: any) {
         }
@@ -243,12 +243,12 @@ class NotesService {
             content: note.content,
             tags: note.tags,
         }
-        const resp = await api.post<NoteDraft>("/notes/drafts/", data)
+        const resp = await api.post<NoteDraft>("/drafts/", data)
         return resp.data
     }
 
     async deleteDraft(id: string) {
-        await api.delete(`/notes/drafts/${id}/`)
+        await api.delete(`/drafts/${id}/`)
     }
 
 }

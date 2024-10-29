@@ -1,3 +1,5 @@
+import tokenService from "@/services/token.service";
+
 export class CkeditorImages {
     private resizeStyles: boolean
     private IMAGES: any[]
@@ -26,10 +28,77 @@ export class CkeditorImages {
 
     enableImagesAutoSize() {
         // @ts-ignore
-        window.CKEDITOR.on('instanceReady', (evt: any) => {
-            const editor = evt.editor;
-            this.setSizes(editor);
-        });
+        if (window.CKEDITOR) {
+            // @ts-ignore
+            window.CKEDITOR.on('instanceReady', (evt: any) => {
+                const editor = evt.editor;
+                this.setSizes(editor);
+            });
+        } else {
+            setTimeout(() => this.enableImagesAutoSize(), 50)
+        }
     }
 
+}
+
+export const ckeditorConfig = {
+    language: "ru",
+    height: '75vh',
+    uiColor: "#ffffff",
+    filebrowserUploadUrl: "/api/ckeditor/upload/",
+    fileTools_requestHeaders: {
+        'Authorization': 'Bearer ' + tokenService.getLocalAccessToken()
+    },
+    iframe_attributes: {
+        sandbox: 'allow-scripts allow-same-origin',
+        allow: 'autoplay'
+    },
+    contentsCss: ["/themes/viva-light/theme.css", "/css/styles.min.css", "/css/main.css"],
+    bodyClass: "m-4",
+    format_pre: {
+        element: 'pre',
+        attributes: {class: "bg-black-alpha-70 border-round p-3 px-5 shadow-2 text-white w-fit"}
+    },
+    font_names: 'Cascadia Code, monospace;' +
+        'Comic Sans MS/Comic Sans MS, cursive;' +
+        'Courier New/Courier New, Courier, monospace;' +
+        'Lucida Sans Unicode/Lucida Sans Unicode, Lucida Grande, sans-serif;' +
+        'Tahoma/Tahoma, Geneva, sans-serif;' +
+        'Times New Roman/Times New Roman, Times, serif;',
+    toolbar: [
+        {'name': 'document', 'items': ['Source', '-', 'Save', 'NewPage', 'Preview', 'Print', '-', 'Templates']},
+        {'name': 'clipboard', 'items': ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo']},
+        {'name': 'editing', 'items': ['Find', 'Replace', '-', 'SelectAll']},
+        // {
+        //   'name': 'forms',
+        //   'items': ['Form', 'Checkbox', 'Radio', 'TextField', 'Textarea', 'Select', 'Button', 'ImageButton',
+        //     'HiddenField']
+        // },
+        '/',
+        {'name': 'styles', 'items': ['Styles', 'Format', 'Font', 'FontSize']},
+        {'name': 'colors', 'items': ['TextColor', 'BGColor']},
+        {
+            'name': 'basicstyles',
+            'items': ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'RemoveFormat']
+        },
+        {
+            'name': 'paragraph',
+            'items': ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote', 'CreateDiv', '-',
+                'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']
+        },
+        {'name': 'links', 'items': ['Link', 'Unlink', 'Anchor']},
+        {
+            'name': 'insert',
+            'items': ['Image', 'Flash', 'Table', 'HorizontalRule', 'Smiley', 'SpecialChar', 'PageBreak', 'Iframe']
+        },
+        {'name': 'about', 'items': ['About']},
+        '/',
+        {
+            'name': 'yourcustomtools', 'items': [
+                'Maximize',
+                'ShowBlocks',
+                "RemoveFormat"
+            ]
+        },
+    ]
 }

@@ -1,9 +1,15 @@
 <template>
   <!--Предпросмотр изображения-->
-  <div class="flex align-items-center align-self-center gap-2 h-full">
-    <img v-if="isImage" :src="imageThumbnail" alt="" :style="imageStyles" class="hover:border-600 hover:shadow-2 cursor-pointer"
+  <div class="flex align-items-center align-self-center gap-2 h-full mr-3">
+    <!--Изображение не из файла-->
+    <img v-if="isImage && !isFileObject" :src="imageThumbnail" alt="" :style="imageStyles" class="hover:border-600 hover:shadow-2 cursor-pointer"
          :data-ngsrc="getOriginImageURL(imageSrc)" :data-nanogallery2-lgroup="nggroup" data-nanogallery2-lightbox>
 
+    <!--Изображение из файла-->
+    <img v-else-if="isImage" :src="imageSrc" alt="image" :style="imageStyles" class="hover:border-600 hover:shadow-2 cursor-pointer"
+         :data-ngsrc="imageSrc" :data-nanogallery2-lgroup="nggroup" data-nanogallery2-lightbox>
+
+    <!--Другой файл-->
     <img v-else @click="enterFile" :style="iconStyles" class="mr-2 cursor-pointer" :src="fileIconURL" :alt="file.name">
 
     <div class="flex flex-column">

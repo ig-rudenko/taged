@@ -21,26 +21,21 @@ class NoteFile {
 }
 
 class Note {
-    private _valid: NoteValidator = new NoteValidator()
+    public valid: NoteValidator = new NoteValidator()
     constructor(
         public id: string = "",
         public title: string = "",
         public content: string = "",
         public tags: Array<string> = [],
         public files: Array<NoteFile> = [],
-    ) { }
-
-    public get valid() {
-        return this._valid
-    }
+    ) {}
 
     public isValid() {
-      this._valid.title = this.title.length !== 0
-      this._valid.tags = this.tags.length !== 0
-      this._valid.content = this.content.length !== 0
-      return this._valid.isValid
+      this.valid.title = this.title.length !== 0
+      this.valid.tags = this.tags.length !== 0
+      this.valid.content = this.content.length !== 0
+      return this.valid.isValid
     }
-
 
 }
 

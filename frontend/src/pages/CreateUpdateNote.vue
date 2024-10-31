@@ -56,6 +56,10 @@ export default {
     }
   },
 
+  unmounted() {
+    this.editNoteID = null;
+  },
+
   computed: {
     ...mapState({user: (state: any) => state.auth.user}),
   },

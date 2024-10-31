@@ -57,14 +57,14 @@ class DraftsViewSet(viewsets.ViewSet):
                 new_drafts.append(stored_draft)
 
         # Обновляем список черновиков.
-        cache.set(self.get_cache_key(), new_drafts)
+        cache.set(self.get_cache_key(), new_drafts, timeout=None)
 
     def save_draft(self, data: dict, pk: str) -> None:
         data = data.copy()
         draft = self.get_drafts(pk)
 
         # Сохраняем новое значение в кэш.
-        cache.set(self.get_cache_key(pk), data)
+        cache.set(self.get_cache_key(pk), data, timeout=None)
 
         # Удаляем содержимое черновика, так как в списке черновиков оно не должно быть.
         data.pop("content", None)
@@ -86,7 +86,7 @@ class DraftsViewSet(viewsets.ViewSet):
                     new_drafts.append(stored_draft)
 
             # Обновляем список черновиков.
-            cache.set(self.get_cache_key(), new_drafts)
+            cache.set(self.get_cache_key(), new_drafts, timeout=None)
 
     @staticmethod
     def set_preview(data: dict) -> None:

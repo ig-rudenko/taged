@@ -23,9 +23,3 @@ class Vectorizer:
         embeddings = model_output.last_hidden_state[:, 0, :]
         embeddings = torch.nn.functional.normalize(embeddings)
         return embeddings[0].cpu().numpy()
-
-
-if __name__ == "__main__":
-    vectorizer = Vectorizer("cointegrated/rubert-tiny", "cointegrated/rubert-tiny")
-    v1 = vectorizer.vectorize("привет мир")
-    print(v.shape)

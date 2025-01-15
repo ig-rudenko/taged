@@ -106,7 +106,7 @@ def get_notes(search: str, tags_in: list[str], page: str, user: User) -> Respons
     paginator = get_repository().filter(
         tags_off=get_unavailable_tags(user),
         tags_in=tags_in,
-        string=search_translate(search),
+        string=search,  # search_translate(search),
         sort=sorted_by,
         sort_desc=True,
         values=["title", "tags", "published_at", "preview_image"],

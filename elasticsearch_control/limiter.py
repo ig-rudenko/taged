@@ -56,6 +56,7 @@ class ElasticsearchPaginator:
         self.page = 1
 
         if params.query:
+            print(params.query)
             # Определяем кол-во записей для текущего запроса
             self.count = self._es.count(
                 index=params.index,

@@ -9,7 +9,8 @@ from elasticsearch_control import ElasticsearchPaginator
 from elasticsearch_control.transport import es_connector
 from .exc import NotFoundError, RepositoryException
 from ..es_index import PostFile, PostIndex, T_Values
-from ..filters import create_notes_query_params
+from ..filters import create_notes_query_params, remove_html_tags
+from ..vectorizer import vectorize
 
 
 class NotesRepository:
@@ -73,9 +74,13 @@ class NotesRepository:
         post.content = content
         post.published_at = datetime.now()
         post.preview_image = preview_image
+
+        document = post.json()
+        document["embedding"] = vectorize(remove_html_tags(document["content"]))
+
         try:
             result = self._es.index(
-                index=self.index, id=str(uuid.uuid4()), document=post.json(), request_timeout=self._timeout
+                index=self.index, id=str(uuid.uuid4()), document=document, request_timeout=self._timeout
             )
         except exceptions.ElasticsearchException:
             raise RepositoryException
@@ -101,6 +106,10 @@ class NotesRepository:
             data = instance
         else:
             data = {k: v for k, v in instance.items() if k in values}
+
+        if "content" in data:
+            data["embedding"] = vectorize(remove_html_tags(data["content"]))
+
         try:
             self._es.update(index=self.index, id=id_, body={"doc": data}, request_timeout=self._timeout)
         except exceptions.ElasticsearchException:
@@ -139,6 +148,7 @@ class NotesRepository:
             sort=sort,
             sort_desc=sort_desc,
             timeout=self._timeout,
+            vectorize_query=True,
         )
         return ElasticsearchPaginator(
             es=self._es,

@@ -1,3 +1,4 @@
+import os
 import re
 from datetime import datetime
 from typing import Literal, NamedTuple
@@ -26,7 +27,7 @@ class PostIndex(AbstractIndex):
     preview_image: str
 
     class Meta:
-        index_name = "company"
+        index_name = os.getenv("NOTE_INDEX_NAME", "notes")
         settings = {
             "analysis": {
                 "filter": {
@@ -45,6 +46,9 @@ class PostIndex(AbstractIndex):
                     },
                 },
             }
+        }
+        mappings = {
+            "embedding": {"type": "dense_vector", "dims": 312},
         }
 
     @staticmethod

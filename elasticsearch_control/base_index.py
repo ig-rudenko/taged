@@ -47,7 +47,9 @@ class MetaIndex(type):
             if not attrs.get("Meta"):
                 raise NotImplementedError(f"Необходимо указать класс `Meta` для индекса `{cls_name}`")
 
-            attrs["Meta"].mappings = {}
+            if not attrs["Meta"]:
+                attrs["Meta"].mappings = {}
+
             del attrs["__annotations__"]
 
         # Идентификатор объекта индекса, используется для поиска записи в Elasticsearch

@@ -274,3 +274,6 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
+
+NOTE_INDEX_NAME = os.getenv("NOTE_INDEX_NAME", "notes")
+VECTORIZE_URL = os.getenv("VECTORIZE_URL", "http://127.0.0.1:8090")

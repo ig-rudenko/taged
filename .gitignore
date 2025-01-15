@@ -11,3 +11,4 @@ static/rest_framework
 .obsidian
 .coverage
 htmlcov
+hf_models

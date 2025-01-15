@@ -11,7 +11,8 @@ def api_elasticsearch_check_available(func: Callable):
     def wrapper(request: Request, *args, **kwargs):
         try:
             return func(request, *args, **kwargs)
-        except TransportError:
+        except TransportError as exc:
+            print(exc)
             return JsonResponse({"detail": "Elasticsearch недоступен"}, status=500)
 
     return wrapper

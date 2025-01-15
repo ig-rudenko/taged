@@ -8,7 +8,13 @@
       <div class="flex flex-wrap justify-content-end">
         <div class="flex">
           <div v-show="filter.use_vectorizer" >
-            <label for="filter.vectorizer_only" class="flex align-items-center p-2 cursor-pointer">
+            <label for="filter.vectorizer_only" class="flex align-items-center p-2 cursor-pointer"
+              v-tooltip.top="{
+                      value: 'Если включено, то будет использовать только векторный поиск текста',
+                      pt: {
+                          text: 'w-12rem text-sm'
+                      },
+                  }">
               <span class="px-2">Только вектор</span>
               <InputSwitch v-model="filter.vectorizer_only" @change="performNewSearch"
                            input-id="filter.vectorizer_only" input-class="text-purple-500" />
@@ -16,6 +22,12 @@
           </div>
 
           <Button label="Векторный поиск" icon="pi pi-sparkles" severity="help" size="small"
+                  v-tooltip.top="{
+                      value: 'Векторный поиск — это метод, который использует технологии машинного обучения для поиска и извлечения информации, наиболее похожей или релевантной данному запросу.',
+                      pt: {
+                          text: 'w-14rem text-sm'
+                      },
+                  }"
                   :outlined="!filter.use_vectorizer"
                   @click="() => {filter.toggleVectorSearch(); performNewSearch()}"/>
         </div>

@@ -17,7 +17,8 @@ def create_notes_query_params(
     sort: T_Values | None = None,
     sort_desc: bool = False,
     timeout: int = 5,
-    vectorize_query: bool = False,
+    use_vectorize_search: bool = False,
+    vectorizer_only: bool = False
 ) -> QueryLimitParams:
     """
     Возвращает запрос для поиска заметок.
@@ -30,6 +31,8 @@ def create_notes_query_params(
     :param sort: Поле, по которому необходимо отсортировать, по умолчанию нет сортировки.
     :param sort_desc: Изменить порядок сортировки на обратный порядок?
     :param timeout: Время ожидания в секундах.
+    :param use_vectorize_search: Использовать векторный поиск?
+    :param vectorizer_only: Использовать только векторный поиск?
     :return: :class:`QueryLimitParams`.
     """
 
@@ -76,7 +79,7 @@ def create_notes_query_params(
         ]
 
     # Поиск по строке в title и content с возможностью допущения ошибок в словах.
-    if string:
+    if string and not vectorizer_only:
         query_params.query["bool"]["should"] = [
             {
                 "match": {
@@ -91,7 +94,7 @@ def create_notes_query_params(
         ]
         query_params.query["bool"]["minimum_should_match"] = 1
 
-    if vectorize_query and string:
+    if use_vectorize_search and string:
         query = {
             "function_score": {
                 "query": query_params.query,

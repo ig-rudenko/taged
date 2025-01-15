@@ -4,7 +4,7 @@ services:
     build: .
     image: knowledge_base:1.2
     restart: always
-    command: python manage.py runserver 0.0.0.0:8000
+    command: python manage.py runserver 0.0.0.0:8000  # TODO: убрать
     environment:
       VECTORIZE_URL: http://vect:8000
       REDIS_CACHE_URL: redis://redis:6379/0  # TODO: убрать

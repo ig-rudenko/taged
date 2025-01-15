@@ -76,7 +76,7 @@ class NotesRepository:
         post.preview_image = preview_image
 
         document = post.json()
-        document["embedding"] = vectorize(remove_html_tags(document["content"]))
+        document["embedding"] = vectorize(f'Заголовок: "{post.title}"!' + remove_html_tags(post.content))
 
         try:
             result = self._es.index(
@@ -108,7 +108,9 @@ class NotesRepository:
             data = {k: v for k, v in instance.items() if k in values}
 
         if "content" in data:
-            data["embedding"] = vectorize(remove_html_tags(data["content"]))
+            data["embedding"] = vectorize(
+                f"Заголовок: \"{data['title']}\"!" + remove_html_tags(data["content"])
+            )
 
         try:
             self._es.update(index=self.index, id=id_, body={"doc": data}, request_timeout=self._timeout)
@@ -126,6 +128,8 @@ class NotesRepository:
         sort: T_Values | None = None,
         sort_desc: bool = False,
         convert_result=None,
+        use_vectorize_search: bool = False,
+        vectorizer_only: bool = False,
     ):
         """
         Возвращает список записей, которые были отфильтрованы.
@@ -137,6 +141,8 @@ class NotesRepository:
         :param sort: Поле, по которому необходимо отсортировать, по умолчанию нет сортировки.
         :param sort_desc: Изменить порядок сортировки на обратный порядок?
         :param convert_result: Функция, которая будет преобразовывать результат запроса в объект.
+        :param use_vectorize_search: Использовать векторную модель для поиска?
+        :param vectorizer_only: Использовать только векторную модель для поиска?
         :return: `ElasticsearchPaginator`.
         """
         query_params = create_notes_query_params(
@@ -148,7 +154,8 @@ class NotesRepository:
             sort=sort,
             sort_desc=sort_desc,
             timeout=self._timeout,
-            vectorize_query=True,
+            use_vectorize_search=use_vectorize_search,
+            vectorizer_only=vectorizer_only,
         )
         return ElasticsearchPaginator(
             es=self._es,

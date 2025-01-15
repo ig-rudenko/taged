@@ -5,8 +5,24 @@
 
     <div class="flex-column p-fluid md:px-6 lg:px-8">
 
-      <div class="p-inputgroup flex-1">
+      <div class="flex flex-wrap justify-content-end">
+        <div class="flex">
+          <div v-show="filter.use_vectorizer" >
+            <label for="filter.vectorizer_only" class="flex align-items-center p-2 cursor-pointer">
+              <span class="px-2">Только вектор</span>
+              <InputSwitch v-model="filter.vectorizer_only" @change="performNewSearch"
+                           input-id="filter.vectorizer_only" input-class="text-purple-500" />
+            </label>
+          </div>
+
+          <Button label="Векторный поиск" icon="pi pi-sparkles" severity="help" size="small"
+                  :outlined="!filter.use_vectorizer"
+                  @click="() => {filter.toggleVectorSearch(); performNewSearch()}"/>
+        </div>
+      </div>
+      <div class="py-2">
         <AutoComplete class="h-4rem text-900" v-model="filter.search"
+                      :input-class="filter.use_vectorizer ? 'border-purple-500 text-purple-500': ''"
                       :input-style="{'text-align': 'center', 'font-size': '1.5rem'}"
                       @keydown.enter="performNewSearch"
                       :suggestions="titles"

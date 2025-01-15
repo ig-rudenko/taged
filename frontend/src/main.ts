@@ -10,6 +10,7 @@ import ContextMenu from "primevue/contextmenu";
 import Dialog from "primevue/dialog";
 import Image from "primevue/image";
 import InputNumber from "primevue/inputnumber";
+import InputSwitch from "primevue/inputswitch";
 import InputText from "primevue/inputtext";
 import InlineMessage from "primevue/inlinemessage";
 import MultiSelect from "primevue/multiselect";
@@ -21,7 +22,6 @@ import ToastService from 'primevue/toastservice';
 import Tooltip from "primevue/tooltip";
 
 // import "primevue/resources/themes/viva-light/theme.css";
-
 import App from './App.vue';
 import store from "@/store";
 import setupInterceptors from '@/services/setupInterceptors';
@@ -46,6 +46,7 @@ app.component('Dialog', Dialog);
 app.component('Image', Image);
 app.component('InlineMessage', InlineMessage);
 app.component('InputNumber', InputNumber);
+app.component('InputSwitch', InputSwitch);
 app.component('InputText', InputText);
 app.component('MultiSelect', MultiSelect);
 app.component('OverlayPanel', OverlayPanel);

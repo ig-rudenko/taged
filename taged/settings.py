@@ -213,6 +213,7 @@ logging.basicConfig(filename="logs", level=logging.INFO)
 
 # В формате `es01:9200,es02:9201,es03:9202`
 ELASTICSEARCH_HOSTS_raw_str = os.getenv("ELASTICSEARCH_HOSTS")
+print(PostIndex.get_index_settings())
 
 if ELASTICSEARCH_HOSTS_raw_str:
     ELASTICSEARCH_HOSTS = [

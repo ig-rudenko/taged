@@ -109,7 +109,7 @@ class NotesRepository:
 
         if "content" in data:
             data["embedding"] = vectorize(
-                f"Заголовок: \"{data['title']}\"!" + remove_html_tags(data["content"])
+                f"Заголовок: \"{instance['title']}\"!" + remove_html_tags(data["content"])
             )
 
         try:

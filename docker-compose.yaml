@@ -2,17 +2,13 @@ services:
 
   knowledge_base:
     build: .
-    image: knowledge_base:1.2
+    image: knowledge_base:1.7
     restart: always
-    command: python manage.py runserver 0.0.0.0:8000  # TODO: убрать
     environment:
-      VECTORIZE_URL: http://vect:8000
-      REDIS_CACHE_URL: redis://redis:6379/0  # TODO: убрать
-      ELASTICSEARCH_HOSTS: elasticsearch:9200  # TODO: убрать
-      DJANGO_DEBUG: 1  # TODO: убрать
-      NOTE_INDEX_NAME: notes  # TODO: заменить на notes
-#    env_file:  # TODO: вернуть
-#      - /etc/sysconfig/taged  # TODO: вернуть
+      REDIS_CACHE_URL: redis://redis:6379/0
+      NOTE_INDEX_NAME: notes
+    env_file:
+      - /etc/sysconfig/taged
     mem_limit: 300m
     volumes:
       # Чтобы добавлять новые изображения и книги
@@ -31,7 +27,7 @@ services:
       - knowledge-base-backend-network
 
   web:
-    image: knowledge_base-nginx:1.2
+    image: knowledge_base-nginx:1.7
     build: frontend
     ports:
       - "${BIND_HTTPS:-8443}:443"
@@ -58,10 +54,12 @@ services:
       - knowledge-base-backend-network
 
   vect:
-    image: knowledge_base-vect:1.2
+    image: knowledge_base-vect:1.7
     build: vectorizer
+    env_file:
+      - .env-vectorizer
     ports:
-      - "127.0.0.1:8080:8000"
+      - "{VECTOR_BIND:-127.0.0.1}:{VECTOR_PORT:-9999}:8000"
     volumes:
       - "./hf_models/:/app/.cache"
     networks:
@@ -71,7 +69,7 @@ services:
     image: elasticsearch:7.14.1
     restart: always
     ports:
-      - "127.0.0.1:9200:9200"
+      - "{ELASTICSEARCH_BIND:-127.0.0.1}:{ELASTICSEARCH_PORT:-9201}:9200"
     volumes:
       - ./esdata:/usr/share/elasticsearch/data
       - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
@@ -99,9 +97,9 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: "${SUBNET_WEB:-10.198.198.0/29}"
+        - subnet: "${SUBNET_WEB:-10.254.253.0/29}"
   knowledge-base-backend-network:
     ipam:
       driver: default
       config:
-        - subnet: "${SUBNET_WEB:-10.199.198.0/29}"
+        - subnet: "${SUBNET_BACK:-10.254.254.0/29}"

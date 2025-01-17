@@ -12,3 +12,6 @@ static/rest_framework
 .coverage
 htmlcov
 hf_models
+
+.env*
+*.tar.gz

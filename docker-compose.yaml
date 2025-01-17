@@ -59,7 +59,7 @@ services:
     env_file:
       - .env-vectorizer
     ports:
-      - "{VECTOR_BIND:-127.0.0.1}:{VECTOR_PORT:-9999}:8000"
+      - "${VECTOR_BIND:-127.0.0.1}:${VECTOR_PORT:-9999}:8000"
     volumes:
       - "./hf_models/:/app/.cache"
     networks:
@@ -69,7 +69,7 @@ services:
     image: elasticsearch:7.14.1
     restart: always
     ports:
-      - "{ELASTICSEARCH_BIND:-127.0.0.1}:{ELASTICSEARCH_PORT:-9201}:9200"
+      - "${ELASTICSEARCH_BIND:-127.0.0.1}:${ELASTICSEARCH_PORT:-9201}:9200"
     volumes:
       - ./esdata:/usr/share/elasticsearch/data
       - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml

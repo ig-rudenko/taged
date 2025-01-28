@@ -9,7 +9,8 @@ from elasticsearch_control import ElasticsearchPaginator
 from elasticsearch_control.transport import es_connector
 from .exc import NotFoundError, RepositoryException
 from ..es_index import PostFile, PostIndex, T_Values
-from ..filters import create_notes_query_params
+from ..filters import create_notes_query_params, remove_html_tags
+from ..vectorizer import vectorize
 
 
 class NotesRepository:
@@ -73,9 +74,13 @@ class NotesRepository:
         post.content = content
         post.published_at = datetime.now()
         post.preview_image = preview_image
+
+        document = post.json()
+        document["embedding"] = vectorize(f'Заголовок: "{post.title}"!' + remove_html_tags(post.content))
+
         try:
             result = self._es.index(
-                index=self.index, id=str(uuid.uuid4()), document=post.json(), request_timeout=self._timeout
+                index=self.index, id=str(uuid.uuid4()), document=document, request_timeout=self._timeout
             )
         except exceptions.ElasticsearchException:
             raise RepositoryException
@@ -101,6 +106,12 @@ class NotesRepository:
             data = instance
         else:
             data = {k: v for k, v in instance.items() if k in values}
+
+        if "content" in data:
+            data["embedding"] = vectorize(
+                f"Заголовок: \"{instance['title']}\"!" + remove_html_tags(data["content"])
+            )
+
         try:
             self._es.update(index=self.index, id=id_, body={"doc": data}, request_timeout=self._timeout)
         except exceptions.ElasticsearchException:
@@ -117,6 +128,8 @@ class NotesRepository:
         sort: T_Values | None = None,
         sort_desc: bool = False,
         convert_result=None,
+        use_vectorize_search: bool = False,
+        vectorizer_only: bool = False,
     ):
         """
         Возвращает список записей, которые были отфильтрованы.
@@ -128,6 +141,8 @@ class NotesRepository:
         :param sort: Поле, по которому необходимо отсортировать, по умолчанию нет сортировки.
         :param sort_desc: Изменить порядок сортировки на обратный порядок?
         :param convert_result: Функция, которая будет преобразовывать результат запроса в объект.
+        :param use_vectorize_search: Использовать векторную модель для поиска?
+        :param vectorizer_only: Использовать только векторную модель для поиска?
         :return: `ElasticsearchPaginator`.
         """
         query_params = create_notes_query_params(
@@ -139,6 +154,8 @@ class NotesRepository:
             sort=sort,
             sort_desc=sort_desc,
             timeout=self._timeout,
+            use_vectorize_search=use_vectorize_search,
+            vectorizer_only=vectorizer_only,
         )
         return ElasticsearchPaginator(
             es=self._es,

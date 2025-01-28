@@ -93,8 +93,10 @@ class NotesListCreateAPIView(UserGenericAPIView):
         search: str = request.GET.get("search", "")
         tags_in: list[str] = request.GET.getlist("tags-in", [])
         page: str = request.GET.get("page", "1")
+        use_vectorize_search: bool = request.GET.get("use-vectorizer", "false") == "true"
+        vectorizer_only: bool = request.GET.get("vectorizer-only", "false") == "true"
 
-        return get_notes(search, tags_in, page, self.current_user())
+        return get_notes(search, tags_in, page, self.current_user(), use_vectorize_search, vectorizer_only)
 
     def post(self, request: Request):
         serializer = self.get_serializer_class()(data=self.request.data)

@@ -213,6 +213,7 @@ logging.basicConfig(filename="logs", level=logging.INFO)
 
 # В формате `es01:9200,es02:9201,es03:9202`
 ELASTICSEARCH_HOSTS_raw_str = os.getenv("ELASTICSEARCH_HOSTS")
+print(PostIndex.get_index_settings())
 
 if ELASTICSEARCH_HOSTS_raw_str:
     ELASTICSEARCH_HOSTS = [
@@ -274,3 +275,6 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
+
+NOTE_INDEX_NAME = os.getenv("NOTE_INDEX_NAME", "notes")
+VECTORIZE_URL = os.getenv("VECTORIZE_URL", "http://127.0.0.1:8090")

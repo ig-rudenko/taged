@@ -2,10 +2,11 @@ services:
 
   knowledge_base:
     build: .
-    image: knowledge_base:1.2
+    image: knowledge_base:1.7
     restart: always
     environment:
       REDIS_CACHE_URL: redis://redis:6379/0
+      NOTE_INDEX_NAME: notes
     env_file:
       - /etc/sysconfig/taged
     mem_limit: 300m
@@ -22,15 +23,15 @@ services:
         condition: service_healthy
 
     networks:
-      - knowledge-base-web-network
-      - knowledge-base-elasticsearch-network
+      - knowledge-base-frontend-network
+      - knowledge-base-backend-network
 
   web:
-    image: knowledge_base-nginx:1.2
+    image: knowledge_base-nginx:1.7
     build: frontend
     ports:
-      - "${BIND_HTTPS:-443}:443"
-      - "${BIND_HTTP:-80}:80"
+      - "${BIND_HTTPS:-8443}:443"
+      - "${BIND_HTTP:-8000}:80"
     restart: always
     mem_limit: 200m
     volumes:
@@ -50,13 +51,26 @@ services:
         condition: service_started
 
     networks:
-      - knowledge-base-web-network
+      - knowledge-base-backend-network
+
+  vect:
+    image: knowledge_base-vect:1.7
+    build: vectorizer
+    restart: always
+    env_file:
+      - .env-vectorizer
+    ports:
+      - "${VECTOR_BIND:-127.0.0.1}:${VECTOR_PORT:-9999}:8000"
+    volumes:
+      - "./hf_models/:/app/.cache"
+    networks:
+      - knowledge-base-backend-network
 
   elasticsearch:
     image: elasticsearch:7.14.1
     restart: always
     ports:
-      - "127.0.0.1:9200:9200"
+      - "${ELASTICSEARCH_BIND:-127.0.0.1}:${ELASTICSEARCH_PORT:-9201}:9200"
     volumes:
       - ./esdata:/usr/share/elasticsearch/data
       - ./elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
@@ -64,13 +78,13 @@ services:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms${ES_JAVA_XMS:-1200m} -Xmx${ES_JAVA_XMX:-1200m}
     networks:
-      - knowledge-base-elasticsearch-network
+      - knowledge-base-backend-network
 
   redis:
     image: redis
     restart: always
     networks:
-      - knowledge-base-elasticsearch-network
+      - knowledge-base-backend-network
     mem_limit: 100m
     healthcheck:
       test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
@@ -80,13 +94,13 @@ services:
 
 networks:
   # Создаем свою сеть, чтобы не было конфликтов с уже существующей
-  knowledge-base-web-network:
+  knowledge-base-frontend-network:
     ipam:
       driver: default
       config:
-        - subnet: "${SUBNET_WEB:-10.198.198.0/29}"
-  knowledge-base-elasticsearch-network:
+        - subnet: "${SUBNET_WEB:-10.254.253.0/29}"
+  knowledge-base-backend-network:
     ipam:
       driver: default
       config:
-        - subnet: "${SUBNET_WEB:-10.199.198.0/29}"
+        - subnet: "${SUBNET_BACK:-10.254.254.0/29}"

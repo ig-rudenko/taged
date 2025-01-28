@@ -1,7 +1,10 @@
 from typing import Literal
 
+from bs4 import BeautifulSoup
+
 from elasticsearch_control import QueryLimitParams
 from .es_index import T_Values
+from .vectorizer import vectorize
 
 
 def create_notes_query_params(
@@ -14,6 +17,8 @@ def create_notes_query_params(
     sort: T_Values | None = None,
     sort_desc: bool = False,
     timeout: int = 5,
+    use_vectorize_search: bool = False,
+    vectorizer_only: bool = False
 ) -> QueryLimitParams:
     """
     Возвращает запрос для поиска заметок.
@@ -26,6 +31,8 @@ def create_notes_query_params(
     :param sort: Поле, по которому необходимо отсортировать, по умолчанию нет сортировки.
     :param sort_desc: Изменить порядок сортировки на обратный порядок?
     :param timeout: Время ожидания в секундах.
+    :param use_vectorize_search: Использовать векторный поиск?
+    :param vectorizer_only: Использовать только векторный поиск?
     :return: :class:`QueryLimitParams`.
     """
 
@@ -64,8 +71,15 @@ def create_notes_query_params(
             }
         )
 
+    if tags_off:
+        query_params.query["bool"]["must_not"] = [
+            {
+                "match": {"tags": " ".join(tags_off)},
+            }
+        ]
+
     # Поиск по строке в title и content с возможностью допущения ошибок в словах.
-    if string:
+    if string and not vectorizer_only:
         query_params.query["bool"]["should"] = [
             {
                 "match": {
@@ -80,12 +94,19 @@ def create_notes_query_params(
         ]
         query_params.query["bool"]["minimum_should_match"] = 1
 
-    if tags_off:
-        query_params.query["bool"]["must_not"] = [
-            {
-                "match": {"tags": " ".join(tags_off)},
+    if use_vectorize_search and string:
+        query = {
+            "function_score": {
+                "query": query_params.query,
+                "script_score": {
+                    "script": {
+                        "source": "cosineSimilarity(params.query_vector, 'embedding') + 1.0",
+                        "params": {"query_vector": vectorize(string)},
+                    },
+                },
             }
-        ]
+        }
+        query_params.query = query
 
     return query_params
 
@@ -126,3 +147,11 @@ def notes_records_filter(res, tags_in: list[str], tags_off: list[str]) -> list[d
                     }
                 )
     return result
+
+
+def remove_html_tags(string: str) -> str:
+    """
+    Удаляет html теги из строки.
+    """
+
+    return BeautifulSoup(string, "html.parser").get_text()

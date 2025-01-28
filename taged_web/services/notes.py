@@ -96,7 +96,9 @@ def update_note(note: PostIndex, title: str, content: str, tags: list[str], user
     return note
 
 
-def get_notes(search: str, tags_in: list[str], page: str, user: User) -> Response:
+def get_notes(
+    search: str, tags_in: list[str], page: str, user: User, use_vectorize_search: bool, vectorizer_only: bool
+) -> Response:
     cache_timeout = 60 * 5
 
     # Если не указана строка поиска, то сортируем по времени создания
@@ -106,11 +108,13 @@ def get_notes(search: str, tags_in: list[str], page: str, user: User) -> Respons
     paginator = get_repository().filter(
         tags_off=get_unavailable_tags(user),
         tags_in=tags_in,
-        string=search_translate(search),
+        string=search,  # search_translate(search),
         sort=sorted_by,
         sort_desc=True,
         values=["title", "tags", "published_at", "preview_image"],
         convert_result=notes_records_filter,
+        use_vectorize_search=use_vectorize_search,
+        vectorizer_only=vectorizer_only,
     )
 
     if not search and not tags_in and page == "1":

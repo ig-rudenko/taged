@@ -6,27 +6,28 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from elasticsearch_control.decorators import api_elasticsearch_check_available
-from taged_web.api.permissions import NotePermission, NoteCreateLinkPermission
+from taged_web.api.permissions import NoteCreateLinkPermission, NotePermission
 from taged_web.api.serializers import (
+    CreateTempLinkSerializer,
     NoteSerializerNoTagsValidation,
     NoteSerializerTagsValidation,
-    CreateTempLinkSerializer,
 )
 from taged_web.es_index import PostIndex
 from taged_web.repo.notes import get_repository
 from taged_web.services.notes import (
+    create_temp_link,
+    get_note_detail,
+    get_note_from_temp_link,
     get_note_or_404,
     get_notes,
-    update_note,
-    get_note_detail,
-    create_temp_link,
-    get_note_from_temp_link,
     get_notes_count,
+    update_note,
 )
-from taged_web.services.storage import add_files, get_file, delete_file
-from taged_web.services.tags import get_unavailable_tags, add_tags_to_user_if_not_exist, get_available_tags
-from .types import UserGenericAPIView
+from taged_web.services.storage import add_files, delete_file, get_file
+from taged_web.services.tags import add_tags_to_user_if_not_exist, get_available_tags, get_unavailable_tags
+
 from ..services.signals import signals
+from .types import UserGenericAPIView
 
 
 class ListUserPermissions(UserGenericAPIView):

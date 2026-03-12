@@ -3,6 +3,7 @@ from typing import Literal
 from bs4 import BeautifulSoup
 
 from elasticsearch_control import QueryLimitParams
+
 from .es_index import T_Values
 from .vectorizer import vectorize
 

@@ -4,9 +4,10 @@ from django.http import Http404
 from django.test import TestCase
 
 from elasticsearch_control.transport import es_connector
-from .fake import FakeElasticsearch
-from ..models import User, Tags
+
+from ..models import Tags, User
 from ..services.notes import get_note_or_404
+from .fake import FakeElasticsearch
 
 
 class TestNotesServices(TestCase):

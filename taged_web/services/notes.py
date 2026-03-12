@@ -6,19 +6,22 @@ from django.conf import settings
 from django.contrib.humanize.templatetags import humanize
 from django.core.cache import cache
 from django.http import Http404
-from jwt import encode as jwt_encode, decode as jwt_decode, PyJWTError
+from jwt import PyJWTError
+from jwt import decode as jwt_decode
+from jwt import encode as jwt_encode
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from elasticsearch_control.cache import get_or_cache
-from taged_web.es_index import T_Values, PostIndex
+from taged_web.es_index import PostIndex, T_Values
 from taged_web.filters import notes_records_filter
 from taged_web.models import User
 from taged_web.repo.exc import NotFoundError
 from taged_web.repo.notes import get_repository
+
 from .cache_version import CacheVersion
 from .signals import register
-from .tags import get_unavailable_tags, add_tags_to_user_if_not_exist
+from .tags import add_tags_to_user_if_not_exist, get_unavailable_tags
 
 _notes_base_cache_key = "notes"
 _notes_count_cache_key = "notesCount"

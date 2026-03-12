@@ -7,10 +7,11 @@ from elasticsearch import Elasticsearch, exceptions
 
 from elasticsearch_control import ElasticsearchPaginator
 from elasticsearch_control.transport import es_connector
-from .exc import NotFoundError, RepositoryException
+
 from ..es_index import PostFile, PostIndex, T_Values
 from ..filters import create_notes_query_params, remove_html_tags
 from ..vectorizer import vectorize
+from .exc import NotFoundError, RepositoryException
 
 
 class NotesRepository:
@@ -195,8 +196,7 @@ class NotesRepository:
         # Проверяет, есть ли хоть одна запись в ответе.
         if res["hits"]["total"]["value"]:
             return [line["_source"]["title"] for line in res["hits"]["hits"]]
-        else:
-            return []
+        return []
 
     @staticmethod
     def get_files(id_: str) -> list[PostFile]:

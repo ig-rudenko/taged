@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from taged_web.api.serializers import NoteEditorSerializer
-from taged_web.services.editor import NoteEditors, Editor
+from taged_web.services.editor import Editor, NoteEditors
 
 
 class RegisterNoteEditorAPIView(APIView):

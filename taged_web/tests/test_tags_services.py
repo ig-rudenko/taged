@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from taged_web.models import User, Tags
+from taged_web.models import Tags, User
 from taged_web.services.tags import add_tags_to_user_if_not_exist, get_available_tags, get_unavailable_tags
 
 

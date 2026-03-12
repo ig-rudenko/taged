@@ -7,5 +7,4 @@ def vectorize(text: str) -> list[float]:
     if resp.status_code == 200:
         data = resp.json()
         return data["vector"]
-    else:
-        return []
+    return []

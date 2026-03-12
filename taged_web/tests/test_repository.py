@@ -4,6 +4,7 @@ from django.test import SimpleTestCase
 
 from elasticsearch_control.transport import es_connector
 from taged_web.repo.notes import NotesRepository, get_repository
+
 from .fake import FakeElasticsearch
 
 

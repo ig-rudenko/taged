@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 from . import views
 from .drafts_view import DraftsViewSet
-from .editor_views import RegisterNoteEditorAPIView, NoteEditorsListAPIView
+from .editor_views import NoteEditorsListAPIView, RegisterNoteEditorAPIView
 
 router = DefaultRouter()
 router.register("", DraftsViewSet, basename="drafts")

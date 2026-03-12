@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
-from django.http import HttpResponse, Http404
+from django.http import Http404, HttpResponse
 
 from .thumbnails import create_thumbnails
 
@@ -26,8 +26,7 @@ def get_file(note_id: str, file_name: str) -> HttpResponse:
             response = HttpResponse(file.read(), content_type="application/vnd.ms-excel")
         response["Content-Disposition"] = f"inline; filename={file_name}"
         return response
-    else:
-        raise Http404()
+    raise Http404()
 
 
 def delete_file(note_id: str, file_name: str):

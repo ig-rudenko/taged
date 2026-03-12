@@ -1,5 +1,5 @@
 from rest_framework.exceptions import ValidationError
-from rest_framework.serializers import ListSerializer, CharField, Serializer, ModelSerializer, IntegerField
+from rest_framework.serializers import CharField, IntegerField, ListSerializer, ModelSerializer, Serializer
 
 from taged_web.models import Tags, User
 

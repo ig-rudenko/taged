@@ -2,7 +2,7 @@ services:
 
   knowledge_base:
     build: .
-    image: knowledge_base:1.7
+    image: knowledge_base:1.7.1
     restart: always
     environment:
       REDIS_CACHE_URL: redis://redis:6379/0
@@ -27,7 +27,7 @@ services:
       - knowledge-base-backend-network
 
   web:
-    image: knowledge_base-nginx:1.7
+    image: knowledge_base-nginx:1.7.1
     build: frontend
     ports:
       - "${BIND_HTTPS:-8443}:443"
@@ -54,7 +54,7 @@ services:
       - knowledge-base-backend-network
 
   vect:
-    image: knowledge_base-vect:1.7
+    image: knowledge_base-vect:1.7.1
     build: vectorizer
     restart: always
     env_file:

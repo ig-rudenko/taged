@@ -5,8 +5,8 @@ ARG python_version=3.13
 
 WORKDIR /app
 
-ADD https://astral.sh/uv/install.sh /uv-installer.sh
-RUN sh /uv-installer.sh
+RUN apk add --no-cache curl \
+ && curl -L https://astral.sh/uv/install.sh | sh
 
 ENV PATH="/root/.local/bin/:$PATH" \
     UV_PYTHON="python$python_version" \

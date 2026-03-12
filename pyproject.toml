@@ -1,0 +1,73 @@
+[project]
+name = "taged"
+version = "1.7.1"
+description = "База знаний"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "beautifulsoup4>=4.14.3",
+    "django==5.2.12",
+    "django-ckeditor>=6.7.3",
+    "djangorestframework>=3.16.1",
+    "djangorestframework-simplejwt>=5.5.1",
+    "elasticsearch>=9.3.0",
+    "gunicorn>=25.1.0",
+    "pillow>=12.1.1",
+    "redis>=7.3.0",
+    "requests>=2.32.5",
+]
+
+[dependency-groups]
+dev = [
+    "django-stubs>=5.2.9",
+    "djangorestframework-stubs>=3.16.8",
+    "mypy>=1.19.1",
+    "types-requests>=2.32.4.20260107",
+]
+
+[tool.ruff]
+line-length = 120
+lint.extend-select = [
+    # pycodestyle
+    "E",
+    "W",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # flake8-return
+    "RET",
+    # flake8-raise
+    "RSE",
+    # isort
+    "I",
+    # flake8-bugbear
+    "B",
+    # flake8-builtins
+    "A",
+]
+lint.ignore = [
+    # Line too long
+    "E501",
+    # Functions with a high complexity
+    "C901",
+    # Use ternary operator instead of `if`-`else`-block
+    "SIM108",
+    # Module level import not at top of file
+    "E402",
+    # Trailing whitespace
+    "W291",
+    # Blank line contains whitespace
+    "W293",
+]
+
+[tool.mypy]
+ignore_missing_imports = true
+plugins = ["mypy_django_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "taged.settings"

@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
+from elastic_transport import TransportError
 
 from .models import Tags
 from .repo.notes import get_repository
@@ -23,7 +24,10 @@ class TagsAdmin(admin.ModelAdmin):
 
     @admin.display(description="Кол-во записей")
     def notes_count(self, tag: Tags):
-        return get_repository().tags_count(tag_name=tag.tag_name)
+        try:
+            return get_repository().tags_count(tag_name=tag.tag_name)
+        except TransportError:
+            return "?"
 
 
 class TagsInline(admin.TabularInline):

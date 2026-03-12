@@ -5,16 +5,6 @@ ARG python_version=3.13
 
 WORKDIR /app
 
-RUN apk add --update --no-cache  \
-    mariadb-connector-c-dev \
-    mariadb-dev \
-    python3-dev \
-    gcc \
-    musl-dev \
-    curl \
-    ca-certificates
-
-
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
 RUN sh /uv-installer.sh
 

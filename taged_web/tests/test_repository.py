@@ -36,9 +36,11 @@ class TestRepository(SimpleTestCase):
 
     def test_add_note(self):
         note = self.repo.create("title", ["tag1", "tag2"], "content", "image")
+        note_data = note.json()
+        note_data["embedding"] = []
 
         self.assertEqual(
-            note.json(),
+            note_data,
             self.fake_es.index_docs[0],
         )
         self.assertEqual(note.title, "title")

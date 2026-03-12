@@ -30,11 +30,11 @@ _notes_count_cache_key = "notesCount"
 def get_note_or_404(note_id: str, user: User, values: list[T_Values] | None = None) -> PostIndex:
     try:
         note = get_repository().get(id_=note_id, values=values)
-    except NotFoundError:
-        raise Http404()
+    except NotFoundError as exc:
+        raise Http404 from exc
     if set(get_unavailable_tags(user)) & set(note.tags_list):
         # Если нет такой записи, либо пользователь не имеет к ней доступа
-        raise Http404()
+        raise Http404
     return note
 
 
@@ -151,15 +151,15 @@ def get_notes(
 def search_translate(search: str) -> str:
     ru = "йцукенгшщзхъфывапролджэячсмитьбю.ёЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ,Ё"
     eng = "qwertyuiop[]asdfghjkl;'zxcvbnm,./`WERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?~"
-    eng_ru_layout = dict(zip(map(ord, eng), ru))
-    ru_eng_layout = dict(zip(map(ord, ru), eng))
+    eng_ru_layout = dict(zip(map(ord, eng), ru, strict=False))
+    ru_eng_layout = dict(zip(map(ord, ru), eng, strict=False))
     return (search + " " + search.translate(eng_ru_layout) + " " + search.translate(ru_eng_layout)).strip()
 
 
 _N = TypeVar("_N", bound=dict)
 
 
-def add_file_mark(objects: list[_N]) -> list[_N]:
+def add_file_mark[N: dict](objects: list[N]) -> list[N]:
     for post in objects:
         post["filesCount"] = 0
         # Проверяем, существуют ли у записей прикрепленные файлы.
@@ -170,7 +170,7 @@ def add_file_mark(objects: list[_N]) -> list[_N]:
     return objects
 
 
-def humanize_datetime(objects: list[_N]) -> list[_N]:
+def humanize_datetime[N: dict](objects: list[N]) -> list[N]:
     for post in objects:
         post["published_at"] = humanize.naturaltime(datetime.strptime(post["published_at"], "%Y-%m-%dT%X.%f"))
     return objects
@@ -201,8 +201,8 @@ def get_note_from_temp_link(token: str) -> PostIndex:
             key=settings.SIMPLE_JWT["SIGNING_KEY"],
             algorithms=[settings.SIMPLE_JWT["ALGORITHM"]],
         )
-    except PyJWTError:
-        raise ValidationError("Invalid token")
+    except PyJWTError as exc:
+        raise ValidationError("Invalid token") from exc
 
     exp: int | None = payload.get("exp", None)
     note_id: str | None = payload.get("id", None)
@@ -214,6 +214,6 @@ def get_note_from_temp_link(token: str) -> PostIndex:
 
     try:
         note = get_repository().get(note_id)
-    except NotFoundError:
-        raise ValidationError("Запись не найдена")
+    except NotFoundError as exc:
+        raise ValidationError("Запись не найдена") from exc
     return note

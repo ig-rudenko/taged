@@ -4,19 +4,19 @@ from typing import Any
 
 
 def _map_type(annotation: Any) -> str | None:
-    if annotation == str:
+    if annotation is str:
         mtype = "text"
-    elif annotation == int:
+    elif annotation is int:
         mtype = "integer"
-    elif annotation == float:
+    elif annotation is float:
         mtype = "float"
-    elif annotation == bool:
+    elif annotation is bool:
         mtype = "boolean"
-    elif annotation == datetime:
+    elif annotation is datetime:
         mtype = "date"
-    elif annotation == bytes:
+    elif annotation is bytes:
         mtype = "binary"
-    elif annotation == dict:
+    elif annotation is dict:
         mtype = "object"
     else:
         return None

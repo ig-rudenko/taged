@@ -1,7 +1,5 @@
-from typing import Type
-
 from elasticsearch import Elasticsearch
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError  # noqa
 
 from .base_index import AbstractIndex
 from .transport import ElasticsearchConnection, es_connector
@@ -15,7 +13,7 @@ class IndexRegister:
     def __init__(self, es_connector: ElasticsearchConnection = es_connector):
         self._es: Elasticsearch = es_connector.es
 
-    def register_index(self, index: Type[AbstractIndex]) -> None:
+    def register_index(self, index: type[AbstractIndex]) -> None:
         """
         Регистрирует индекс в Elasticsearch.
         :param index: Класс индекса.

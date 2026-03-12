@@ -64,6 +64,7 @@ class PostIndex(AbstractIndex):
             return self.tags.split(", ")
         if isinstance(self.tags, list):
             return self.tags
+        return []
 
     def json(self) -> dict:
         return {

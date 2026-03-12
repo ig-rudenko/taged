@@ -35,8 +35,8 @@ class NotesRepository:
                 request_timeout=self._timeout,
                 _source=list(values) if values else None,
             )
-        except exceptions.ElasticsearchException:
-            raise NotFoundError
+        except exceptions.ApiError as exc:
+            raise NotFoundError from exc
 
         post = PostIndex()
         data: dict = response["_source"]
@@ -83,8 +83,8 @@ class NotesRepository:
             result = self._es.index(
                 index=self.index, id=str(uuid.uuid4()), document=document, request_timeout=self._timeout
             )
-        except exceptions.ElasticsearchException:
-            raise RepositoryException
+        except exceptions.ApiError as exc:
+            raise RepositoryException from exc
 
         post.id = result.get("_id", "")
         return post
@@ -93,7 +93,7 @@ class NotesRepository:
         """Удаляет запись"""
         try:
             result = self._es.delete(index=self.index, id=id_)
-        except exceptions.ElasticsearchException:
+        except exceptions.ApiError:
             return False
         return result["_shards"].get("failed") == 0
 
@@ -115,7 +115,7 @@ class NotesRepository:
 
         try:
             self._es.update(index=self.index, id=id_, body={"doc": data}, request_timeout=self._timeout)
-        except exceptions.ElasticsearchException:
+        except exceptions.ApiError:
             return False
         instance["id"] = id_
         return instance
@@ -222,8 +222,8 @@ class NotesRepository:
                 body={"query": {"match": {"tags": tag_name}}},
                 request_timeout=self._timeout,
             )["count"]
-        except exceptions.ElasticsearchException:
-            raise RepositoryException
+        except exceptions.ApiError as exc:
+            raise RepositoryException from exc
 
 
 _repo_instance: NotesRepository | None = None

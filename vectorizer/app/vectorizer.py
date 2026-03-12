@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoModel, AutoTokenizer
 
 from .deco import singleton
 from .settings import settings
@@ -44,5 +44,4 @@ class Vectorizer:
 
         # Взвешенное усреднение
         weights = np.array(weights) / np.sum(weights)
-        weighted_vectors = np.average(vectors, axis=0, weights=weights)
-        return weighted_vectors
+        return np.average(vectors, axis=0, weights=weights)

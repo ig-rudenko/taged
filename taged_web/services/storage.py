@@ -26,7 +26,7 @@ def get_file(note_id: str, file_name: str) -> HttpResponse:
             response = HttpResponse(file.read(), content_type="application/vnd.ms-excel")
         response["Content-Disposition"] = f"inline; filename={file_name}"
         return response
-    raise Http404()
+    raise Http404
 
 
 def delete_file(note_id: str, file_name: str):

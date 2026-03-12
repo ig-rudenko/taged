@@ -1,6 +1,7 @@
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Literal, Optional
+from typing import Literal
 
 from elasticsearch import Elasticsearch
 
@@ -39,7 +40,7 @@ class ElasticsearchPaginator:
     per_page = 24
 
     def __init__(
-        self, es: Elasticsearch, params: QueryLimitParams, convert_result: Optional[Callable] = None, **extra
+        self, es: Elasticsearch, params: QueryLimitParams, convert_result: Callable | None = None, **extra
     ):
         """
         Инициализируем пагинатор запросов.

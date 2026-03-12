@@ -280,4 +280,4 @@ SIMPLE_JWT = {
 }
 
 NOTE_INDEX_NAME = os.getenv("NOTE_INDEX_NAME", "notes")
-VECTORIZE_URL = os.getenv("VECTORIZE_URL", "http://127.0.0.1:8090")
+VECTORIZE_URL = os.getenv("VECTORIZE_URL")

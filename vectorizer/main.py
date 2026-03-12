@@ -1,8 +1,7 @@
-from fastapi import FastAPI
-
 from app.handlers import router
 from app.settings import settings
 from app.vectorizer import Vectorizer
+from fastapi import FastAPI
 
 print(f"Start load model: {settings.model_name}")
 Vectorizer()

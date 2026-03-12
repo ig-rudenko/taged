@@ -6,7 +6,7 @@ from elasticsearch import Elasticsearch, NotFoundError
 class FakeElasticsearch(Elasticsearch):
 
     def __init__(self, **kwargs: Any):
-        super().__init__(**kwargs)
+        super().__init__(hosts="http://localhost:9200", **kwargs)
         self.index_docs: list[dict] = []
         self.delete_ids: list[str] = []
 
@@ -18,7 +18,7 @@ class FakeElasticsearch(Elasticsearch):
         self,
         *,
         index,
-        id,
+        id,  # noqa
         doc_type=...,
         _source=...,
         _source_excludes=...,
@@ -33,7 +33,7 @@ class FakeElasticsearch(Elasticsearch):
         pretty=...,
         human=...,
         error_trace=...,
-        format=...,
+        format=...,  # noqa
         filter_path=...,
         request_timeout=...,
         ignore=...,
@@ -44,7 +44,7 @@ class FakeElasticsearch(Elasticsearch):
         headers=...,
     ):
         if not id:  # Если пустой ID.
-            raise NotFoundError()
+            raise NotFoundError(message="NotFoundError", meta="", body="")  # noqa
         return {
             "_source": {
                 "title": "title",
@@ -55,13 +55,13 @@ class FakeElasticsearch(Elasticsearch):
             }
         }
 
-    def index(
+    def index(  # noqa
         self,
         *,
         index,
         document,
         doc_type=...,
-        id=...,
+        id=...,  # noqa
         if_primary_term=...,
         if_seq_no=...,
         op_type=...,
@@ -76,7 +76,7 @@ class FakeElasticsearch(Elasticsearch):
         pretty=...,
         human=...,
         error_trace=...,
-        format=...,
+        format=...,  # noqa
         filter_path=...,
         request_timeout=...,
         ignore=...,
@@ -93,7 +93,7 @@ class FakeElasticsearch(Elasticsearch):
         self,
         *,
         index,
-        id,
+        id,  # noqa
         doc_type=...,
         if_primary_term=...,
         if_seq_no=...,
@@ -106,7 +106,7 @@ class FakeElasticsearch(Elasticsearch):
         pretty=...,
         human=...,
         error_trace=...,
-        format=...,
+        format=...,  # noqa
         filter_path=...,
         request_timeout=...,
         ignore=...,
@@ -142,7 +142,7 @@ class FakeElasticsearch(Elasticsearch):
         pretty=...,
         human=...,
         error_trace=...,
-        format=...,
+        format=...,  # noqa
         filter_path=...,
         request_timeout=...,
         ignore=...,

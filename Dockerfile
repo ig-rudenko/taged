@@ -25,7 +25,7 @@ RUN --mount=type=cache,destination=/root/.cache/uv uv sync \
 
 
 FROM python:3.13.12-alpine
-LABEL authors="irudenko"
+LABEL authors="ig-rudenko"
 
 ARG user_id=1000
 ARG group_id=1001

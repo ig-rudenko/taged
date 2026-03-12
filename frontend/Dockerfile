@@ -1,5 +1,4 @@
-FROM node:22.9.0-slim AS builder
-LABEL author="ig.rudenko"
+FROM node:24.14.0-slim AS builder
 
 WORKDIR /app
 
@@ -16,7 +15,8 @@ COPY *.ts /app
 RUN npm run build
 
 
-FROM nginx:1.27.1-alpine AS prod
+FROM nginx:1.28.2-alpine AS prod
+LABEL author="ig-rudenko"
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 

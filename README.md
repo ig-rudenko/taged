@@ -1,6 +1,6 @@
 # База знаний
 
-![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
+![Python](https://img.shields.io/badge/python-3.13+-blue.svg)
 [![Code style: black](https://img.shields.io/badge/code_style-black-black.svg)](https://github.com/psf/black)
 
 ### Гибкое хранилище записей с разграничением уровня доступа
@@ -27,33 +27,6 @@
 
 Для работы приложения на сервер необходимо установить:
 
-- python (>3.10)
-- docker
-- docker-compose
-
-### Ansible
-
-Развертывание приложения осуществляется через **ansible**,
-который создает и запускает docker контейнеры через **docker-compose**.
-
-Для этого необходимо изменить файл `ansible/hosts`
-и указать свои данные для подключения и переменные.
-
-```ini
-[knowledge_host]
-knowledge_host ansible_host =  # Дополнительные параметры подключения
-
-[knowledge-host:vars]
-python_version = 3.12
-root_folder = /opt/taged
-DJANGO_SECRET_KEY = django-insecure-o$84xxrt-ip(b7&)wy)ka(@s@7tq()0vs0u(hu*mo7-^uvc_54
-django_superuser_username = root
-django_superuser_password = password
-django_superuser_email = superuser@example.com
-```
-
-Далее запускаем ansible.
-
-```shell
-ansible-playbook -i ansible/hosts ansible/playbooks/deploy.yaml
-```
+1. Создать `.env` файл по примеру из файла `env-example`.
+2. Создать `.env-vectorizer` файл по примеру из файла `env-vectorizer-example`.
+3. Запустить `docker compose up -d`.

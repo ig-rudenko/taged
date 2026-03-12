@@ -46,7 +46,7 @@ ENV PATH=/app/venv/bin:$PATH \
 COPY --chown=$user_id:$group_id . /app
 COPY --link --from=builder /app/venv/ /app/venv
 
-RUN chmod +x run.sh
+RUN chmod +x run.sh && chown $user_id:$group_id -R /app
 
 USER $user_id:$group_id
 EXPOSE 8000/tcp

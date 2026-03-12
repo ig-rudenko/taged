@@ -10,7 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
-import logging
 import os
 import time
 import uuid
@@ -37,11 +36,13 @@ SECRET_KEY = os.getenv(
     "django-insecure-o$84xxrt-ip(b7&)wy)ka(@s@7tq()0vs0u(hu*mo7-^uvc_54",
 )
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 if os.getenv("CSRF_TRUSTED_ORIGINS"):
     CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DJANGO_DEBUG", "False") in ["1", "True", "true"]
+DEBUG = os.getenv("DJANGO_DEBUG", "0").lower() in {"1", "true", "yes"}
+print(f"DEBUG: {DEBUG}")
 
 ALLOWED_HOSTS = ["*"]
 
@@ -174,6 +175,7 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
 
 if os.getenv("REDIS_CACHE_URL"):
+    print("Cache backend: REDIS")
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
@@ -209,20 +211,21 @@ CKEDITOR_RESTRICT_BY_USER = True
 CKEDITOR_FILENAME_GENERATOR = "taged.settings.get_filename"
 CKEDITOR_UPLOAD_PATH = "notes/"
 
-logging.basicConfig(filename="logs", level=logging.INFO)
-
 # В формате `es01:9200,es02:9201,es03:9202`
 ELASTICSEARCH_HOSTS_raw_str = os.getenv("ELASTICSEARCH_HOSTS")
-print(PostIndex.get_index_settings())
 
 if ELASTICSEARCH_HOSTS_raw_str:
     ELASTICSEARCH_HOSTS = [
-        {"host": host.split(":")[0], "port": int(host.split(":")[1])}
+        {
+            "scheme": "https" if host.startswith("https") else "http",
+            "host": host.split(":")[0],
+            "port": int(host.split(":")[1]),
+        }
         for host in ELASTICSEARCH_HOSTS_raw_str.split(",")
     ]
     ELASTICSEARCH_TIMEOUT = 10
 
-    print("ELASTICSEARCH_HOSTS:", ELASTICSEARCH_HOSTS)
+    print("ELASTICSEARCH HOSTS:", ELASTICSEARCH_HOSTS)
 
     # Инициализируем подключение к Elasticsearch
     es_connector.init(es=Elasticsearch(ELASTICSEARCH_HOSTS), timeout=ELASTICSEARCH_TIMEOUT)

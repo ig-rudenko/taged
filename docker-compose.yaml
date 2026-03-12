@@ -8,14 +8,14 @@ services:
       REDIS_CACHE_URL: redis://redis:6379/0
       NOTE_INDEX_NAME: notes
     env_file:
-      - /etc/sysconfig/taged
+      - .env
     mem_limit: 300m
     volumes:
       # Чтобы добавлять новые изображения и книги
       - ./media:/app/media
       - ./static:/app/static
       # База данных
-      - ${DB_FILE:-./db.sqlite3}:/app/db.sqlite3
+      - ${DB_FILE:-./db.sqlite3}:/app/db.sqlite3:z
     depends_on:
       elasticsearch:
         condition: service_started

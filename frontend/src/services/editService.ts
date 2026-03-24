@@ -1,4 +1,4 @@
-import api from "@/services/api.ts";
+import api from "@/services/api";
 import {v4 as uuidv4} from "uuid";
 
 

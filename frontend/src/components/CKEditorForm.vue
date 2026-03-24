@@ -2,6 +2,7 @@
 import {defineComponent} from 'vue';
 import {component as ckeditor} from '@mayasabha/ckeditor4-vue3';
 import {ckeditorConfig, CkeditorImages} from "@/services/ckeditor.ts";
+import {tokenService} from "@/services/auth/token.service.ts";
 
 export default defineComponent({
   name: "CKEditorForm",
@@ -17,7 +18,10 @@ export default defineComponent({
   },
 
   computed: {
-    ckeditorConfig() { return ckeditorConfig },
+    ckeditorConfig() {
+      ckeditorConfig.fileTools_requestHeaders['Authorization'] = 'Bearer ' + tokenService.getLocalAccessToken()
+      return ckeditorConfig
+    },
     value: {
       get() {
         return this.text
@@ -40,7 +44,3 @@ export default defineComponent({
 <template>
   <ckeditor v-model="value" :config="ckeditorConfig" editor-url="/ckeditor/ckeditor.js"></ckeditor>
 </template>
-
-<style scoped>
-
-</style>

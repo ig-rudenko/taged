@@ -1,7 +1,7 @@
 import {AxiosError} from "axios";
 
 export function getVerboseAxiosError(error: AxiosError<any>): string {
-    if (error.response?.data) {
+    if (error.response?.data && typeof error.response.data !== 'string') {
         const detail = error.response.data
 
         let validationErrors = ""

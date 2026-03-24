@@ -13,16 +13,24 @@
           <div v-if="userError.length" class="flex justify-content-center">
             <InlineMessage @click="userError = ''" severity="error"><span v-html="userError"></span></InlineMessage>
           </div>
-          <div class="py-3 w-100">
+          <div class="py-2 w-100">
             <InputText @keydown.enter="handleLogin" name="username" class="w-100" autofocus v-model="user.username"
                        placeholder="Логин"/>
           </div>
-          <div class="py-3 w-100">
+          <div class="py-2 w-100">
             <InputText @keydown.enter="handleLogin" name="password" class="w-100" v-model="user.password"
                        type="password" placeholder="Пароль"/>
           </div>
-          <div class="py-3">
-            <Button @click="handleLogin" label="Войти" type="submit" severity="primary"/>
+          <div class="py-2 flex gap-2">
+            <Button @click="handleLogin" label="Войти" :disabled="processing" :loading="processing" severity="primary"/>
+
+            <Button v-if="keycloakConnector().enabled" @click="handleOIDCLogin" :disabled="processing"
+                    :loading="processing" label="Войти через OIDC" fluid outlined/>
+          </div>
+
+          <div>
+            <i v-tooltip="'Сброс входа'" @click="logout"
+               class="pi pi-wrench text-gray-400 hover:text-gray-100 cursor-pointer"/>
           </div>
         </div>
 
@@ -44,10 +52,11 @@
 
 <script lang="ts">
 import {mapActions, mapState} from "vuex";
-import {AxiosError, AxiosResponse} from "axios";
 
 import {LoginUser} from "@/user";
 import {getVerboseAxiosError} from "@/errorFmt";
+import keycloakConnector from "@/keycloak.ts";
+import store from "@/store";
 
 export default {
   app: "Login",
@@ -55,6 +64,7 @@ export default {
     return {
       user: new LoginUser(),
       userError: "",
+      processing: false,
     };
   },
   computed: {
@@ -65,25 +75,34 @@ export default {
     if (this.loggedIn) this.$router.push("/");
   },
   methods: {
+    keycloakConnector() {
+      return keycloakConnector
+    },
     ...mapActions("auth", ["login"]),
 
-    handleLogin() {
-      this.login(this.user)
-          .then(
-              (value: AxiosResponse | AxiosError) => {
-                if (value.status == 200) {
-                  this.$router.push("/");
-                } else {
-                  this.userError = getVerboseAxiosError((<AxiosError>value))
-                }
-              },
-              () => this.userError = 'Неверный логин или пароль'
-          )
-          .catch(
-              (reason: AxiosError<any>) => {
-                this.userError = getVerboseAxiosError(reason)
-              }
-          );
+    async handleLogin() {
+      this.processing = true;
+      try {
+        const resp = await this.login(this.user)
+        if (resp.status == 200) {
+          await this.$router.push("/");
+        } else {
+          this.userError = 'Неверный логин или пароль'
+        }
+      } catch (e: any) {
+        this.userError = getVerboseAxiosError(e)
+      }
+      this.processing = false;
+    },
+
+    handleOIDCLogin() {
+      keycloakConnector.keycloakLoginState.setAutoLogin();
+      keycloakConnector.keycloak.login();
+    },
+
+    async logout() {
+      await store.dispatch("auth/logout");
+      location.href = "/login";
     },
 
   },

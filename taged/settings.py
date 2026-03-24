@@ -25,7 +25,7 @@ from taged_web.es_index import PostIndex
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+TRUE_VALUES = ["1", "true", "yes"]
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -41,7 +41,7 @@ if os.getenv("CSRF_TRUSTED_ORIGINS"):
     CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DJANGO_DEBUG", "0").lower() in {"1", "true", "yes"}
+DEBUG = os.getenv("DJANGO_DEBUG", "0").lower() in TRUE_VALUES
 print(f"DEBUG: {DEBUG}")
 
 ALLOWED_HOSTS = ["*"]
@@ -53,6 +53,7 @@ if DEBUG:
 # Application definition
 
 INSTALLED_APPS = [
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -63,6 +64,7 @@ INSTALLED_APPS = [
     "ckeditor",
     "ckeditor_uploader",
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
     "taged_web.apps.TagedWebConfig",
     "rest_framework_simplejwt",
 ]
@@ -73,6 +75,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "taged.authentication.JWTAuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -82,7 +85,9 @@ ROOT_URLCONF = "taged.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [
+            BASE_DIR / "templates",
+        ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -90,6 +95,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "taged.authentication.context_preprocessor_keycloak_enable",
             ],
         },
     },
@@ -148,7 +154,7 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 
-if os.getenv("DJANGO_COLLECT_STATIC", "0") == "1":
+if os.getenv("DJANGO_COLLECT_STATIC", "0").lower() in TRUE_VALUES:
     STATIC_ROOT = BASE_DIR / "static"
 else:
     STATICFILES_DIRS = [BASE_DIR / "static"]
@@ -244,13 +250,49 @@ if ELASTICSEARCH_HOSTS_raw_str:
             # Если Elasticsearch недоступен, то пытаемся еще раз
             time.sleep(10)
 
+# =============================================== KEYCLOAK ===================================================
+
+KEYCLOAK_ENABLE = os.getenv("KEYCLOAK_ENABLE", "0").lower() in TRUE_VALUES
+KEYCLOAK_JWT_LEEWAY = int(os.getenv("KEYCLOAK_JWT_LEEWAY", 0))
+KEYCLOAK_CLIENT_ID = os.getenv("KEYCLOAK_CLIENT_ID")
+KEYCLOAK_REALM = os.getenv("KEYCLOAK_REALM")
+KEYCLOAK_URL = os.getenv("KEYCLOAK_URL")
+KEYCLOAK_JWKS_URL = (
+    os.getenv("KEYCLOAK_JWKS_URL") or f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/certs"
+)
+KEYCLOAK_ISSUER = os.getenv("KEYCLOAK_ISSUER")
+KEYCLOAK_AUDIENCE = os.getenv("KEYCLOAK_AUDIENCE", KEYCLOAK_CLIENT_ID)
+KEYCLOAK_USER_ID_FIELD = os.getenv("KEYCLOAK_USER_ID_FIELD", "username")
+KEYCLOAK_USER_ID_CLAIM = os.getenv("KEYCLOAK_USER_ID_CLAIM", "preferred_username")
+
+if KEYCLOAK_ENABLE:
+    AUTHENTICATION_BACKENDS = (
+        "taged.authentication.KeycloakBackend",
+        "django.contrib.auth.backends.ModelBackend",
+    )
+
+    OIDC_RP_CLIENT_ID = KEYCLOAK_CLIENT_ID
+    OIDC_RP_CLIENT_SECRET = None
+    OIDC_USE_PKCE = True
+    OIDC_CREATE_USER = os.getenv("OIDC_CREATE_USER", "0").lower() in TRUE_VALUES
+
+    OIDC_OP_AUTHORIZATION_ENDPOINT = f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/auth"
+    OIDC_OP_TOKEN_ENDPOINT = f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/token"
+    OIDC_OP_USER_ENDPOINT = f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/userinfo"
+    OIDC_OP_JWKS_ENDPOINT = f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/certs"
+    OIDC_RP_SIGN_ALGO = "RS256"
+
+    OIDC_RP_SCOPES = "openid profile email"
+    LOGIN_URL = "/oidc/authenticate/"
+
+# ================================================= JWT ======================================================
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
-    "ROTATE_REFRESH_TOKENS": False,
-    "BLACKLIST_AFTER_ROTATION": False,
-    "UPDATE_LAST_LOGIN": False,
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
     "ALGORITHM": "HS512",
     "SIGNING_KEY": os.getenv("JWT_SECRET_KEY", SECRET_KEY),
     "VERIFYING_KEY": "",
@@ -264,7 +306,9 @@ SIMPLE_JWT = {
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
     "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
-    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "AUTH_TOKEN_CLASSES": [
+        "rest_framework_simplejwt.tokens.AccessToken",
+    ],
     "TOKEN_TYPE_CLAIM": "token_type",
     "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
     "JTI_CLAIM": "jti",
@@ -273,11 +317,14 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
     "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
     "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
-    "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
+    "TOKEN_VERIFY_SERIALIZER": "taged.authentication.TokenVerifySerializer",
     "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
     "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
+
+if KEYCLOAK_ENABLE:
+    SIMPLE_JWT["AUTH_TOKEN_CLASSES"].append("taged.authentication.KeycloakToken")
 
 NOTE_INDEX_NAME = os.getenv("NOTE_INDEX_NAME", "notes")
 VECTORIZE_URL = os.getenv("VECTORIZE_URL")

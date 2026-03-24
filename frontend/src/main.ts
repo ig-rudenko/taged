@@ -24,10 +24,13 @@ import Tooltip from "primevue/tooltip";
 // import "primevue/resources/themes/viva-light/theme.css";
 import App from './App.vue';
 import store from "@/store";
-import setupInterceptors from '@/services/setupInterceptors';
+import setupInterceptors from '@/services/api/setupInterceptors';
 import router from "@/router";
+import keycloakConnector from "@/keycloak.ts";
+import {setTokens} from "@/services/auth/token.service.ts";
+import authTypeService, {AuthType} from "@/services/auth/type.ts";
 
-setupInterceptors(store);
+setupInterceptors();
 export const app = createApp(App);
 app.use(PrimeVue, {ripple: true});
 app.use(ToastService);
@@ -37,6 +40,30 @@ app.directive('tooltip', Tooltip);
 app.use(store);
 app.use(router);
 app.config.globalProperties.$router = router as Router;
+
+if (authTypeService.type != AuthType.jwt) {
+    keycloakConnector.initKeycloak().then(() => {
+        if (!keycloakConnector.enabled) return;  // Если OIDC вышлючен на backend.
+
+        if (window.location.hash) {
+            history.replaceState(null, "", window.location.pathname + window.location.search);
+        }
+
+        // Если вошли через OIDC.
+        if (keycloakConnector.keycloakLoginState.isLogin) {
+            keycloakConnector.autoRefreshToken(setTokens);  // Автоматическое обновление токена.
+            store.dispatch('auth/keycloakLogin')
+        }
+
+        // Если необходимо авторизоваться.
+        if (keycloakConnector.keycloakLoginState.autoLogin) {
+            store.dispatch('auth/keycloakLogin').then(
+                () => setTimeout(() => location.href = "/", 100)
+            )
+            keycloakConnector.keycloakLoginState.deleteAutoLogin()
+        }
+    });
+}
 
 app.component('AutoComplete', AutoComplete);
 app.component('Badge', Badge);

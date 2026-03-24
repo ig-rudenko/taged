@@ -24,6 +24,7 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView,
 )
 
+from taged.authentication import OIDCAPIView
 from taged.ckeditor import ckeditor_upload_api_view
 from taged_web.api.myself_views import get_myself_api_view
 from taged_web.api.urls import router as draft_router
@@ -39,6 +40,16 @@ urlpatterns = [
     # CKEDITOR
     re_path(r"^api/ckeditor/upload/", ckeditor_upload_api_view, name="ckeditor_upload"),
 ]
+
+if settings.KEYCLOAK_ENABLE:
+    urlpatterns.insert(
+        0,
+        path("oidc/", include("mozilla_django_oidc.urls")),
+    )
+    urlpatterns.insert(
+        0,
+        path("api/oidc/config", OIDCAPIView.as_view(), name="oidc_config"),
+    )
 
 if settings.DEBUG:
     urlpatterns += [

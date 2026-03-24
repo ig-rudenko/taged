@@ -1,5 +1,3 @@
-import tokenService from "@/services/token.service";
-
 export class CkeditorImages {
     private resizeStyles: boolean
     private IMAGES: any[]
@@ -46,9 +44,7 @@ export const ckeditorConfig = {
     height: '75vh',
     uiColor: "#ffffff",
     filebrowserUploadUrl: "/api/ckeditor/upload/",
-    fileTools_requestHeaders: {
-        'Authorization': 'Bearer ' + tokenService.getLocalAccessToken()
-    },
+    fileTools_requestHeaders: {},
     iframe_attributes: {
         sandbox: 'allow-scripts allow-same-origin',
         allow: 'autoplay'

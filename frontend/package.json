@@ -10,12 +10,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview --port 5173"
   },
   "dependencies": {
     "@mayasabha/ckeditor4-vue3": "^1.0.9",
     "@vitejs/plugin-vue": "^5.2.1",
     "axios": "^1.7.9",
+    "keycloak-js": "^26.2.3",
     "primeicons": "^7.0.0",
     "primevue": "^3.53.1",
     "uuid": "^11.1.0",
